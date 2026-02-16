@@ -1,0 +1,68 @@
+{% extends "base_customer.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden z-0">
+        
+        <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar">
+            
+            <div class="p-6 md:p-10 pb-20"> 
+                
+                <div class="w-full h-48 md:h-80 bg-gray-200 rounded-lg mb-8 overflow-hidden relative shadow-inner shrink-0">
+                    <img src="" alt="" class="w-full h-full object-cover">
+                </div>
+
+                <div class="mb-6 border-l-4 border-yellow-400 pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-2">
+                     <h2 class="text-3xl font-bold text-gray-800">ร้านฮิตติดชาร์ต</h2>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+                    
+                    <div class="group relative h-72 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 border border-gray-100">
+                        <img src="{% static 'images/pong_shop.jpg' %}" alt="Shop" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 bg-gray-200">
+                        
+                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-6 pb-4 px-3 text-center">
+                            <span class="block text-lg font-bold text-gray-800 truncate">ผง เจริญสุขภัณฑ์</span>
+                        </div>
+                    </div>
+
+                    <div class="group relative h-72 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 border border-gray-100">
+                        <img src="" alt="" class="w-full h-full object-cover bg-gray-200 group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-6 pb-4 px-3 text-center">
+                            <span class="block text-lg font-bold text-gray-800 truncate">ผง 911</span>
+                        </div>
+                    </div>
+
+                    <div class="group relative h-72 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 border border-gray-100">
+                        <img src="" alt="" class="w-full h-full object-cover bg-gray-200 group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-6 pb-4 px-3 text-center">
+                            <span class="block text-lg font-bold text-gray-800 truncate">Pong Restaurant</span>
+                        </div>
+                    </div>
+
+                     <div class="group relative h-72 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 border border-gray-100">
+                        <img src="" alt="" class="w-full h-full object-cover bg-gray-200 group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-6 pb-4 px-3 text-center">
+                            <span class="block text-lg font-bold text-gray-800 truncate">ผง 911</span>
+                        </div>
+                    </div>
+
+                    <div class="group relative h-72 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 border border-gray-100">
+                        <img src="" alt="" class="w-full h-full object-cover bg-gray-200 group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-6 pb-4 px-3 text-center">
+                            <span class="block text-lg font-bold text-gray-800 truncate">ผง 911</span>
+                        </div>
+                    </div>
+
+                    <div class="group relative h-72 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 border border-gray-100">
+                        <img src="" alt="" class="w-full h-full object-cover bg-gray-200 group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-6 pb-4 px-3 text-center">
+                            <span class="block text-lg font-bold text-gray-800 truncate">Test Scroll</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div> 
+        </div> 
+    </div>
+{% endblock %}

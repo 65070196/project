@@ -1,0 +1,312 @@
+
+/* Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: sans-serif;
+}
+
+
+
+/* Navbar */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #b3a5f3; 
+    padding: 10px 40px;
+}
+
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-left img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.navbar-left .logo {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    width: 300px;
+    margin-left: 20px;
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    padding: 8px 10px;
+    flex: 1;
+}
+
+.search-box button {
+    background: #fffa7c;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.navbar-right a {
+    text-decoration: none;
+    color: #000;
+    font-weight: 500;
+}
+
+.login-btn {
+    background: #fffa7c;
+    padding: 8px 15px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #000;
+    font-weight: bold;
+}
+
+
+
+/* Content */
+.container {
+    background-color: rgba(255,255,255,0.9);
+    padding: 30px;
+    margin: 30px auto;
+    width: 90%;
+    border-radius: 10px;
+}
+
+.banner {
+    height: 120px;
+    background: #d9d9d9;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+}
+
+.shop-card {
+    height: 120px;
+    background: #d9d9d9;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+
+
+/* Booking */
+.booking-container {
+  background-color: rgba(255, 255, 255, 0.9);
+  width: 70%;
+  margin: 40px auto;
+  padding: 30px 50px;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.booking-container h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.booking-box {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.booking-box label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.input {
+  background: #b4b4b4;
+  border-radius: 10px;
+  padding: 15px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.input.long {
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.input-box {
+  flex: 1;
+}
+
+.input.small {
+  width: 100%;
+}
+
+.icon {
+  margin-left: 10px;
+  font-size: 1.2rem;
+}
+
+.btn-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.btn-row.center {
+  justify-content: center;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.btn.yellow {
+  background-color: #ffd85c;
+  flex: 1;                 
+  padding: 5px 30px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.btn.yellow:hover {
+  background-color: #f6ca35;
+}
+
+.btn.blue {
+  background-color: #3478f6;
+  color: #fff;
+}
+
+.btn.blue:hover {
+  background-color: #2a63cc;
+}
+
+.btn.red {
+  background-color: #ff4c4c;
+  color: #fff;
+}
+
+.btn.red:hover {
+  background-color: #d93636;
+}
+
+/* queue-check */
+.queue-container {
+  background-color: rgba(255,255,255);
+  padding: 30px;
+  margin: 30px auto;
+  width: 90%;
+  height: 80vh;
+  border-radius: 10px;
+}
+
+.queue-container h2 {
+  margin-bottom: 20px;
+}
+
+.queue-box {
+  background: rgba(255, 255, 255);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.queue-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #d9d9d9;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.queue-table thead {
+  background: #c4bdf6;
+}
+
+.queue-table th,
+.queue-table td {
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.queue-table td b {
+  font-weight: bold;
+}
+
+.page-change {
+  position: fixed;
+  height: 110vh;
+  left: 80%;
+  gap: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-page {
+  background-color: #c3ff75;
+  border: none;
+  height: 50px;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-page:hover {
+  background-color: #729644;
+}
+
+.page-number {
+  background-color: #99ac81;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}

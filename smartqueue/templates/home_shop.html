@@ -1,0 +1,83 @@
+{% extends "base_shop.html" %}
+{% load static %}
+
+{% block content %}
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden z-0">
+
+  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar">
+    
+    <div class="p-6 md:p-10 pb-24">
+
+      <div class="mb-6 border-l-4 border-yellow-400 pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-2">
+        <h2 class="text-3xl font-bold text-gray-800">คิวที่ได้รับ</h2>
+        <p class="text-gray-500 text-sm">รายการคิวทั้งหมดของร้านค้า</p>
+      </div>
+
+      <div class="space-y-4">
+
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <h3 class="text-lg font-bold text-gray-800">ผง รัก RO</h3>
+              <p class="text-sm text-gray-500">หมายเลขการจอง: ddd-123</p>
+            </div>
+
+            <span class="px-3 py-1 text-sm rounded-full bg-yellow-100 text-yellow-700 font-semibold">
+              กำลังดำเนินการ
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-700">
+            <div>
+              <span class="text-gray-500">วันจอง</span>
+              <p class="font-medium">12/8/2568 16:00</p>
+            </div>
+            <div>
+              <span class="text-gray-500">โต๊ะที่จอง</span>
+              <p class="font-medium">โต๊ะหมายเลข 4</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <h3 class="text-lg font-bold text-gray-800">ผง ยอดนักเกตัวพ่อ</h3>
+              <p class="text-sm text-gray-500">หมายเลขการจอง: abc-456</p>
+            </div>
+
+            <span class="px-3 py-1 text-sm rounded-full bg-green-100 text-green-700 font-semibold">
+              เสร็จสิ้น
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div>
+              <span class="text-gray-500">วันจอง</span>
+              <p class="font-medium">10/8/2568 18:00</p>
+            </div>
+            <div>
+              <span class="text-gray-500">โต๊ะที่จอง</span>
+              <p class="font-medium">โต๊ะหมายเลข 2</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex justify-center items-center gap-4 mt-8">
+        <button class="px-5 py-2 rounded-full bg-gray-200 hover:bg-gray-300 font-semibold">
+          ก่อนหน้า
+        </button>
+        <div class="w-10 h-10 rounded-lg bg-yellow-400 text-white flex items-center justify-center font-bold">
+          1
+        </div>
+        <button class="px-5 py-2 rounded-full bg-gray-200 hover:bg-gray-300 font-semibold">
+          ถัดไป
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

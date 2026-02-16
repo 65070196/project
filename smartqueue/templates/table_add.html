@@ -1,0 +1,70 @@
+{% extends "base_shop.html" %}
+{% load static %}
+{% block content %}
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden">
+
+  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x overflow-y-auto no-scrollbar">
+
+    <div class="p-6 md:p-10 pb-24">
+
+      <div class="mb-6 border-l-4 border-yellow-400 pl-4">
+        <h2 class="text-3xl font-bold text-gray-800">เพิ่มประเภทโต๊ะ</h2>
+        <p class="text-gray-500 text-sm">จัดการประเภทโต๊ะภายในร้าน</p>
+      </div>
+
+      <div class="max-w-3xl mx-auto space-y-6">
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            ชื่อประเภทโต๊ะ
+          </label>
+          <input type="text"
+                 class="w-full h-14 bg-gray-100 rounded-xl px-4 outline-none focus:ring-2 focus:ring-yellow-400"
+                 placeholder="เช่น โต๊ะ VIP, โต๊ะครอบครัว">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            รายละเอียด
+          </label>
+          <textarea
+            class="w-full h-24 bg-gray-100 rounded-xl px-4 py-3 outline-none resize-none focus:ring-2 focus:ring-yellow-400"
+            placeholder="รายละเอียดเพิ่มเติมของประเภทโต๊ะ"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              จำนวนโต๊ะ
+            </label>
+            <div class="h-14 bg-gray-100 rounded-xl flex items-center justify-between px-4">
+              <input type="number" value="10"
+                     class="bg-transparent w-full outline-none">
+              <span class="text-gray-500">✏️</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              รูปภาพประกอบ
+            </label>
+            <label class="h-14 bg-gray-100 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-200">
+              <span class="text-2xl text-gray-500">🖼️</span>
+              <input type="file" class="hidden">
+            </label>
+          </div>
+
+        </div>
+
+        <div>
+          <button
+            class="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition">เพิ่มโต๊ะ
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
