@@ -15,9 +15,9 @@ urlpatterns = [
     path("booking/", Booking.as_view(), name="booking"),
     path("queue-check/", QueueCheck.as_view(), name="queue-check"),
 
-    path("table-manage/", TableManage.as_view(), name="table-manage"),
-    path("table-add/", TableAdd.as_view(), name="table-add"),
-    path("table-edit/", TableEdit.as_view(), name="table-edit"),
+    path("table/", TableManage.as_view(), name="table-manage"),
+    path('table/add/', TableAdd.as_view(), name='table-add'),
+    path('table/edit/<int:table_id>/', TableEdit.as_view(), name='table-edit'),
 
     path("promo-manage/", PromoManage.as_view(), name="promo-manage"),
     path("promo-add/", PromoAdd.as_view(), name="promo-add"),

@@ -1,17 +1,17 @@
+from django.contrib.auth.models import User
 from django.db import models
 
-# Create your models here.
+
 class Customer(models.Model):
-    customer_id = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=20, null=False)
-    password = models.CharField(max_length=20, null=False)
-    fullname = models.CharField(max_length=100, null=False)
+    user_id = models.AutoField(primary_key=True)
+    username = models.OneToOneField(User, on_delete=models.CASCADE)
+    firstname = models.CharField(max_length=100, null=False)
+    lastname = models.CharField(max_length=100, null=False)
     phone = models.CharField(max_length=10, blank=True, null=True)
-    email = models.CharField(max_length=100, blank=True, null=True)
-    image = models.ForeignKey('Image', on_delete=models.CASCADE, null=False)
+    image = models.ForeignKey('Image', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
-        return self.fullname
+        return self.firstname + ' ' + self.lastname
 
 class Queue(models.Model):
     queue_id = models.AutoField(primary_key=True)

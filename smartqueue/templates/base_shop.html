@@ -45,8 +45,8 @@
 
     <div class="flex items-center space-x-6 text-sm font-bold text-black">
       <a href="#" class="hover:text-white transition duration-200">จัดการคิว</a>
-      <a href="#" class="hover:text-white transition duration-200">จัดการโปรโมชั่น</a>
-      <a href="#" class="hover:text-white transition duration-200">จัดการโต๊ะ</a>
+      <a href="{% url 'promo-manage' %}" class="hover:text-white transition duration-200">จัดการโปรโมชั่น</a>
+      <a href="{% url 'table-manage' %}" class="hover:text-white transition duration-200">จัดการโต๊ะ</a>
       <a href="#" class="hover:text-white transition duration-200">โปรโมชั่น</a>
       
       {% if user.is_authenticated %}

@@ -3,7 +3,8 @@ from django.shortcuts import render, redirect
 from django.shortcuts import render
 
 from django.contrib.auth import authenticate, logout, login
-from .models import Customer
+from django.contrib.auth.models import User
+from .models import Customer, Shop, Table
 
 
 class Login(View):
@@ -11,7 +12,6 @@ class Login(View):
         return render(request, 'login.html')
 
     def post(self, request):
-        # ต้องแก้ เพราะเรื่องความปลอดภัย
         username_form = request.POST.get('username')
         password_form = request.POST.get('password')
 
@@ -36,62 +36,98 @@ class RegisterCustomer(View):
         return render(request, 'register_customer.html')
 
     def post(self, request):
-        # ต้องแก้ เพราะเรื่องความปลอดภัย
-        username_form = request.POST.get('username')
-        email_form = request.POST.get('email')
-        password1_form = request.POST.get('password')
-        password2_form = request.POST.get('password_confirm')
-        fullname_form = request.POST.get('fullname')
+        username_form = request.POST.get('username', '').strip()
+        email_form = request.POST.get('email', '').strip()
+        password1_form = request.POST.get('password', '')
+        password2_form = request.POST.get('password_confirm', '')
+        firstname_form = request.POST.get('firstname', '').strip()
+        lastname_form = request.POST.get('lastname', '').strip()
+        phone_form = request.POST.get('phone', '').strip()
 
-        context = {}
+        context = {
+            'old_username': username_form,
+            'old_email': email_form,
+            'old_firstname': firstname_form,
+            'old_lastname': lastname_form,
+            'old_phone': phone_form,
+        }
+
+        if not all([username_form, email_form, password1_form, password2_form, firstname_form, lastname_form]):
+            context['error_message'] = "กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน"
+            return render(request, 'register_customer.html', context)
 
         if password1_form != password2_form:
             context['error_message'] = "รหัสผ่านทั้งสองช่องไม่ตรงกัน"
             return render(request, 'register_customer.html', context)
+            
+        if len(password1_form) < 8:
+            context['error_message'] = "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร"
+            return render(request, 'register_customer.html', context)
 
-        if Customer.objects.filter(username=username_form).exists():
+        if User.objects.filter(username=username_form).exists():
             context['error_message'] = "ชื่อผู้ใช้งานนี้ถูกใช้ไปแล้ว"
             return render(request, 'register_customer.html', context)
         
-        if Customer.objects.filter(email=email_form).exists():
+        if User.objects.filter(email=email_form).exists():
             context['error_message'] = "อีเมลนี้ถูกใช้ไปแล้ว"
             return render(request, 'register_customer.html', context)
 
         try:
-            user = Customer.objects.create_user(
-                username = username_form,
-                password = password1_form,
-                first_name = fullname_form,
-                email = email_form,
-                tel = request.POST.get('phone'),
-
+            django_user = User.objects.create_user(
+                username=username_form,
+                password=password1_form,
+                email=email_form,
+                first_name=firstname_form,
+                last_name=lastname_form,
             )
             
-            login(request, user)
+            Customer.objects.create(
+                username=django_user, 
+                firstname=firstname_form,
+                lastname=lastname_form,
+                phone=phone_form,
+            )
             
+            login(request, django_user)
             return redirect('home-c')
 
         except Exception as e:
-            return render(request, 'register_customer.html')
+            if 'django_user' in locals() and django_user.id:
+                django_user.delete()
+                
+            context['error_message'] = f"เกิดข้อผิดพลาดในการสมัครสมาชิก: {str(e)}"
+            return render(request, 'register_customer.html', context)
 
 class RegisterShop(View):
     def get(self, request):
         return render(request, "register_shop.html")
     
+
 class ResetPassword(View):
     def get(self, request):
         return render(request, "reset_password.html")
     
-
-
     
 class HomeCustomer(View):
     def get(self, request):
-        return render(request, "home_customer.html")
+        shops = Shop.objects.all().order_by('shop_id')
+        context = {
+            'shops': shops
+        }
+        return render(request, "home_customer.html", context)
+    
 
+# หน้าหลักผู้ใช้งาน
 class HomeShop(View):
     def get(self, request):
         return render(request, "home_shop.html")
+    
+    def post(self, request):
+        shops = Shop.objects.all().order_by('shop_id')
+        context = {
+            'shops': shops
+        }
+        return render(request, "home_shop.html", context)
 
 class Booking(View):
     def get(self, request):
@@ -101,9 +137,15 @@ class QueueCheck(View):
     def get(self, request):
         return render(request, "queue_check.html")
 
+#Table
 class TableManage(View):
     def get(self, request):
-        return render(request, "table_manage.html")
+        tables = Table.objects.all().order_by('table_id')
+        context = {
+            'tables': tables
+        }
+        return render(request, "table_manage.html", context)
+    
 
 class TableAdd(View):
     def get(self, request):
