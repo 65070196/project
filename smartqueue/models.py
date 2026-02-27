@@ -20,15 +20,6 @@ class Queue(models.Model):
     queue_date = models.DateField(null=False)
     queue_time = models.DateTimeField(null=False)
 
-class Payment(models.Model):
-    payment_id = models.AutoField(primary_key=True)
-    customer = models.ForeignKey('Customer', on_delete=models.CASCADE, null=False)
-    promo = models.ForeignKey('Promotion', on_delete=models.SET_NULL, null=True, blank=True)
-    queue = models.ForeignKey('Queue', on_delete=models.CASCADE, null=False)
-    payment_date = models.DateField(null=False)
-    amount = models.FloatField(null=False)
-    payment_method = models.CharField(max_length=24, null=False)
-    payment_status = models.CharField(max_length=24, null=False)
 
 class Shop(models.Model):
     shop_id = models.AutoField(primary_key=True)

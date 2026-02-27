@@ -4,6 +4,7 @@ from smartqueue.views import *
 
 urlpatterns = [
     path("login/", Login.as_view(), name="login"), # http://127.0.0.1:8000/login/
+    path("logout/", Logout.as_view(), name="logout"),
     path("register/c/", RegisterCustomer.as_view(), name="register-c"), # http://127.0.0.1:8000/register/
     path("register/s/", RegisterShop.as_view(), name="register-s"), # http://127.0.0.1:8000/registerShop/
     path("reset-password/", ResetPassword.as_view(), name="reset-password"),
@@ -19,7 +20,7 @@ urlpatterns = [
     path('table/add/', TableAdd.as_view(), name='table-add'),
     path('table/edit/<int:table_id>/', TableEdit.as_view(), name='table-edit'),
 
-    path("promo-manage/", PromoManage.as_view(), name="promo-manage"),
+    path("promo/", PromoManage.as_view(), name="promo-manage"),
     path("promo-add/", PromoAdd.as_view(), name="promo-add"),
-    path("promo-edit/", PromoEdit.as_view(), name="promo-edit"),
+    path("promo-edit/<int:promo_id>/", PromoEdit.as_view(), name="promo-edit"),
 ]

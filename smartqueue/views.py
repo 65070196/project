@@ -15,13 +15,25 @@ class Login(View):
         username_form = request.POST.get('username')
         password_form = request.POST.get('password')
 
-        user = authenticate(request, 
-            username=username_form, 
-            password=password_form)
+        user = authenticate(request, username=username_form, password=password_form)
 
         if user is not None:
             login(request, user)
-            return redirect('home-c')
+            
+            if Shop.objects.filter(username=user).exists():
+                return redirect('home-s')
+                
+            elif Customer.objects.filter(username=user).exists():
+                return redirect('home-c')
+                
+            elif user.is_superuser or user.is_staff:
+                return redirect('/admin/')
+                
+            else:
+                logout(request)
+                error_message = "บัญชีนี้ยังไม่ได้ตั้งค่าโปรไฟล์อย่างสมบูรณ์"
+                return render(request, 'login.html', {'error_message': error_message})
+                
         else:
             error_message = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
             return render(request, 'login.html', {'error_message': error_message})
@@ -102,6 +114,55 @@ class RegisterShop(View):
     def get(self, request):
         return render(request, "register_shop.html")
     
+    def post(self, request):
+        shop_name_form = request.POST.get('shop_name', '').strip()
+        username_form = request.POST.get('username', '').strip()
+        email_form = request.POST.get('email', '').strip()
+        phone_form = request.POST.get('phone', '').strip()
+        password1_form = request.POST.get('password', '')
+        password2_form = request.POST.get('password_confirm', '')
+
+        context = {
+            'old_shop_name': shop_name_form,
+            'old_username': username_form,
+            'old_email': email_form,
+            'old_phone': phone_form,
+        }
+
+        if not all([shop_name_form, username_form, password1_form, password2_form]):
+            context['error_message'] = "กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน"
+            return render(request, 'register_shop.html', context)
+        
+        if password1_form != password2_form:
+            context['error_message'] = "รหัสผ่านทั้งสองช่องไม่ตรงกัน"
+            return render(request, 'register_shop.html', context)
+        
+        if len(password1_form) < 8:
+            context['error_message'] = "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร"
+            return render(request, 'register_shop.html', context)
+        
+        if Shop.objects.filter(username=username_form).exists():
+            context['error_message'] = "ชื่อผู้ใช้งานนี้ถูกใช้ไปแล้ว"
+            return render(request, 'register_shop.html', context)
+        
+        if email_form and Shop.objects.filter(email=email_form).exists():
+            context['error_message'] = "อีเมลนี้ถูกใช้ไปแล้ว"
+            return render(request, 'register_shop.html', context)
+        
+        try:
+            Shop.objects.create(
+                shop_name=shop_name_form,
+                username=username_form,
+                password=password1_form,
+                phone=phone_form,
+                email=email_form,
+            )
+
+            return redirect('home-s')
+
+        except Exception as e:
+            context['error_message'] = f"เกิดข้อผิดพลาดในการสมัครสมาชิก: {str(e)}"
+            return render(request, 'register_shop.html', context)
 
 class ResetPassword(View):
     def get(self, request):

@@ -38,7 +38,7 @@
     
     <div class="flex items-center space-x-4">
       <a href="{% url 'home-c' %}" class="flex items-center gap-2">
-        <div class="bg-white rounded-full w-10 h-10 shadow-sm"></div> 
+        <div class="bg-white rounded-full w-10 h-10 shadow-sm"></div>
         <div class="text-xl font-bold text-black tracking-wide">On-Queue</div>
       </a>
       
@@ -60,9 +60,19 @@
         <a href="#" class="hover:text-white transition duration-200">ตรวจสอบคิว</a>
         <a href="#" class="hover:text-white transition duration-200">เกี่ยวกับ</a>
         
-        <a href="#" class="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full hover:bg-gray-100 transition shadow-sm">
-            <span>{{ user.username }}</span>
-        </a>
+        <div class="relative inline-block text-left">
+            <button onclick="toggleUserMenu()" class="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full hover:bg-gray-100 transition shadow-sm focus:outline-none">
+                <span>{{ user.username }}</span>
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            
+            <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors text-center">
+                    ออกจากระบบ
+                </a>
+            </div>
+        </div>
+
       {% else %}
         <a href="#" class="hover:text-white transition duration-200">หน้าแรก</a>
         <a href="#" class="hover:text-white transition duration-200">เกี่ยวกับ</a>
@@ -78,6 +88,19 @@
       {% block content %}{% endblock %}
   </main>
 
+  <script src="{% static 'js/script.js' %}"></script>
+  
+  <script>
+    function toggleUserMenu() {
+        document.getElementById('userMenuDropdown').classList.toggle('hidden');
+    }
+
+
+    window.addEventListener('click', function(e) {
+        if (!document.getElementById('userMenuDropdown').contains(e.target) && !e.target.closest('button[onclick="toggleUserMenu()"]')) {
+            document.getElementById('userMenuDropdown').classList.add('hidden');
+        }
+    });
+  </script>
 </body>
-<script src="{% static 'js/script.js' %}"></script>
 </html>

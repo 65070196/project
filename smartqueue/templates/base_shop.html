@@ -50,9 +50,21 @@
       <a href="#" class="hover:text-white transition duration-200">โปรโมชั่น</a>
       
       {% if user.is_authenticated %}
-      <a href="#" class="bg-[#fcd34d] text-black px-6 py-2 rounded-full hover:bg-[#fbbf24] transition font-bold shadow-md">
-          ร้าน {{ user.username }}
-      </a>
+      <div class="relative inline-block text-left">
+      <button onclick="toggleUserMenu()" 
+        class="bg-[#fcd34d] text-black px-6 py-2 rounded-full hover:bg-[#fbbf24] transition font-bold shadow-md flex items-center gap-2">
+        
+        <span>ร้าน {{ user.username }}</span>
+        <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+
+      <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+        <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors text-center">
+          ออกจากระบบ
+        </a>
+      </div>
       {% else %}
       <a href="{% url 'login' %}" class="bg-[#fcd34d] text-black px-6 py-2 rounded-full hover:bg-[#fbbf24] transition font-bold shadow-md">
           เข้าสู่ระบบ
@@ -64,6 +76,19 @@
   <main class="container mx-auto pt-24 px-4 pb-10">
       {% block content %}{% endblock %}
   </main>
+
+  <script>
+    function toggleUserMenu() {
+        document.getElementById('userMenuDropdown').classList.toggle('hidden');
+    }
+
+
+    window.addEventListener('click', function(e) {
+        if (!document.getElementById('userMenuDropdown').contains(e.target) && !e.target.closest('button[onclick="toggleUserMenu()"]')) {
+            document.getElementById('userMenuDropdown').classList.add('hidden');
+        }
+    });
+  </script>
 
 </body>
 </html>
