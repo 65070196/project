@@ -183,7 +183,7 @@ class HomeCustomer(View):
 # หน้าหลักผู้ใช้งาน
 class HomeShop(View):
     def get(self, request):
-        queues = Queue.objects.all().order_by('queue_time')
+        queues = Queue.objects.all().order_by('-queue_time')
         context = {
             'queues': queues
         }
@@ -199,16 +199,6 @@ class HomeShop(View):
         }
         return render(request, "home_shop.html", context)
 
-class QueueMange(View):
-    def get(self, request):
-        return render(request, "queue_manage.html")
-    
-    def post(self, request):
-        queues = Queue.objects.all().order_by('queue_id')
-        context = {
-            'queues': queues
-        }
-        return render(request, "queue_manage.html", context)
 
 class QueueCheck(View):
     def get(self, request):

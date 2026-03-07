@@ -16,7 +16,7 @@ urlpatterns = [
     path("queue-reserve/<int:shop_id>/", QueueReserve.as_view(), name="queue-reserve"),
     path("queue-check/", QueueCheck.as_view(), name="queue-check"),
 
-    path("queue-shop/", QueueMange.as_view(), name="queue-shop"),
+    # path("queue-shop/", QueueMange.as_view(), name="queue-shop"),
 
 
     path("table/", TableManage.as_view(), name="table-manage"),
