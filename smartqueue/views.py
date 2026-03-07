@@ -1,10 +1,12 @@
 from django.views import View
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.shortcuts import render
 
 from django.contrib.auth import authenticate, logout, login
 from django.contrib.auth.models import User
-from .models import Customer, Shop, Table
+from .models import Customer, Shop, Table, Queue
+from django.utils.dateparse import parse_date, parse_time
+import datetime
 
 
 class Login(View):
@@ -181,22 +183,90 @@ class HomeCustomer(View):
 # หน้าหลักผู้ใช้งาน
 class HomeShop(View):
     def get(self, request):
-        return render(request, "home_shop.html")
+        queues = Queue.objects.all().order_by('queue_time')
+        context = {
+            'queues': queues
+        }
+        return render(request, "home_shop.html", context)
     
     def post(self, request):
-        shops = Shop.objects.all().order_by('shop_id')
+        queues = Queue.objects.filter(
+            shop__username=request.user.username
+        ).order_by('queue_time')
+
         context = {
-            'shops': shops
+            'queues': queues
         }
         return render(request, "home_shop.html", context)
 
-class Booking(View):
+class QueueMange(View):
     def get(self, request):
-        return render(request, "booking.html")
+        return render(request, "queue_manage.html")
     
+    def post(self, request):
+        queues = Queue.objects.all().order_by('queue_id')
+        context = {
+            'queues': queues
+        }
+        return render(request, "queue_manage.html", context)
+
 class QueueCheck(View):
     def get(self, request):
-        return render(request, "queue_check.html")
+        queues = Queue.objects.all().order_by('queue_id')
+        context = {
+            'queues': queues
+        }
+        return render(request, "queue_check.html", context)
+    
+class QueueReserve(View):
+    def get(self, request, shop_id):  
+        shop = get_object_or_404(Shop, pk=shop_id)
+        context = {
+            'shop': shop
+        }
+        return render(request, 'queue_reserve.html', context)
+    
+    def post(self, request, shop_id):
+        shop = get_object_or_404(Shop, pk=shop_id)
+        
+        queue_date_str = request.POST.get('queue_date')
+        queue_time_str = request.POST.get('queue_time')
+
+        if not queue_date_str or not queue_time_str:
+            return render(request, 'queue_reserve.html', {
+                'shop': shop,
+                'error_message': 'กรุณาเลือกวันที่และเวลาให้ครบถ้วน'
+            })
+
+        try:
+            customer = Customer.objects.get(username=request.user)
+            
+            parsed_date = parse_date(queue_date_str)
+            parsed_time = parse_time(queue_time_str)
+            
+            combined_datetime = datetime.datetime.combine(parsed_date, parsed_time)
+
+            Queue.objects.create(
+                customer=customer,
+                shop=shop,
+                queue_date=parsed_date,
+                queue_time=combined_datetime
+            )
+            
+            return redirect('home-c') 
+
+        except Customer.DoesNotExist:
+            return render(request, 'queue_reserve.html', {
+                'shop': shop,
+                'error_message': 'ไม่พบข้อมูลลูกค้าในระบบ กรุณาล็อกอินใหม่'
+            })
+        except Exception as e:
+            return render(request, 'queue_reserve.html', {
+                'shop': shop,
+                'error_message': f'เกิดข้อผิดพลาดในการจองคิว: {str(e)}'
+            })
+
+
 
 #Table
 class TableManage(View):

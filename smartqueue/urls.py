@@ -13,8 +13,11 @@ urlpatterns = [
     path("home/c/", HomeCustomer.as_view(), name="home-c"), # http://127.0.0.1:8000/home/c/   ->  for Customer
     path("home/s/", HomeShop.as_view(), name="home-s"), # http://127.0.0.1:8000/home/s/       ->  for Shop
     
-    path("booking/", Booking.as_view(), name="booking"),
+    path("queue-reserve/<int:shop_id>/", QueueReserve.as_view(), name="queue-reserve"),
     path("queue-check/", QueueCheck.as_view(), name="queue-check"),
+
+    path("queue-shop/", QueueMange.as_view(), name="queue-shop"),
+
 
     path("table/", TableManage.as_view(), name="table-manage"),
     path('table/add/', TableAdd.as_view(), name='table-add'),
