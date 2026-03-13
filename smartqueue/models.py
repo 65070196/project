@@ -14,11 +14,19 @@ class Customer(models.Model):
         return self.firstname + ' ' + self.lastname
 
 class Queue(models.Model):
+    STATUS_CHOICES = [
+        ('doing', 'กำลังดำเนินการ'),
+        ('done', 'เสร็จสิ้น'),
+        ('cancel', 'ยกเลิก'),
+    ]
     queue_id = models.AutoField(primary_key=True)
     customer = models.ForeignKey('Customer', on_delete=models.CASCADE, null=False)
     shop = models.ForeignKey('Shop', on_delete=models.CASCADE, null=False)
     queue_date = models.DateField(null=False)
     queue_time = models.DateTimeField(null=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='doing')
+    def __str__(self):
+        return f"Queue {self.queue_id} - {self.get_status_display()}"
 
 
 class Shop(models.Model):

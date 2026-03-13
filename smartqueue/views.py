@@ -4,11 +4,12 @@ from django.shortcuts import render
 
 from django.contrib.auth import authenticate, logout, login
 from django.contrib.auth.models import User
-from .models import Customer, Shop, Table, Queue
+from .models import Customer, Shop, Table, Queue, Promotion
 from django.utils.dateparse import parse_date, parse_time
 import datetime
 
 
+# ระบบ Login, Logout, Register, Reset Password
 class Login(View):
     def get(self, request):
         return render(request, 'login.html')
@@ -169,8 +170,10 @@ class RegisterShop(View):
 class ResetPassword(View):
     def get(self, request):
         return render(request, "reset_password.html")
-    
-    
+
+
+
+# หน้าหลักผู้ใช้งาน 
 class HomeCustomer(View):
     def get(self, request):
         shops = Shop.objects.all().order_by('shop_id')
@@ -179,27 +182,6 @@ class HomeCustomer(View):
         }
         return render(request, "home_customer.html", context)
     
-
-# หน้าหลักผู้ใช้งาน
-class HomeShop(View):
-    def get(self, request):
-        queues = Queue.objects.all().order_by('-queue_time')
-        context = {
-            'queues': queues
-        }
-        return render(request, "home_shop.html", context)
-    
-    def post(self, request):
-        queues = Queue.objects.filter(
-            shop__username=request.user.username
-        ).order_by('queue_time')
-
-        context = {
-            'queues': queues
-        }
-        return render(request, "home_shop.html", context)
-
-
 class QueueCheck(View):
     def get(self, request):
         queues = Queue.objects.all().order_by('queue_id')
@@ -257,11 +239,56 @@ class QueueReserve(View):
             })
 
 
+# หน้าหลักร้านค้า
+class HomeShop(View):
+    def get(self, request):
+        my_shop = Shop.objects.get(username=request.user)
+        queues = Queue.objects.filter(shop=my_shop).order_by('queue_date', 'queue_time')
+        context = {
+            'queues': queues
+        }
+        return render(request, "home_shop.html", context)
+    
+    def post(self, request):
+        queues = Queue.objects.filter(
+            shop__username=request.user.username
+        ).order_by('queue_time')
+
+        context = {
+            'queues': queues
+        }
+        return render(request, "home_shop.html", context)
+
+class QueueEdit(View):
+    def get(self, request, queue_id):
+        queue = get_object_or_404(Queue, queue_id=queue_id)
+        
+        context = {
+            'queue': queue
+        }
+        return render(request, "queue_edit.html", context)
+    
+    def post(self, request, queue_id):
+        queue = get_object_or_404(Queue, queue_id=queue_id)
+        new_status = request.POST.get('status')
+        
+        if new_status:
+            queue.status = new_status
+            queue.save()
+        return redirect('home-s')
+    
+
+class QueueDelete(View):
+    def post(self, request, queue_id):
+        queue = get_object_or_404(Queue, pk=queue_id)
+        queue.delete()
+        return redirect("home-s")
 
 #Table
 class TableManage(View):
     def get(self, request):
-        tables = Table.objects.all().order_by('table_id')
+        my_shop = Shop.objects.get(username=request.user)
+        tables = Table.objects.all().filter(shop=my_shop).order_by('table_id')
         context = {
             'tables': tables
         }
@@ -271,19 +298,110 @@ class TableManage(View):
 class TableAdd(View):
     def get(self, request):
         return render(request, "table_add.html")
-
+    
 class TableEdit(View):
-    def get(self, request):
-        return render(request, "table_edit.html")
+    def get(self, request, table_id):
+        table = get_object_or_404(Table, table_id=table_id)
+        
+        context = {
+            'table': table
+        }
+        return render(request, "table_edit.html", context)
+    
+    def post(self, request, table_id):
+        table = get_object_or_404(Table, table_id=table_id)
+        
+        new_name = request.POST.get('name', '').strip()
+        new_desc = request.POST.get('description', '').strip()
+        new_amount = request.POST.get('amount', '').strip()
+
+        if new_name != '':
+            table.name = new_name
+        if new_desc != '':
+            table.description = new_desc
+        if new_amount != '':
+            table.amount = new_amount
+            
+        table.save()
+        return redirect('table-manage')
+    
+class TableDlete(View):
+    def post(self, request, table_id):
+        table = get_object_or_404(Table, table_id=table_id)
+        table.delete()
+        return redirect('table-manage')
+
     
 class PromoManage(View):
     def get(self, request):
-        return render(request, "promo_manage.html")
+        my_shop = Shop.objects.get(username=request.user)
+        promotions = Promotion.objects.filter(shop=my_shop, shop__username=request.user.username)
+        context = {
+            'promotions': promotions
+        }
+        return render(request, "promo_manage.html", context)
     
 class PromoAdd(View):
     def get(self, request):
         return render(request, "promo_add.html")
+    
+    def post(self, request):
+        promo_name = request.POST.get('promo_name')
+        description = request.POST.get('description')
+        discount_rate = request.POST.get('discount_rate')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+
+        try:
+            shop = Shop.objects.get(username=request.user.username)
+        except Shop.DoesNotExist:
+            return redirect('home-shop')
+
+        Promotion.objects.create(
+            shop=shop,
+            promo_name=promo_name,
+            description=description,
+            discount_rate=float(discount_rate),
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        return redirect('promo-manage')
+
+class PromoDelete(View):
+    def post(self, request, promo_id):
+        promo = get_object_or_404(Promotion, promo_id=promo_id)
+        promo.delete()
+        return redirect('promo-manage')
 
 class PromoEdit(View):
-    def get(self, request):
-        return render(request, "promo_edit.html")
+    def get(self, request, promo_id):
+        promo = get_object_or_404(Promotion, promo_id=promo_id)
+        context = {
+            'promo': promo
+        }
+        return render(request, "promo_edit.html", context)
+    
+    def post(self, request, promo_id):
+        promo = get_object_or_404(Promotion, promo_id=promo_id)
+        
+        new_name = request.POST.get('promo_name', '')
+        new_desc = request.POST.get('description', '')
+        new_discount = request.POST.get('discount_rate', '')
+        new_start = request.POST.get('start_date', '')
+        new_end = request.POST.get('end_date', '')
+
+        if new_name != '':
+            promo.promo_name = new_name
+        if new_desc != '':
+            promo.description = new_desc
+        if new_discount != '':
+            promo.discount_rate = new_discount
+        if new_start != '':
+            promo.start_date = new_start
+        if new_end != '':
+            promo.end_date = new_end
+        
+        promo.save()
+        return redirect('promo-manage')
+    

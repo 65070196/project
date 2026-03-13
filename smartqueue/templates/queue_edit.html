@@ -1,0 +1,71 @@
+{% extends "base_shop.html" %}
+{% load static %}
+
+{% block content %}
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden">
+  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x overflow-y-auto no-scrollbar">
+    <div class="p-6 md:p-10 pb-24">
+      
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">แก้ไขสถานะคิว</h2>
+        <p class="text-sm text-gray-500">อัปเดตสถานะการเข้าใช้บริการของลูกค้า</p>
+      </div>
+
+      <form method="POST" class="max-w-3xl mx-auto space-y-6">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold mb-2 text-gray-500">หมายเลขคิว</label>
+            <input type="text" value="{{ queue.queue_id }}" disabled
+                   class="w-full h-12 px-4 rounded-xl bg-gray-300 text-gray-600 cursor-not-allowed">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-2 text-gray-500">ชื่อลูกค้า</label>
+            <input type="text" value="{{ queue.customer.firstname }} {{ queue.customer.lastname }}" disabled
+                   class="w-full h-12 px-4 rounded-xl bg-gray-300 text-gray-600 cursor-not-allowed">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold mb-2 text-gray-500">วันที่จองคิว</label>
+            <input type="text" value="{{ queue.queue_date|date:'d/m/Y' }}" disabled
+                   class="w-full h-12 px-4 rounded-xl bg-gray-300 text-gray-600 cursor-not-allowed">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-2 text-gray-500">เวลา</label>
+            <input type="text" value="{{ queue.queue_time|date:'H:i' }} น." disabled
+                   class="w-full h-12 px-4 rounded-xl bg-gray-300 text-gray-600 cursor-not-allowed">
+          </div>
+        </div>
+
+        <div class="p-6 bg-blue-50 border border-blue-200 rounded-xl mt-6">
+          <label class="block text-base font-bold mb-3 text-blue-800">อัปเดตสถานะคิวปัจจุบัน</label>
+          
+          <select name="status" required
+                  class="w-full h-14 px-4 rounded-xl bg-white border-2 border-blue-300 focus:border-blue-500 focus:ring-0 outline-none text-gray-800 font-semibold text-lg cursor-pointer">
+            <option value="doing" {% if queue.status == 'doing' %}selected{% endif %}>⏳กำลังดำเนินการ</option>
+            <option value="done" {% if queue.status == 'done' %}selected{% endif %}>✅เสร็จสิ้น</option>
+            <option value="cancel" {% if queue.status == 'cancel' %}selected{% endif %}>❌ยกเลิก</option>
+          </select>
+          <p class="text-sm text-gray-500 mt-2">* กรุณาเลือกสถานะใหม่ที่ต้องการแล้วกดบันทึก</p>
+        </div>
+
+        <div class="flex gap-4 pt-6">
+          <a href="{% url 'home-s' %}"
+             class="flex-1 py-3 bg-gray-400 hover:bg-gray-500 transition text-center rounded-xl font-bold text-white">
+            กลับหน้ารายการ
+          </a>
+          <button type="submit"
+             class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 transition text-white rounded-xl font-bold">
+            บันทึกสถานะ
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -15,84 +15,64 @@
 
       <div class="max-w-3xl mx-auto space-y-6">
 
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">
-            ชื่อโปรโมชั่น
-          </label>
-          <input type="text"
-                 class="w-full h-14 bg-gray-100 rounded-xl px-4 outline-none focus:ring-2 focus:ring-yellow-400"
-                 placeholder="เช่น ลดวันจันทร์, โปรเปิดร้าน">
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">
-            รายละเอียดโปรโมชั่น
-          </label>
-          <textarea
-            class="w-full h-24 bg-gray-100 rounded-xl px-4 py-3 outline-none resize-none focus:ring-2 focus:ring-yellow-400"
-            placeholder="รายละเอียดเพิ่มเติมของโปรโมชั่น"></textarea>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form method="POST" class="max-w-3xl mx-auto space-y-6">
+  
+        {% csrf_token %}
 
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">
-              ส่วนลด (%)
+              ชื่อโปรโมชั่น <span class="text-red-500">*</span>
             </label>
-            <input type="number"
-                   class="w-full h-14 bg-gray-100 rounded-xl px-4 outline-none focus:ring-2 focus:ring-yellow-400"
-                   placeholder="เช่น 10">
+            <input type="text" name="promo_name" required maxlength="24"
+                  class="w-full h-14 bg-gray-100 rounded-xl px-4 outline-none focus:ring-2 focus:ring-yellow-400"
+                  placeholder="เช่น ลดวันจันทร์">
           </div>
 
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">
-              รูปแบบส่วนลด
+              รายละเอียดโปรโมชั่น
             </label>
-            <select
-              class="w-full h-14 bg-gray-100 rounded-xl px-4 outline-none focus:ring-2 focus:ring-yellow-400">
-              <option>เปอร์เซ็นต์ (%)</option>
-              <option>จำนวนเงิน (บาท)</option>
-            </select>
-          </div>
-
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              วันเริ่มต้น
-            </label>
-            <input type="date"
-                   class="w-full h-14 bg-gray-100 rounded-xl px-4 outline-none focus:ring-2 focus:ring-yellow-400">
+            <textarea name="description" maxlength="24"
+              class="w-full h-24 bg-gray-100 rounded-xl px-4 py-3 outline-none resize-none focus:ring-2 focus:ring-yellow-400"
+              placeholder="รายละเอียดสั้นๆ (ไม่เกิน 24 ตัวอักษร)"></textarea>
           </div>
 
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">
-              วันสิ้นสุด
+              ส่วนลด <span class="text-red-500">*</span>
             </label>
-            <input type="date"
-                   class="w-full h-14 bg-gray-100 rounded-xl px-4 outline-none focus:ring-2 focus:ring-yellow-400">
+            <input type="number" name="discount_rate" required step="0.01" min="0"
+                  class="w-full h-14 bg-gray-100 rounded-xl px-4 outline-none focus:ring-2 focus:ring-yellow-400"
+                  placeholder="ระบุส่วนลด">
           </div>
 
-        </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">
+                วันเริ่มต้น <span class="text-red-500">*</span>
+              </label>
+              <input type="date" name="start_date" required
+                    class="w-full h-14 bg-gray-100 rounded-xl px-4 outline-none focus:ring-2 focus:ring-yellow-400">
+            </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">
-            รูปภาพโปรโมชั่น
-          </label>
-          <label class="h-14 bg-gray-100 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-200">
-            <span class="text-2xl text-gray-500">🖼️</span>
-            <input type="file" class="hidden">
-          </label>
-        </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">
+                วันสิ้นสุด <span class="text-red-500">*</span>
+              </label>
+              <input type="date" name="end_date" required
+                    class="w-full h-14 bg-gray-100 rounded-xl px-4 outline-none focus:ring-2 focus:ring-yellow-400">
+            </div>
+          </div>
 
-        <div>
-          <button
-            class="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition">
-            เพิ่มโปรโมชั่น
-          </button>
-        </div>
+          <div>
+            <button type="submit"
+              class="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition">
+              เพิ่มโปรโมชั่น
+            </button>
+          </div>
+
+        </form>
+      </div>
 
       </div>
     </div>

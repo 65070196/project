@@ -3,81 +3,72 @@
 
 {% block content %}
 <div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden">
-
   <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x overflow-y-auto no-scrollbar">
-
     <div class="p-6 md:p-10 pb-24">
-
       
       <div class="mb-6">
         <h2 class="text-2xl font-bold text-gray-800">แก้ไขประเภทโต๊ะ</h2>
-        <p class="text-sm text-gray-500">ปรับปรุงข้อมูลประเภทโต๊ะในระบบ</p>
+        <p class="text-sm text-gray-500">ปรับปรุงข้อมูลประเภทโต๊ะในร้านของคุณ</p>
       </div>
 
-      
+      <form method="POST" class="max-w-3xl mx-auto space-y-6">
+        {% csrf_token %}
+        
         <div>
           <label class="block text-sm font-semibold mb-2">หมายเลขประเภทโต๊ะ</label>
-          <input type="text" value="1" disabled
+          <input type="text" value="{{ table.table_id }}" disabled
                  class="w-full h-12 px-4 rounded-xl bg-gray-300">
         </div>
 
-        
         <div>
-          <label class="block text-sm font-semibold mb-2">ชื่อประเภทโต๊ะ</label>
-          <input type="text" value="โต๊ะเดี่ยว"
+          <label class="block text-sm font-semibold mb-2">ชื่อประเภทโต๊ะเดิม</label>
+          <input type="text" value="{{ table.name }}" disabled
+                 class="w-full h-12 px-4 rounded-xl bg-gray-300">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">ชื่อประเภทโต๊ะใหม่</label>
+          <input type="text" name="name" placeholder="กรอกชื่อใหม่ (หากไม่ต้องการเปลี่ยน ให้เว้นว่างไว้)"
                  class="w-full h-12 px-4 rounded-xl bg-gray-100">
         </div>
 
-        
         <div>
           <label class="block text-sm font-semibold mb-2">รายละเอียดเดิม</label>
-          <input type="text" value="โต๊ะสำหรับลูกค้า 1 คน" disabled
+          <input type="text" value="{{ table.description }}" disabled
                  class="w-full h-12 px-4 rounded-xl bg-gray-300">
         </div>
 
-        
         <div>
           <label class="block text-sm font-semibold mb-2">รายละเอียดใหม่</label>
-          <input type="text" placeholder="กรอกรายละเอียดใหม่"
+          <input type="text" name="description" placeholder="กรอกรายละเอียดใหม่ (หากไม่ต้องการเปลี่ยน ให้เว้นว่างไว้)"
                  class="w-full h-12 px-4 rounded-xl bg-gray-100">
         </div>
 
-        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
           <div>
             <label class="block text-sm font-semibold mb-2">จำนวนโต๊ะเดิม</label>
-            <input type="number" value="10" disabled
+            <input type="text" value="{{ table.amount }}" disabled
                    class="w-full h-12 px-4 rounded-xl bg-gray-300">
           </div>
-
           <div>
             <label class="block text-sm font-semibold mb-2">จำนวนโต๊ะใหม่</label>
-            <input type="number" placeholder="กรอกจำนวนโต๊ะ"
+            <input type="number" name="amount" placeholder="กรอกจำนวนโต๊ะใหม่" min="0"
                    class="w-full h-12 px-4 rounded-xl bg-gray-100">
-          </div>
-
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold mb-2">รูปภาพประกอบ</label>
-          <div class="h-32 bg-gray-300 rounded-xl flex items-center justify-center text-4xl">
-            🖼️
           </div>
         </div>
 
         <div class="flex gap-4 pt-4">
           <a href="{% url 'table-manage' %}"
-             class="flex-1 py-3 bg-gray-400 text-center rounded-xl font-bold text-white">
+             class="flex-1 py-3 bg-gray-400 text-center rounded-xl font-bold text-white hover:bg-gray-500 transition">
             ยกเลิก
           </a>
-          <button
-             class="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold">
+          <button type="submit"
+             class="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition">
             บันทึกการแก้ไข
           </button>
         </div>
 
-      </div>
+      </form>
 
     </div>
   </div>
