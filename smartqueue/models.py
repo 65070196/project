@@ -4,14 +4,11 @@ from django.db import models
 
 class Customer(models.Model):
     user_id = models.AutoField(primary_key=True)
-    username = models.OneToOneField(User, on_delete=models.CASCADE)
-    firstname = models.CharField(max_length=100, null=False)
-    lastname = models.CharField(max_length=100, null=False)
+    auth = models.OneToOneField(User, on_delete=models.CASCADE, db_column='auth_id')
     phone = models.CharField(max_length=10, blank=True, null=True)
     image = models.ForeignKey('Image', on_delete=models.CASCADE, null=True)
-
     def __str__(self):
-        return self.firstname + ' ' + self.lastname
+        return f"{self.auth.first_name} {self.auth.last_name}"
 
 class Queue(models.Model):
     STATUS_CHOICES = [
@@ -31,12 +28,13 @@ class Queue(models.Model):
 
 class Shop(models.Model):
     shop_id = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=24, null=False)
-    password = models.CharField(max_length=24, null=False)
+    auth = models.OneToOneField(User, on_delete=models.CASCADE, db_column='auth_id')
     shop_name = models.CharField(max_length=100, null=False)
     phone = models.CharField(max_length=10, blank=True, null=True)
-    email = models.CharField(max_length=100, blank=True, null=True)
+    description = models.CharField(max_length=1200, blank=True, null=True)
     image = models.ForeignKey('Image', on_delete=models.SET_NULL, null=True, blank=True)
+    def __str__(self):
+        return self.shop_name
 
 class Promotion(models.Model):
     promo_id = models.AutoField(primary_key=True)
@@ -65,11 +63,16 @@ class Table(models.Model):
 
 class OpenDate(models.Model):
     open_date_id = models.AutoField(primary_key=True)
-    shop = models.ForeignKey('Shop', on_delete=models.CASCADE, null=False)
-    working_day = models.DateField(null=False)
-    open_time = models.DateTimeField(null=False)
-    close_time = models.DateTimeField(null=False)
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='open_dates')
+    
+    working_days = models.JSONField(default=list, help_text="")
+    
+    open_time = models.TimeField(null=True, blank=True)
+    close_time = models.TimeField(null=True, blank=True)
+    is_closed = models.BooleanField(default=False)
 
 class Image(models.Model):
     image_id = models.AutoField(primary_key=True)
     image_path = models.CharField(max_length=1000, null=False)
+    def __str__(self):
+        return self.image_path

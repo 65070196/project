@@ -1,10 +1,14 @@
+import os
 from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
 from django.shortcuts import render
 
+from django.core.files.storage import FileSystemStorage
+from django.contrib import messages
+from django.conf import settings
 from django.contrib.auth import authenticate, logout, login
 from django.contrib.auth.models import User
-from .models import Customer, Shop, Table, Queue, Promotion
+from .models import Customer, Shop, Table, Menu, Queue, Promotion, OpenDate, Image
 from django.utils.dateparse import parse_date, parse_time
 import datetime
 
@@ -18,20 +22,20 @@ class Login(View):
         username_form = request.POST.get('username')
         password_form = request.POST.get('password')
 
+        # เช็คว่า username และ password ถูกต้องไหม (ถ้าถูกจะคืนค่า User object กลับมา)
         user = authenticate(request, username=username_form, password=password_form)
 
         if user is not None:
             login(request, user)
             
-            if Shop.objects.filter(username=user).exists():
-                return redirect('home-s')
-                
-            elif Customer.objects.filter(username=user).exists():
+            if user.is_superuser or user.is_staff:
+                return redirect('/admin/')
+            elif Shop.objects.filter(auth=user).exists():
+                return redirect('home-s') 
+            elif Customer.objects.filter(auth=user).exists():
                 return redirect('home-c')
                 
-            elif user.is_superuser or user.is_staff:
-                return redirect('/admin/')
-                
+            # ล็อกอินได้แต่ไม่มีข้อมูล
             else:
                 logout(request)
                 error_message = "บัญชีนี้ยังไม่ได้ตั้งค่าโปรไฟล์อย่างสมบูรณ์"
@@ -41,10 +45,12 @@ class Login(View):
             error_message = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
             return render(request, 'login.html', {'error_message': error_message})
 
+
 class Logout(View):
     def get(self, request):
         logout(request)
         return redirect('home-c')
+
 
 class RegisterCustomer(View):
     def get(self, request):
@@ -95,14 +101,10 @@ class RegisterCustomer(View):
                 first_name=firstname_form,
                 last_name=lastname_form,
             )
-            
             Customer.objects.create(
-                username=django_user, 
-                firstname=firstname_form,
-                lastname=lastname_form,
+                auth=django_user,
                 phone=phone_form,
             )
-            
             login(request, django_user)
             return redirect('home-c')
 
@@ -112,6 +114,7 @@ class RegisterCustomer(View):
                 
             context['error_message'] = f"เกิดข้อผิดพลาดในการสมัครสมาชิก: {str(e)}"
             return render(request, 'register_customer.html', context)
+
 
 class RegisterShop(View):
     def get(self, request):
@@ -144,26 +147,32 @@ class RegisterShop(View):
             context['error_message'] = "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร"
             return render(request, 'register_shop.html', context)
         
-        if Shop.objects.filter(username=username_form).exists():
+        if User.objects.filter(username=username_form).exists():
             context['error_message'] = "ชื่อผู้ใช้งานนี้ถูกใช้ไปแล้ว"
             return render(request, 'register_shop.html', context)
         
-        if email_form and Shop.objects.filter(email=email_form).exists():
+        if email_form and User.objects.filter(email=email_form).exists():
             context['error_message'] = "อีเมลนี้ถูกใช้ไปแล้ว"
             return render(request, 'register_shop.html', context)
         
         try:
-            Shop.objects.create(
-                shop_name=shop_name_form,
+            # สร้าง User 
+            user = User.objects.create_user(
                 username=username_form,
-                password=password1_form,
-                phone=phone_form,
                 email=email_form,
+                password=password1_form
             )
-
+            # สร้างข้อมูล Shop แล้วผูกกับ User
+            Shop.objects.create(
+                auth=user,
+                shop_name=shop_name_form,
+                phone=phone_form
+            )
             return redirect('home-s')
 
         except Exception as e:
+            if 'user' in locals() and user.id:
+                user.delete()
             context['error_message'] = f"เกิดข้อผิดพลาดในการสมัครสมาชิก: {str(e)}"
             return render(request, 'register_shop.html', context)
 
@@ -181,7 +190,8 @@ class HomeCustomer(View):
             'shops': shops
         }
         return render(request, "home_customer.html", context)
-    
+
+
 class QueueCheck(View):
     def get(self, request):
         queues = Queue.objects.all().order_by('queue_id')
@@ -190,6 +200,7 @@ class QueueCheck(View):
         }
         return render(request, "queue_check.html", context)
     
+
 class QueueReserve(View):
     def get(self, request, shop_id):  
         shop = get_object_or_404(Shop, pk=shop_id)
@@ -211,7 +222,7 @@ class QueueReserve(View):
             })
 
         try:
-            customer = Customer.objects.get(username=request.user)
+            customer = Customer.objects.get(auth=request.user)
             
             parsed_date = parse_date(queue_date_str)
             parsed_time = parse_time(queue_time_str)
@@ -242,22 +253,71 @@ class QueueReserve(View):
 # หน้าหลักร้านค้า
 class HomeShop(View):
     def get(self, request):
-        my_shop = Shop.objects.get(username=request.user)
-        queues = Queue.objects.filter(shop=my_shop).order_by('queue_date', 'queue_time')
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        try:
+            my_shop = Shop.objects.get(auth=request.user)
+            queues = Queue.objects.filter(shop=my_shop).order_by('queue_date', 'queue_time')
+            
+            context = {
+                'queues': queues
+            }
+            return render(request, "home_shop.html", context)
+            
+        except Shop.DoesNotExist:
+            return redirect('login') 
+    
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        queues = Queue.objects.filter(shop__auth=request.user).order_by('queue_date', 'queue_time')
         context = {
             'queues': queues
         }
         return render(request, "home_shop.html", context)
     
-    def post(self, request):
-        queues = Queue.objects.filter(
-            shop__username=request.user.username
-        ).order_by('queue_time')
+
+class ShopDetail(View):
+    def get(self, request, shop_id):
+        try:
+            shop = Shop.objects.get(pk=shop_id)
+        except Shop.DoesNotExist:
+            return redirect('home-c') 
+            
+        promotions = Promotion.objects.filter(shop=shop)
+        menus = Menu.objects.filter(shop=shop)
+        tables = Table.objects.filter(shop=shop)
+        open_dates = OpenDate.objects.filter(shop=shop)
+
+        day_map = {
+            0: 'จันทร์', 1: 'อังคาร', 2: 'พุธ', 
+            3: 'พฤหัสบดี', 4: 'ศุกร์', 5: 'เสาร์', 6: 'อาทิตย์'
+        }
+        
+        for od in open_dates:
+            if od.working_days and isinstance(od.working_days, list):
+                days_text = [day_map.get(int(day), '') for day in od.working_days if int(day) in day_map]
+                
+                if len(days_text) > 1:
+                    od.display_days = f"{days_text[0]} - {days_text[-1]}"
+                elif len(days_text) == 1:
+                    # ถ้ามีวันเดียว
+                    od.display_days = days_text[0]
+                else:
+                    od.display_days = "ไม่ระบุ"
+            else:
+                od.display_days = "ไม่ระบุ"
 
         context = {
-            'queues': queues
+            'shop': shop,
+            'promotions': promotions,
+            'menus': menus,
+            'tables': tables,
+            'open_dates': open_dates,
         }
-        return render(request, "home_shop.html", context)
+        return render(request, 'shop_detail.html', context)
+
 
 class QueueEdit(View):
     def get(self, request, queue_id):
@@ -284,10 +344,9 @@ class QueueDelete(View):
         queue.delete()
         return redirect("home-s")
 
-#Table
 class TableManage(View):
     def get(self, request):
-        my_shop = Shop.objects.get(username=request.user)
+        my_shop = Shop.objects.get(auth=request.user)
         tables = Table.objects.all().filter(shop=my_shop).order_by('table_id')
         context = {
             'tables': tables
@@ -298,6 +357,38 @@ class TableManage(View):
 class TableAdd(View):
     def get(self, request):
         return render(request, "table_add.html")
+
+    def post(self, request):
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        amount = request.POST.get('amount')
+        image_file = request.FILES.get('image')
+
+        shop = Shop.objects.get(auth=request.user)
+
+        image_obj = None # เตรียมตัวแปรเก็บ Object รูปภาพไว้ก่อน
+
+        # จัดการรูปภาพ (ถ้ามีการแนบไฟล์มา)
+        if image_file:
+            # ต้องการเซฟไฟล์ไปที่โฟลเดอร์ static/images/shop_images/ ที่สร้างไว้
+            target_folder = os.path.join(settings.BASE_DIR, 'static', 'images', 'shop_images')
+            fs = FileSystemStorage(location=target_folder)
+            
+            saved_filename = fs.save(image_file.name, image_file)
+            
+            # สร้างข้อความ Path เพื่อเก็บลงตาราง Image
+            db_image_path = f"images/shop_images/{saved_filename}"
+
+            image_obj = Image.objects.create(image_path=db_image_path)
+
+        Table.objects.create(
+            shop=shop,                  
+            name=name,
+            description=description,
+            amount=amount,
+            image=image_obj
+        )
+        return redirect('table-manage')
     
 class TableEdit(View):
     def get(self, request, table_id):
@@ -325,7 +416,7 @@ class TableEdit(View):
         table.save()
         return redirect('table-manage')
     
-class TableDlete(View):
+class TableDelete(View):
     def post(self, request, table_id):
         table = get_object_or_404(Table, table_id=table_id)
         table.delete()
@@ -334,8 +425,8 @@ class TableDlete(View):
     
 class PromoManage(View):
     def get(self, request):
-        my_shop = Shop.objects.get(username=request.user)
-        promotions = Promotion.objects.filter(shop=my_shop, shop__username=request.user.username)
+        my_shop = Shop.objects.get(auth=request.user)
+        promotions = Promotion.objects.filter(shop=my_shop)
         context = {
             'promotions': promotions
         }
@@ -353,7 +444,7 @@ class PromoAdd(View):
         end_date = request.POST.get('end_date')
 
         try:
-            shop = Shop.objects.get(username=request.user.username)
+            shop = Shop.objects.get(auth=request.user)
         except Shop.DoesNotExist:
             return redirect('home-shop')
 
@@ -365,7 +456,6 @@ class PromoAdd(View):
             start_date=start_date,
             end_date=end_date
         )
-
         return redirect('promo-manage')
 
 class PromoDelete(View):
@@ -405,3 +495,113 @@ class PromoEdit(View):
         promo.save()
         return redirect('promo-manage')
     
+
+class EditOpendate(View):
+    def get(self, request):
+        return render(request, "opendate_edit.html")
+    
+    ## def post(self, request):
+        ##selected_days = request.POST.getlist('days') 
+
+        ##days_list = [int(day) for day in selected_days]
+
+        ##OpenDate.objects.create(
+            ##shop=my_shop,
+            ##working_days=days_list, # เก็บเป็น [0, 1, 2]
+            ##open_time=request.POST.get('open_time'),
+            ##close_time=request.POST.get('close_time')
+        ##)
+        ##return redirect('promo-manage')
+
+class EditShopProfile(View):
+    def get(self, request):
+        context = {
+            'user': request.user,
+        }
+        return render(request, "edit_shop_profile.html", context)
+
+    def post(self, request):
+        user = request.user
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.phone = phone
+
+        profile_image = request.FILES.get('profile_image')
+
+        if profile_image:
+            folder_name = 'shop'
+            target_folder = os.path.join(settings.BASE_DIR, 'static', 'images', 'profile_images', folder_name)
+            
+            os.makedirs(target_folder, exist_ok=True)
+            
+            fs = FileSystemStorage(location=target_folder)
+            saved_filename = fs.save(profile_image.name, profile_image)
+            db_image_path = f"images/profile_images/{folder_name}/{saved_filename}"
+
+            user.profile_image = db_image_path
+
+        try:
+            user.save()
+            messages.success(request, 'อัปเดตข้อมูลร้านค้าสำเร็จ')
+            return redirect('shop-profile-edit') 
+            
+        except Exception as e:
+            messages.error(request, f'เกิดข้อผิดพลาด: {str(e)}')
+            
+        context = {
+            'user': user,
+        }
+        return render(request, "edit_shop_profile.html", context)
+
+
+class EditCustomerProfile(View):
+    def get(self, request):
+        context = {
+            'user': request.user,
+        }
+        return render(request, "edit_customer_profile.html", context)
+
+    def post(self, request):
+        user = request.user
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.phone = phone
+
+        profile_image = request.FILES.get('profile_image')
+
+        if profile_image:
+            folder_name = 'customer'
+            target_folder = os.path.join(settings.BASE_DIR, 'static', 'images', 'profile_images', folder_name)
+            
+            os.makedirs(target_folder, exist_ok=True)
+            
+            fs = FileSystemStorage(location=target_folder)
+            saved_filename = fs.save(profile_image.name, profile_image)
+            db_image_path = f"images/profile_images/{folder_name}/{saved_filename}"
+
+            user.profile_image = db_image_path
+
+        try:
+            user.save()
+            messages.success(request, 'อัปเดตข้อมูลลูกค้าสำเร็จ')
+            return redirect('customer-profile-edit') 
+            
+        except Exception as e:
+            messages.error(request, f'เกิดข้อผิดพลาด: {str(e)}')
+            
+        context = {
+            'user': user,
+        }
+        return render(request, "edit_customer_profile.html", context)

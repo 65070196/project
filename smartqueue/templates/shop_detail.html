@@ -1,0 +1,143 @@
+{% extends "base_customer.html" %}
+{% load static %}
+
+{% block content %}
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden z-0">
+
+  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar relative">
+
+    <div class="p-6 md:p-10 pb-32"> <div class="w-full h-64 md:h-[400px] bg-gray-200 rounded-3xl mb-8 overflow-hidden relative shadow-inner group">
+        {% if shop.image and shop.image.image_path %}
+            <img src="{% static shop.image.image_path %}" alt="{{ shop.shop_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+        {% else %}
+            <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                <span class="text-4xl">🏪</span>
+            </div>
+        {% endif %}
+        
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+        
+        <div class="absolute bottom-6 left-6 md:bottom-10 md:left-10 text-white">
+            <h1 class="text-4xl md:text-5xl font-bold drop-shadow-lg">{{ shop.shop_name }}</h1>
+            {% if shop.phone %}
+            <p class="mt-3 text-gray-200 flex items-center gap-2 font-medium">
+                <span>📞</span> {{ shop.phone }}
+            </p>
+            {% endif %}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div class="md:col-span-2">
+            <h3 class="text-2xl font-bold mb-4 border-l-4 border-yellow-400 pl-3 text-gray-800">เกี่ยวกับร้าน</h3>
+            <p class="text-gray-600 leading-loose whitespace-pre-line">
+                {{ shop.description|default:"ทางร้านยังไม่ได้ระบุรายละเอียดเพิ่มเติม" }}
+            </p>
+        </div>
+
+        <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm h-fit">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800">
+                <span>⏰</span> เวลาทำการ
+            </h3>
+            <ul class="space-y-3 text-sm text-gray-700">
+                {% for opendate in open_dates %}
+                    <li class="flex justify-between items-center pb-2 border-b border-gray-200 last:border-0">
+                        <span class="font-medium text-gray-600">{{ opendate.display_days|default:"รอบทำการ" }}</span>
+                        
+                        {% if opendate.is_closed %}
+                            <span class="text-red-500 font-bold bg-red-100 px-2 py-1 rounded-md text-xs">ปิดทำการ</span>
+                        {% else %}
+                            <span class="font-semibold text-gray-800">{{ opendate.open_time|time:"H:i" }} - {{ opendate.close_time|time:"H:i" }} น.</span>
+                        {% endif %}
+                    </li>
+                {% empty %}
+                    <li class="text-gray-500 text-center py-2">ยังไม่ได้ระบุเวลาทำการ</li>
+                {% endfor %}
+            </ul>
+        </div>
+      </div>
+
+      {% if promotions %}
+      <div class="mb-12">
+        <h3 class="text-2xl font-bold mb-6 border-l-4 border-yellow-400 pl-3 text-gray-800">🔥 โปรโมชั่นเด็ด</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for promo in promotions %}
+            <div class="bg-gradient-to-br from-red-50 to-orange-50 p-6 rounded-2xl border border-red-100 shadow-sm hover:shadow-md transition">
+                <div class="flex justify-between items-start mb-3">
+                    <h4 class="font-bold text-red-600 text-lg line-clamp-1">{{ promo.promo_name }}</h4>
+                    <span class="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full shrink-0">ลด {{ promo.discount_rate|floatformat:0 }}%</span>
+                </div>
+                <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ promo.description|default:"-" }}</p>
+                <div class="text-xs font-semibold text-orange-500 flex items-center gap-1 bg-white w-fit px-3 py-1.5 rounded-lg">
+                    📅 {{ promo.start_date|date:"d M y" }} - {{ promo.end_date|date:"d M y" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if tables %}
+      <div class="mb-12">
+        <h3 class="text-2xl font-bold mb-6 border-l-4 border-yellow-400 pl-3 text-gray-800">🛋️ ประเภทโต๊ะที่ให้บริการ</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+            {% for table in tables %}
+            <div class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group">
+                <div class="h-40 bg-gray-200 relative overflow-hidden">
+                    {% if table.image and table.image.image_path %}
+                    <img src="{% static table.image.image_path %}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-gray-400">ไม่มีรูปภาพ</div>
+                    {% endif %}
+                </div>
+                <div class="p-5 text-center">
+                    <h4 class="font-bold text-gray-800 text-lg">{{ table.name }}</h4>
+                    <p class="text-xs text-gray-500 mt-2 line-clamp-2 h-8">{{ table.description|default:"" }}</p>
+                    <div class="mt-3 inline-block bg-blue-50 text-blue-600 font-bold text-xs px-3 py-1 rounded-full">
+                        ทั้งหมด {{ table.amount }} โต๊ะ
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if menus %}
+      <div class="mb-12">
+        <h3 class="text-2xl font-bold mb-6 border-l-4 border-yellow-400 pl-3 text-gray-800">🍽️ เมนูแนะนำ</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for menu in menus %}
+            <div class="flex gap-4 bg-white border border-gray-100 p-4 rounded-2xl shadow-sm hover:shadow-md transition">
+                <div class="w-24 h-24 shrink-0 rounded-xl overflow-hidden bg-gray-100">
+                    {% if menu.image and menu.image.image_path %}
+                    <img src="{% static menu.image.image_path %}" class="w-full h-full object-cover">
+                    {% endif %}
+                </div>
+                <div class="flex flex-col justify-center flex-1">
+                    <h4 class="font-bold text-gray-800">{{ menu.name }}</h4>
+                    <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ menu.description|default:"" }}</p>
+                    <p class="text-orange-500 font-bold mt-2 text-lg">฿{{ menu.price }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <div class="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 py-4 px-6 md:px-10 z-20 flex justify-between items-center shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+        <div class="hidden md:block">
+            <p class="text-sm text-gray-500 font-medium">พร้อมรับประทานอาหารอร่อยๆ หรือยัง?</p>
+            <p class="font-bold text-gray-800 text-lg">จองคิว {{ shop.shop_name }}</p>
+        </div>
+        <a href="{% url 'queue-reserve' shop.shop_id %}" 
+           class="w-full md:w-auto px-12 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg text-center shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-1">
+            🗓️ จองคิวร้านนี้เลย
+        </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

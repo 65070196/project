@@ -60,6 +60,9 @@
       </button>
 
       <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+        <a href="{% url 'edit-s-profile' %}" class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors text-center">
+          แก้ไขโปรไฟล์
+        </a>
         <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors text-center">
           ออกจากระบบ
         </a>
@@ -76,20 +79,8 @@
       {% block content %}{% endblock %}
   </main>
 
-  <script>
-    function toggleUserMenu() {
-        document.getElementById('userMenuDropdown').classList.toggle('hidden');
-    }
 
-
-    window.addEventListener('click', function(e) {
-        if (!document.getElementById('userMenuDropdown').contains(e.target) && !e.target.closest('button[onclick="toggleUserMenu()"]')) {
-            document.getElementById('userMenuDropdown').classList.add('hidden');
-        }
-    });
-  </script>
-
-  <script src="{% static 'js/script.js' %}"></script>
+  <script src="{% static 'js/script.js' %}?v=2"></script>
 
 </body>
 </html>

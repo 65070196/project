@@ -55,7 +55,8 @@
           <button type="submit" class="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition shadow-sm hover:shadow-md">
             ยืนยันการจอง
           </button>
-          <a href="{% url 'home-c' %}" class="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition shadow-sm hover:shadow-md text-center flex items-center justify-center">
+          
+          <a href="{% url 'shop-detail' shop.shop_id %}" class="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition shadow-sm hover:shadow-md text-center flex items-center justify-center">
             ยกเลิกการจอง
           </a>
         </div>

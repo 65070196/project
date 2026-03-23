@@ -66,10 +66,15 @@
             </button>
             
             <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                <a href="{% url 'edit-c-profile' %}" class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors text-center">
+                    แก้ไขโปรไฟล์
+                </a>
                 <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors text-center">
                     ออกจากระบบ
                 </a>
             </div>
+
+
         </div>
 
       {% else %}
