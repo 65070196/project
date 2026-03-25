@@ -2,6 +2,7 @@ import os
 from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
 from django.shortcuts import render
+from django.db import transaction
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib import messages
@@ -204,21 +205,29 @@ class QueueCheck(View):
 class QueueReserve(View):
     def get(self, request, shop_id):  
         shop = get_object_or_404(Shop, pk=shop_id)
+        # 1. ดึงประเภทโต๊ะของร้านนี้มาเตรียมส่งไปให้หน้าเว็บ
+        tables = Table.objects.filter(shop=shop) 
+        
         context = {
-            'shop': shop
+            'shop': shop,
+            'tables': tables # ส่งตัวแปร tables เข้าไปด้วย
         }
         return render(request, 'queue_reserve.html', context)
     
     def post(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
+        # ดึงมาเผื่อกรณีเกิด Error จะได้ส่งรายชื่อโต๊ะกลับไปหน้าเดิมได้ (Dropdown จะได้ไม่หาย)
+        tables = Table.objects.filter(shop=shop) 
         
         queue_date_str = request.POST.get('queue_date')
         queue_time_str = request.POST.get('queue_time')
+        table_id = request.POST.get('table_id') # 2. รับค่าไอดีโต๊ะที่ลูกค้าเลือก
 
-        if not queue_date_str or not queue_time_str:
+        if not queue_date_str or not queue_time_str or not table_id:
             return render(request, 'queue_reserve.html', {
                 'shop': shop,
-                'error_message': 'กรุณาเลือกวันที่และเวลาให้ครบถ้วน'
+                'tables': tables,
+                'error_message': 'กรุณาเลือกวันที่ เวลา และประเภทโต๊ะให้ครบถ้วน'
             })
 
         try:
@@ -226,29 +235,59 @@ class QueueReserve(View):
             
             parsed_date = parse_date(queue_date_str)
             parsed_time = parse_time(queue_time_str)
-            
             combined_datetime = datetime.datetime.combine(parsed_date, parsed_time)
 
-            Queue.objects.create(
-                customer=customer,
-                shop=shop,
-                queue_date=parsed_date,
-                queue_time=combined_datetime
-            )
+            # --- 3. เริ่มกระบวนการล็อก Database เพื่อป้องกันคนแย่งโต๊ะกัน (Race Condition) ---
+            with transaction.atomic():
+                # select_for_update() จะล็อกข้อมูลโต๊ะนี้ไว้ ถ้ามีคนกดพร้อมกัน คนที่ 2 ต้องรอเสี้ยววิ
+                table = Table.objects.select_for_update().get(pk=table_id, shop=shop)
+                
+                # นับว่า ณ วันและเวลานี้ โต๊ะประเภทนี้โดนจองไปกี่คิวแล้ว
+                existing_queues_count = Queue.objects.filter(
+                    shop=shop,
+                    table=table,
+                    queue_time=combined_datetime
+                ).count()
+
+                # ถ้าจำนวนคิวที่จองไปแล้ว >= จำนวนโต๊ะที่มีอยู่จริง = โต๊ะเต็ม!
+                if existing_queues_count >= table.amount:
+                    return render(request, 'queue_reserve.html', {
+                        'shop': shop,
+                        'tables': tables,
+                        'error_message': f'ขออภัย โต๊ะประเภท "{table.name}" ในเวลาดังกล่าวถูกจองเต็มแล้ว'
+                    })
+
+                # ถ้ายังไม่เต็ม ก็สร้างคิวใหม่ได้เลย
+                Queue.objects.create(
+                    customer=customer,
+                    shop=shop,
+                    table=table, # อย่าลืมเซฟโต๊ะลงไปด้วย
+                    queue_date=parsed_date,
+                    queue_time=combined_datetime
+                )
+            # --- จบกระบวนการล็อก Database ---
             
             return redirect('home-c') 
 
         except Customer.DoesNotExist:
             return render(request, 'queue_reserve.html', {
                 'shop': shop,
+                'tables': tables,
                 'error_message': 'ไม่พบข้อมูลลูกค้าในระบบ กรุณาล็อกอินใหม่'
+            })
+        except Table.DoesNotExist:
+            return render(request, 'queue_reserve.html', {
+                'shop': shop,
+                'tables': tables,
+                'error_message': 'ไม่พบประเภทโต๊ะที่คุณเลือก (ข้อมูลอาจถูกลบไปแล้ว)'
             })
         except Exception as e:
             return render(request, 'queue_reserve.html', {
                 'shop': shop,
+                'tables': tables,
                 'error_message': f'เกิดข้อผิดพลาดในการจองคิว: {str(e)}'
             })
-
+        
 
 # หน้าหลักร้านค้า
 class HomeShop(View):
@@ -280,41 +319,45 @@ class HomeShop(View):
 
 class ShopDetail(View):
     def get(self, request, shop_id):
+        # 1. ค้นหาร้านค้า
         try:
             shop = Shop.objects.get(pk=shop_id)
         except Shop.DoesNotExist:
             return redirect('home-c') 
             
+        # 2. ดึงข้อมูลที่เกี่ยวข้อง
         promotions = Promotion.objects.filter(shop=shop)
         menus = Menu.objects.filter(shop=shop)
         tables = Table.objects.filter(shop=shop)
-        open_dates = OpenDate.objects.filter(shop=shop)
 
-        day_map = {
-            0: 'จันทร์', 1: 'อังคาร', 2: 'พุธ', 
-            3: 'พฤหัสบดี', 4: 'ศุกร์', 5: 'เสาร์', 6: 'อาทิตย์'
-        }
-        
-        for od in open_dates:
-            if od.working_days and isinstance(od.working_days, list):
-                days_text = [day_map.get(int(day), '') for day in od.working_days if int(day) in day_map]
-                
-                if len(days_text) > 1:
-                    od.display_days = f"{days_text[0]} - {days_text[-1]}"
-                elif len(days_text) == 1:
-                    # ถ้ามีวันเดียว
-                    od.display_days = days_text[0]
-                else:
-                    od.display_days = "ไม่ระบุ"
-            else:
-                od.display_days = "ไม่ระบุ"
+        # 3. จัดการเวลาทำการ (OpenDate) แบบตารางกว้าง (Wide Table)
+        open_dates_list = []
+        try:
+            # ใช้ shop.open_date เพราะเราตั้ง OneToOneField และ related_name='open_date' ไว้
+            od = shop.open_date 
+            
+            days_mapping = [
+                ('mon', 'จันทร์'), ('tue', 'อังคาร'), ('wed', 'พุธ'), 
+                ('thu', 'พฤหัสบดี'), ('fri', 'ศุกร์'), ('sat', 'เสาร์'), ('sun', 'อาทิตย์')
+            ]
+            
+            for key, name in days_mapping:
+                open_dates_list.append({
+                    'day_name': name,
+                    'is_closed': getattr(od, f"{key}_is_closed"),
+                    'open_time': getattr(od, f"{key}_open"),
+                    'close_time': getattr(od, f"{key}_close"),
+                })
+        except OpenDate.DoesNotExist:
+            # ถ้าร้านนี้ยังไม่เคยตั้งเวลาเลย
+            open_dates_list = []
 
         context = {
             'shop': shop,
             'promotions': promotions,
             'menus': menus,
             'tables': tables,
-            'open_dates': open_dates,
+            'open_dates_list': open_dates_list, # เปลี่ยนชื่อตัวแปรเป็น open_dates_list
         }
         return render(request, 'shop_detail.html', context)
 
@@ -498,43 +541,127 @@ class PromoEdit(View):
 
 class EditOpendate(View):
     def get(self, request):
-        return render(request, "opendate_edit.html")
-    
-    ## def post(self, request):
-        ##selected_days = request.POST.getlist('days') 
+        # สมมติว่าดึงร้านค้าจาก User ที่ล็อกอิน
+        shop = Shop.objects.get(auth=request.user)
+        
+        # พยายามดึงข้อมูลเวลาเปิดปิด ถ้ายังไม่มีก็ให้เป็น None ไปก่อน
+        try:
+            open_date = shop.open_date
+        except OpenDate.DoesNotExist:
+            open_date = None
+            
+        # จับคู่คีย์ (ตรงกับชื่อฟิลด์ใน Model) กับ ชื่อวันภาษาไทย
+        days_mapping = [
+            ('mon', 'จันทร์'), ('tue', 'อังคาร'), ('wed', 'พุธ'), 
+            ('thu', 'พฤหัสบดี'), ('fri', 'ศุกร์'), ('sat', 'เสาร์'), ('sun', 'อาทิตย์')
+        ]
+        
+        days_data = []
+        for key, name in days_mapping:
+            # ดึงข้อมูลจากโมเดลทีละฟิลด์โดยใช้ getattr (ถ้ามี open_date ค่อยดึง ถ้าไม่มีให้เป็นค่าว่าง)
+            days_data.append({
+                'key': key,
+                'name': name,
+                'is_closed': getattr(open_date, f"{key}_is_closed") if open_date else False,
+                'open_time': getattr(open_date, f"{key}_open") if open_date else None,
+                'close_time': getattr(open_date, f"{key}_close") if open_date else None,
+            })
+            
+        return render(request, 'opendate_edit.html', {'days_data': days_data})
 
-        ##days_list = [int(day) for day in selected_days]
+    def post(self, request):
+        shop = Shop.objects.get(auth=request.user)
+        
+        days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+        defaults_data = {}
+        
+        # วนลูปรับค่าจากฟอร์มทีละวัน แล้วยัดใส่ Dictionary
+        for day in days:
+            is_closed = request.POST.get(f"{day}_is_closed") == 'on'
+            open_time = request.POST.get(f"{day}_open")
+            close_time = request.POST.get(f"{day}_close")
+            
+            # ถ้าติ๊กปิดร้าน หรือลืมกรอกเวลา ให้ถือว่าวันนั้นปิดร้านไปเลยเพื่อป้องกัน Error
+            if is_closed or not open_time or not close_time:
+                defaults_data[f"{day}_is_closed"] = True
+                defaults_data[f"{day}_open"] = None
+                defaults_data[f"{day}_close"] = None
+            else:
+                defaults_data[f"{day}_is_closed"] = False
+                defaults_data[f"{day}_open"] = open_time
+                defaults_data[f"{day}_close"] = close_time
+                
+        # ใช้ update_or_create: ถ้า 1 ร้านค้านี้เคยตั้งเวลาแล้วให้อัปเดต ถ้าไม่เคยให้สร้างใหม่
+        OpenDate.objects.update_or_create(
+            shop=shop,
+            defaults=defaults_data
+        )
+        
+        # เปลี่ยนชื่อ URL ตรงนี้ให้ตรงกับหน้าจัดการร้านของคุณ
+        return redirect('opendate-edit')
 
-        ##OpenDate.objects.create(
-            ##shop=my_shop,
-            ##working_days=days_list, # เก็บเป็น [0, 1, 2]
-            ##open_time=request.POST.get('open_time'),
-            ##close_time=request.POST.get('close_time')
-        ##)
-        ##return redirect('promo-manage')
+
+class ViewShopProfile(View):
+    def get(self, request):
+        user = request.user
+        try:
+            shop = Shop.objects.get(auth=user)
+        except Shop.DoesNotExist:
+            shop = None
+            
+        context = {
+            'user': user,
+            'shop': shop,
+        }
+        return render(request, "shop_profile.html", context)
+
 
 class EditShopProfile(View):
     def get(self, request):
+        user = request.user
+        # ดึงข้อมูลร้านค้าที่ผูกกับ User หรือสร้างใหม่ถ้ายังไม่มี
+        shop, created = Shop.objects.get_or_create(auth=user) 
         context = {
-            'user': request.user,
+            'user': user,
+            'shop': shop,
         }
         return render(request, "edit_shop_profile.html", context)
 
     def post(self, request):
         user = request.user
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
+        shop, created = Shop.objects.get_or_create(auth=user)
         
-        user.first_name = first_name
-        user.last_name = last_name
-        user.email = email
-        user.phone = phone
+        # 1. รับค่าข้อมูลส่วนตัว (จากตาราง User)
+        new_first_name = request.POST.get('first_name', '').strip()
+        new_last_name = request.POST.get('last_name', '').strip()
+        new_email = request.POST.get('email', '').strip()
+        
+        # 2. รับค่าข้อมูลร้านค้า (จากตาราง Shop)
+        new_shop_name = request.POST.get('shop_name', '').strip()
+        new_description = request.POST.get('description', '').strip()
+        new_phone = request.POST.get('phone', '').strip()
 
+        # เช็คว่าถ้ามีข้อมูลพิมพ์มาใหม่ ถึงจะเอาไปทับของเดิม
+        if new_first_name:
+            user.first_name = new_first_name
+        if new_last_name:
+            user.last_name = new_last_name
+        if new_email:
+            user.email = new_email
+            
+        if new_shop_name:
+            shop.shop_name = new_shop_name
+        if new_description:
+            shop.description = new_description
+        if new_phone:
+            shop.phone = new_phone
+
+        # รับไฟล์รูปร้านค้า (โลโก้ร้าน)
         profile_image = request.FILES.get('profile_image')
 
+        # ถ้าอัปรูปใหม่เข้ามา
         if profile_image:
+            # เปลี่ยนชื่อโฟลเดอร์เป็น shop
             folder_name = 'shop'
             target_folder = os.path.join(settings.BASE_DIR, 'static', 'images', 'profile_images', folder_name)
             
@@ -544,43 +671,90 @@ class EditShopProfile(View):
             saved_filename = fs.save(profile_image.name, profile_image)
             db_image_path = f"images/profile_images/{folder_name}/{saved_filename}"
 
-            user.profile_image = db_image_path
+            if shop.image:
+                old_file_path = os.path.join(settings.BASE_DIR, 'static', shop.image.image_path)
+                
+                # เช็คว่าไฟล์นี้มีอยู่จริงไหม ถ้ามีให้ลบไฟล์ทิ้ง
+                if os.path.isfile(old_file_path):
+                    os.remove(old_file_path)
+                
+                # ลบ Object รูปเดิมออกจาก Database เพื่อไม่ให้เป็นขยะ
+                old_image_obj = shop.image
+                shop.image = None # ตัดการผูกกับ db
+                old_image_obj.delete()
+                
+            # สร้าง Object รูปใหม่ลงตาราง Image
+            image_obj = Image.objects.create(image_path=db_image_path)
+            
+            # ผูกรูปใหม่เข้ากับ Shop
+            shop.image = image_obj
 
         try:
-            user.save()
+            user.save()      
+            shop.save()
             messages.success(request, 'อัปเดตข้อมูลร้านค้าสำเร็จ')
-            return redirect('shop-profile-edit') 
+        
+            # กลับไปหน้าดูโปรไฟล์ร้านค้า (อย่าลืมตั้งชื่อ url เป็น 'view-s-profile' ใน urls.py นะครับ)
+            return redirect('view-s-profile') 
             
         except Exception as e:
             messages.error(request, f'เกิดข้อผิดพลาด: {str(e)}')
             
         context = {
             'user': user,
+            'shop': shop,
         }
         return render(request, "edit_shop_profile.html", context)
 
 
+class ViewCustomerProfile(View):
+    def get(self, request):
+        user = request.user
+        try:
+            customer = Customer.objects.get(auth=user)
+        except Customer.DoesNotExist:
+            customer = None
+            
+        context = {
+            'user': user,
+            'customer': customer,
+        }
+        return render(request, "customer_profile.html", context)
+
+
 class EditCustomerProfile(View):
     def get(self, request):
+        user = request.user
+        customer, created = Customer.objects.get_or_create(auth=user) 
         context = {
-            'user': request.user,
+            'user': user,
+            'customer': customer,
         }
         return render(request, "edit_customer_profile.html", context)
 
     def post(self, request):
         user = request.user
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
+        customer, created = Customer.objects.get_or_create(auth=user)
         
-        user.first_name = first_name
-        user.last_name = last_name
-        user.email = email
-        user.phone = phone
+        # รับค่าจากฟอร์ม (ถ้าไม่ได้พิมพ์อะไรมา ค่าจะเป็น string ว่าง '')
+        new_first_name = request.POST.get('first_name', '').strip()
+        new_last_name = request.POST.get('last_name', '').strip()
+        new_email = request.POST.get('email', '').strip()
+        new_phone = request.POST.get('phone', '').strip()
+
+        # เช็คว่าถ้ามีข้อมูลพิมพ์มาใหม่ ถึงจะเอาไปทับของเดิม
+        if new_first_name:
+            user.first_name = new_first_name
+        if new_last_name:
+            user.last_name = new_last_name
+        if new_email:
+            user.email = new_email
+        if new_phone:
+            customer.phone = new_phone
 
         profile_image = request.FILES.get('profile_image')
 
+        # ถ้าอัปรูปใหม่เข้ามา
         if profile_image:
             folder_name = 'customer'
             target_folder = os.path.join(settings.BASE_DIR, 'static', 'images', 'profile_images', folder_name)
@@ -591,17 +765,32 @@ class EditCustomerProfile(View):
             saved_filename = fs.save(profile_image.name, profile_image)
             db_image_path = f"images/profile_images/{folder_name}/{saved_filename}"
 
-            user.profile_image = db_image_path
+            if customer.image:
+                old_file_path = os.path.join(settings.BASE_DIR, 'static', customer.image.image_path)
+                
+                # เช็คว่าไฟล์นี้มีอยู่จริงไหม ถ้ามีให้ลบไฟล์ทิ้ง
+                if os.path.isfile(old_file_path):
+                    os.remove(old_file_path)
+                
+                # ลบ Object รูปเดิมออกจาก Database เพื่อไม่ให้เป็นขยะ
+                old_image_obj = customer.image
+                customer.image = None # ตัดการผูกกับ db
+                old_image_obj.delete()
+                
+            # สร้าง Object รูปใหม่ลงตาราง Image
+            image_obj = Image.objects.create(image_path=db_image_path)
+            
+            # ผูกรูปใหม่เข้ากับ Customer
+            customer.image = image_obj
 
         try:
-            user.save()
+            user.save()      
+            customer.save()
             messages.success(request, 'อัปเดตข้อมูลลูกค้าสำเร็จ')
-            return redirect('customer-profile-edit') 
+        
+            return redirect('view-c-profile') 
             
         except Exception as e:
             messages.error(request, f'เกิดข้อผิดพลาด: {str(e)}')
             
-        context = {
-            'user': user,
-        }
-        return render(request, "edit_customer_profile.html", context)
+        return render(request, "edit_customer_profile.html")

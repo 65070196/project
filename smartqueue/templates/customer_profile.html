@@ -1,0 +1,80 @@
+{% extends "base_customer.html" %}
+{% load static %}
+
+{% block content %}
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden">
+  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x overflow-y-auto no-scrollbar">
+    <div class="p-6 md:p-10 pb-24">
+      
+      <div class="mb-8 border-b border-gray-200 pb-4 flex justify-between items-end">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">ข้อมูลส่วนตัว</h2>
+          <p class="text-gray-500 text-sm mt-1">จัดการและตรวจสอบข้อมูลบัญชีของคุณ</p>
+        </div>
+        
+        <a href="{% url 'edit-c-profile' %}" class="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold rounded-lg transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+          </svg>
+          แก้ไขข้อมูล
+        </a>
+      </div>
+
+      <div class="max-w-4xl mx-auto bg-gray-50 rounded-2xl shadow-sm border border-gray-200 p-8">
+        
+        <div class="flex flex-col items-center mb-10">
+          <div class="w-32 h-32 bg-white rounded-full overflow-hidden border-4 border-white shadow-md mb-4 flex justify-center items-center">
+            {% if customer and customer.image %}
+              <img src="{% static customer.image.image_path %}" alt="Profile Picture" class="w-full h-full object-cover">
+            {% else %}
+              <svg class="w-16 h-16 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+              </svg>
+            {% endif %}
+          </div>
+          <h3 class="text-xl font-bold text-gray-800">{{ user.first_name }} {{ user.last_name }}</h3>
+          <p class="text-sm text-gray-500">{{ user.username }}</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          
+          <div class="border-b border-gray-200 pb-4">
+            <p class="text-sm font-semibold text-gray-500 mb-1">ชื่อ</p>
+            <p class="text-lg text-gray-800 font-medium">{{ user.first_name|default:"-" }}</p>
+          </div>
+
+          <div class="border-b border-gray-200 pb-4">
+            <p class="text-sm font-semibold text-gray-500 mb-1">นามสกุล</p>
+            <p class="text-lg text-gray-800 font-medium">{{ user.last_name|default:"-" }}</p>
+          </div>
+
+          <div class="border-b border-gray-200 pb-4">
+            <p class="text-sm font-semibold text-gray-500 mb-1">อีเมล</p>
+            <p class="text-lg text-gray-800 font-medium">{{ user.email|default:"-" }}</p>
+          </div>
+
+          <div class="border-b border-gray-200 pb-4">
+            <p class="text-sm font-semibold text-gray-500 mb-1">เบอร์โทรศัพท์</p>
+            <p class="text-lg text-gray-800 font-medium">
+              {% if customer and customer.phone %}
+                {{ customer.phone }}
+              {% else %}
+                -
+              {% endif %}
+            </p>
+          </div>
+
+        </div>
+
+        <div class="mt-8 text-center md:hidden">
+          <a href="{% url 'edit-c-profile' %}" class="inline-flex items-center justify-center w-full gap-2 px-4 py-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold rounded-lg transition-colors">
+            แก้ไขข้อมูลส่วนตัว
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

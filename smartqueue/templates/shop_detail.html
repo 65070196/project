@@ -6,7 +6,9 @@
 
   <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar relative">
 
-    <div class="p-6 md:p-10 pb-32"> <div class="w-full h-64 md:h-[400px] bg-gray-200 rounded-3xl mb-8 overflow-hidden relative shadow-inner group">
+    <div class="p-6 md:p-10 pb-32"> 
+      
+      <div class="w-full h-64 md:h-[400px] bg-gray-200 rounded-3xl mb-8 overflow-hidden relative shadow-inner group">
         {% if shop.image and shop.image.image_path %}
             <img src="{% static shop.image.image_path %}" alt="{{ shop.shop_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
         {% else %}
@@ -40,14 +42,16 @@
                 <span>⏰</span> เวลาทำการ
             </h3>
             <ul class="space-y-3 text-sm text-gray-700">
-                {% for opendate in open_dates %}
+                {% for od in open_dates_list %}
                     <li class="flex justify-between items-center pb-2 border-b border-gray-200 last:border-0">
-                        <span class="font-medium text-gray-600">{{ opendate.display_days|default:"รอบทำการ" }}</span>
+                        <span class="font-medium text-gray-600">วัน{{ od.day_name }}</span>
                         
-                        {% if opendate.is_closed %}
+                        {% if od.is_closed %}
                             <span class="text-red-500 font-bold bg-red-100 px-2 py-1 rounded-md text-xs">ปิดทำการ</span>
+                        {% elif od.open_time and od.close_time %}
+                            <span class="font-semibold text-gray-800">{{ od.open_time|time:"H:i" }} - {{ od.close_time|time:"H:i" }} น.</span>
                         {% else %}
-                            <span class="font-semibold text-gray-800">{{ opendate.open_time|time:"H:i" }} - {{ opendate.close_time|time:"H:i" }} น.</span>
+                            <span class="text-gray-400 text-sm">ไม่ระบุเวลา</span>
                         {% endif %}
                     </li>
                 {% empty %}

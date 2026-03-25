@@ -35,7 +35,10 @@ urlpatterns = [
 
     path("opendate-edit/", EditOpendate.as_view(), name="opendate-edit"),
 
+    path("c-profile/", ViewCustomerProfile.as_view(), name="view-c-profile"),
     path("edit-c-profile/", EditCustomerProfile.as_view(), name="edit-c-profile"),
+
+    path("s-profile/", ViewShopProfile.as_view(), name="view-s-profile"),
     path("edit-s-profile/", EditShopProfile.as_view(), name="edit-s-profile"),
 ]
 
