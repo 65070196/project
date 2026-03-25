@@ -3,15 +3,17 @@ from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
 from django.shortcuts import render
 from django.db import transaction
-
 from django.core.files.storage import FileSystemStorage
 from django.contrib import messages
 from django.conf import settings
 from django.contrib.auth import authenticate, logout, login
-from django.contrib.auth.models import User
-from .models import Customer, Shop, Table, Menu, Queue, Promotion, OpenDate, Image
+
+from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
 import datetime
+
+from django.contrib.auth.models import User
+from .models import *
 
 
 # ระบบ Login, Logout, Register, Reset Password
@@ -293,14 +295,16 @@ class QueueReserve(View):
 class HomeShop(View):
     def get(self, request):
         if not request.user.is_authenticated:
-            return redirect('login')
-            
+            return redirect('login')   
         try:
             my_shop = Shop.objects.get(auth=request.user)
-            queues = Queue.objects.filter(shop=my_shop).order_by('queue_date', 'queue_time')
+            today = timezone.localdate()
+            
+            queues = Queue.objects.filter(shop=my_shop, queue_date=today).order_by('queue_time')
             
             context = {
-                'queues': queues
+                'queues': queues,
+                'today_date': today,
             }
             return render(request, "home_shop.html", context)
             
@@ -310,11 +314,41 @@ class HomeShop(View):
     def post(self, request):
         if not request.user.is_authenticated:
             return redirect('login')
-        queues = Queue.objects.filter(shop__auth=request.user).order_by('queue_date', 'queue_time')
+            
+        today = timezone.localdate()
+        queues = Queue.objects.filter(shop__auth=request.user, queue_date=today).order_by('queue_time')
+    
         context = {
-            'queues': queues
+            'queues': queues,
+            'today_date': today,
         }
         return render(request, "home_shop.html", context)
+
+class AllQueueShop(View):
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        try:
+            my_shop = Shop.objects.get(auth=request.user)
+            queues = Queue.objects.filter(shop=my_shop).order_by('queue_date', 'queue_time')  
+            context = {
+                'queues': queues
+            }
+            return render(request, "queue_all.html", context)
+        except Shop.DoesNotExist:
+            return redirect('login')
+
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        queues = Queue.objects.filter(shop__auth=request.user).order_by('queue_date', 'queue_time')
+
+        context = {
+
+            'queues': queues
+        }
+        return render(request, "queue_all.html", context)
     
 
 class ShopDetail(View):
@@ -327,7 +361,6 @@ class ShopDetail(View):
             
         # 2. ดึงข้อมูลที่เกี่ยวข้อง
         promotions = Promotion.objects.filter(shop=shop)
-        menus = Menu.objects.filter(shop=shop)
         tables = Table.objects.filter(shop=shop)
 
         # 3. จัดการเวลาทำการ (OpenDate) แบบตารางกว้าง (Wide Table)
@@ -355,9 +388,8 @@ class ShopDetail(View):
         context = {
             'shop': shop,
             'promotions': promotions,
-            'menus': menus,
             'tables': tables,
-            'open_dates_list': open_dates_list, # เปลี่ยนชื่อตัวแปรเป็น open_dates_list
+            'open_dates_list': open_dates_list,
         }
         return render(request, 'shop_detail.html', context)
 
@@ -772,10 +804,10 @@ class EditCustomerProfile(View):
                 if os.path.isfile(old_file_path):
                     os.remove(old_file_path)
                 
-                # ลบ Object รูปเดิมออกจาก Database เพื่อไม่ให้เป็นขยะ
-                old_image_obj = customer.image
-                customer.image = None # ตัดการผูกกับ db
-                old_image_obj.delete()
+                # # ลบ Object รูปเดิมออกจาก Database เพื่อไม่ให้เป็นขยะ
+                # old_image_obj = customer.image
+                # customer.image = None # ตัดการผูกกับ db
+                # old_image_obj.delete()
                 
             # สร้าง Object รูปใหม่ลงตาราง Image
             image_obj = Image.objects.create(image_path=db_image_path)

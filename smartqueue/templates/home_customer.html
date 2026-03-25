@@ -24,7 +24,9 @@
                         {% if shop.image and shop.image.image_path %}
                             <img src="{% static shop.image.image_path %}" alt="{{ shop.shop_name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 bg-gray-200">
                         {% else %}
-                            <img src="{% static 'images/pong_shop.jpg' %}" alt="Default Shop" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 bg-gray-200">
+                            <div class="flex items-center justify-center h-full w-full bg-gray-200 text-7xl group-hover:scale-110 transition-transform duration-500"> 
+                                🏪 
+                            </div>
                         {% endif %}
                         
                         <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-6 pb-4 px-3 text-center">

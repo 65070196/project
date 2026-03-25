@@ -19,6 +19,7 @@ urlpatterns = [
     
     path("queue-reserve/<int:shop_id>/", QueueReserve.as_view(), name="queue-reserve"),
     path("queue-check/", QueueCheck.as_view(), name="queue-check"),
+    path("queue-all/", AllQueueShop.as_view(), name="queue-all"),
     path("queue-edit/<int:queue_id>/", QueueEdit.as_view(), name="queue-edit"),
     path('queue/delete/<int:queue_id>/', QueueDelete.as_view(), name='queue-delete'),
 

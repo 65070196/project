@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+# --- โมเดลของลูกค้า ---
 class Customer(models.Model):
     user_id = models.AutoField(primary_key=True)
     auth = models.OneToOneField(User, on_delete=models.CASCADE, db_column='auth_id')
@@ -11,6 +12,7 @@ class Customer(models.Model):
         return f"{self.auth.first_name} {self.auth.last_name}"
 
 
+# --- โมเดลของลูกค้า ---
 class Queue(models.Model):
     STATUS_CHOICES = [
         ('doing', 'กำลังดำเนินการ'),
@@ -28,6 +30,7 @@ class Queue(models.Model):
         return f"Queue {self.queue_id} - {self.get_status_display()}"
 
 
+# --- โมเดลของร้านค้า ---
 class Shop(models.Model):
     shop_id = models.AutoField(primary_key=True)
     auth = models.OneToOneField(User, on_delete=models.CASCADE, db_column='auth_id')
@@ -39,6 +42,7 @@ class Shop(models.Model):
         return self.shop_name
 
 
+# --- โมเดลของโปรโมชั่น ---
 class Promotion(models.Model):
     promo_id = models.AutoField(primary_key=True)
     shop = models.ForeignKey('Shop', on_delete=models.CASCADE, null=False)
@@ -49,15 +53,7 @@ class Promotion(models.Model):
     discount_rate = models.FloatField(null=False)
 
 
-class Menu(models.Model):
-    menu_id = models.AutoField(primary_key=True)
-    shop = models.ForeignKey('Shop', on_delete=models.CASCADE, null=False)
-    name = models.CharField(max_length=24, null=False)
-    description = models.CharField(max_length=200, blank=True, null=True)
-    price = models.IntegerField(null=False)
-    image = models.ForeignKey('Image', on_delete=models.CASCADE, null=False)
-
-
+# --- โมเดลของลูกค้า ---
 class Table(models.Model):
     table_id = models.AutoField(primary_key=True)
     shop = models.ForeignKey('Shop', on_delete=models.CASCADE, null=False)
@@ -67,6 +63,7 @@ class Table(models.Model):
     image = models.ForeignKey('Image', on_delete=models.CASCADE, null=False)
 
 
+# --- โมเดลของลูกค้า ---
 class OpenDate(models.Model):
     open_date_id = models.AutoField(primary_key=True)
     shop = models.OneToOneField(Shop, on_delete=models.CASCADE, related_name='open_date')
@@ -107,6 +104,7 @@ class OpenDate(models.Model):
     sun_close = models.TimeField(null=True, blank=True)
 
 
+# --- โมเดลของลูกค้า ---
 class Image(models.Model):
     image_id = models.AutoField(primary_key=True)
     image_path = models.CharField(max_length=1000, null=False)
