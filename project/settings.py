@@ -77,14 +77,18 @@ import os
 import dj_database_url
 
 
+# DATABASES = {
+#     'default': dj_database_url.parse('postgresql://postgres.hflpnhmbgoxwygmvlmfn:รหัสผ่านของคุณ@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres')
+# }
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "smartqueue_db",
-        "USER": "hflpnhmbgoxwygmvlmfn",
-        "PASSWORD": "8UpOk8cwzQ7AChrv",
-        "HOST": "127.0.0.1", # 'localhost'
-        "PORT": "6543",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres.hflpnhmbgoxwygmvlmfn', # <--- ต้องใส่แบบยาวๆ แบบนี้ครับ!
+        'PASSWORD': 'รหัสผ่านของคุณ',
+        'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
+        'PORT': '6543',
     }
 }
 
