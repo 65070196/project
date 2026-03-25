@@ -86,7 +86,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
         'USER': 'postgres.hflpnhmbgoxwygmvlmfn', # <--- ต้องใส่แบบยาวๆ แบบนี้ครับ!
-        'PASSWORD': 'รหัสผ่านของคุณ',
+        'PASSWORD': '8UpOk8cwzQ7AChrv',
         'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
         'PORT': '6543',
     }
