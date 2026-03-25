@@ -81,7 +81,7 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "smartqueue_db",
-        "USER": "postgres",
+        "USER": "hflpnhmbgoxwygmvlmfn",
         "PASSWORD": "1234",
         "HOST": "127.0.0.1", # 'localhost'
         "PORT": "6543",
