@@ -73,16 +73,24 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+import os
+import dj_database_url
+
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "smartqueue_db",
         "USER": "postgres",
         "PASSWORD": "1234",
-        "HOST": "localhost",
+        "HOST": "127.0.0.1", # 'localhost'
         "PORT": "5432",
     }
 }
+
+# ความหมายคือ: ถ้าเว็บรันอยู่บน Vercel ให้มันดึงฐานข้อมูลออนไลน์มาใช้ทับของเดิมซะ
+if 'DATABASE_URL' in os.environ:
+    DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
 
 
 # Password validation
@@ -120,7 +128,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 
-import os
 
 STATIC_URL = 'static/'
 
