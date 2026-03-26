@@ -220,12 +220,11 @@ class QueueReserve(View):
     
     def post(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
-        # ดึงมาเผื่อกรณีเกิด Error จะได้ส่งรายชื่อโต๊ะกลับไปหน้าเดิมได้ (Dropdown จะได้ไม่หาย)
         tables = Table.objects.filter(shop=shop) 
         
         queue_date_str = request.POST.get('queue_date')
         queue_time_str = request.POST.get('queue_time')
-        table_id = request.POST.get('table_id') # 2. รับค่าไอดีโต๊ะที่ลูกค้าเลือก
+        table_id = request.POST.get('table_id')
 
         if not queue_date_str or not queue_time_str or not table_id:
             return render(request, 'queue_reserve.html', {
@@ -239,21 +238,27 @@ class QueueReserve(View):
             
             parsed_date = parse_date(queue_date_str)
             parsed_time = parse_time(queue_time_str)
+
+            # --- เพิ่มจุดเช็คเวลาตรงนี้ ---
+            if parsed_time.minute not in [0, 30]:
+                return render(request, 'queue_reserve.html', {
+                    'shop': shop,
+                    'tables': tables,
+                    'error_message': 'ขออภัย ระบบรองรับการจองเฉพาะนาทีที่ :00 และ :30 เท่านั้น'
+                })
+            # ---------------------------
+
             combined_datetime = datetime.datetime.combine(parsed_date, parsed_time)
 
-            # --- 3. เริ่มกระบวนการล็อก Database เพื่อป้องกันคนแย่งโต๊ะกัน (Race Condition) ---
             with transaction.atomic():
-                # select_for_update() จะล็อกข้อมูลโต๊ะนี้ไว้ ถ้ามีคนกดพร้อมกัน คนที่ 2 ต้องรอเสี้ยววิ
                 table = Table.objects.select_for_update().get(pk=table_id, shop=shop)
                 
-                # นับว่า ณ วันและเวลานี้ โต๊ะประเภทนี้โดนจองไปกี่คิวแล้ว
                 existing_queues_count = Queue.objects.filter(
                     shop=shop,
                     table=table,
                     queue_time=combined_datetime
                 ).count()
 
-                # ถ้าจำนวนคิวที่จองไปแล้ว >= จำนวนโต๊ะที่มีอยู่จริง = โต๊ะเต็ม!
                 if existing_queues_count >= table.amount:
                     return render(request, 'queue_reserve.html', {
                         'shop': shop,
@@ -261,30 +266,16 @@ class QueueReserve(View):
                         'error_message': f'ขออภัย โต๊ะประเภท "{table.name}" ในเวลาดังกล่าวถูกจองเต็มแล้ว'
                     })
 
-                # ถ้ายังไม่เต็ม ก็สร้างคิวใหม่ได้เลย
                 Queue.objects.create(
                     customer=customer,
                     shop=shop,
-                    table=table, # อย่าลืมเซฟโต๊ะลงไปด้วย
+                    table=table,
                     queue_date=parsed_date,
                     queue_time=combined_datetime
                 )
-            # --- จบกระบวนการล็อก Database ---
             
             return redirect('home-c') 
 
-        except Customer.DoesNotExist:
-            return render(request, 'queue_reserve.html', {
-                'shop': shop,
-                'tables': tables,
-                'error_message': 'ไม่พบข้อมูลลูกค้าในระบบ กรุณาล็อกอินใหม่'
-            })
-        except Table.DoesNotExist:
-            return render(request, 'queue_reserve.html', {
-                'shop': shop,
-                'tables': tables,
-                'error_message': 'ไม่พบประเภทโต๊ะที่คุณเลือก (ข้อมูลอาจถูกลบไปแล้ว)'
-            })
         except Exception as e:
             return render(request, 'queue_reserve.html', {
                 'shop': shop,
