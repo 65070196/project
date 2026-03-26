@@ -197,7 +197,9 @@ class HomeCustomer(View):
 
 class QueueCheck(View):
     def get(self, request):
-        queues = Queue.objects.all().order_by('queue_id')
+        user = request.user
+        queues = Queue.objects.filter(customer__auth=user).order_by('-queue_date', '-queue_time')
+        
         context = {
             'queues': queues
         }
