@@ -45,23 +45,26 @@
             <label class="block text-sm font-semibold text-gray-700 mb-2">
               วันที่ทำการจอง
             </label>
-            <input type="date" name="queue_date" required
-                   class="w-full h-14 bg-gray-100 rounded-xl px-4 text-gray-700 outline-none focus:ring-2 focus:ring-blue-400 transition-all cursor-pointer">
+            <input type="date" name="queue_date" value="{{ selected_date }}" required
+              onchange="window.location.href='?queue_date=' + this.value"
+              class="...">
           </div>
 
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">
                 เวลาที่ทำการจอง <span class="text-red-500">*</span>
             </label>
-            <select name="queue_time" required 
-                    class="w-full h-14 bg-gray-100 rounded-xl px-4 text-gray-700 outline-none focus:ring-2 focus:ring-blue-400 transition-all cursor-pointer">
-                <option value="" disabled selected>-- เลือกเวลา --</option>
-                
-                {% for hour in hour_range %}
-                    <option value="{{ hour|stringformat:'02d' }}:00">
-                        {{ hour|stringformat:'02d' }}:00 น.
-                    </option>
-                {% endfor %}
+            <select name="queue_time" required class="...">
+              {% if is_closed %}
+                  <option value="" disabled selected>-- วันนี้ร้านปิดทำการ --</option>
+              {% else %}
+                  <option value="" disabled selected>-- เลือกเวลา --</option>
+                  {% for hour in hour_range %}
+                      <option value="{{ hour|stringformat:'02d' }}:00">
+                          {{ hour|stringformat:'02d' }}:00 น.
+                      </option>
+                  {% endfor %}
+              {% endif %}
             </select>
           </div>
 

@@ -211,15 +211,43 @@ class QueueReserve(View):
         shop = get_object_or_404(Shop, pk=shop_id)
         tables = Table.objects.filter(shop=shop)
         
-        # สร้าง list ของชั่วโมง เช่น [10, 11, 12, ..., 21]
-        opening_hour = shop.open_time.hour
-        closing_hour = shop.close_time.hour
-        hour_range = range(opening_hour, closing_hour) 
+        # 1. รับค่าวันที่ลูกค้าเลือกจากพารามิเตอร์ (ถ้ายังไม่เลือกให้ใช้วันนี้)
+        date_str = request.GET.get('queue_date')
+        if date_str:
+            selected_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+        else:
+            selected_date = datetime.date.today()
+
+        # 2. หาวันในสัปดาห์ (0=จันทร์, 6=อาทิตย์)
+        weekday = selected_date.weekday()
+        open_info = shop.open_date # ดึงข้อมูลจาก OneToOneField
+        
+        # 3. Logic การดึงเวลาเปิด-ปิดตามวัน
+        day_map = {
+            0: (open_info.mon_is_closed, open_info.mon_open, open_info.mon_close),
+            1: (open_info.tue_is_closed, open_info.tue_open, open_info.tue_close),
+            2: (open_info.wed_is_closed, open_info.wed_open, open_info.wed_close),
+            3: (open_info.thu_is_closed, open_info.thu_open, open_info.thu_close),
+            4: (open_info.fri_is_closed, open_info.fri_open, open_info.fri_close),
+            5: (open_info.sat_is_closed, open_info.sat_open, open_info.sat_close),
+            6: (open_info.sun_is_closed, open_info.sun_open, open_info.sun_close),
+        }
+
+        is_closed, start_time, end_time = day_map.get(weekday)
+
+        # 4. สร้างรายการชั่วโมง (เฉพาะนาที :00)
+        hour_range = []
+        if not is_closed and start_time and end_time:
+            # วนลูปตั้งแต่ชั่วโมงที่เปิด จนถึงชั่วโมงก่อนปิด
+            for h in range(start_time.hour, end_time.hour):
+                hour_range.append(h)
 
         context = {
             'shop': shop,
             'tables': tables,
-            'hour_range': hour_range, # ส่งช่วงเวลาไปให้ Template
+            'hour_range': hour_range,
+            'is_closed': is_closed,
+            'selected_date': selected_date.strftime('%Y-%m-%d'),
         }
         return render(request, 'queue_reserve.html', context)
     
@@ -398,7 +426,7 @@ class QueueEdit(View):
         # รับค่าจาก URL ว่ามาจากหน้าไหน (default เป็น 'today')
         next_page = request.GET.get('next', 'today')
         
-        return render(request, "edit_queue.html", {
+        return render(request, "queue_edit.html", {
             'queue': queue,
             'next_page': next_page
         })
