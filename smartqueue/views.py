@@ -708,17 +708,11 @@ class EditShopProfile(View):
 
 class ViewCustomerProfile(View):
     def get(self, request):
-        user = request.user
-        try:
-            customer = Customer.objects.get(auth=user)
-        except Customer.DoesNotExist:
-            customer = None
-            
-        context = {
-            'user': user,
+        customer = Customer.objects.filter(auth=request.user).first()
+        return render(request, "customer_profile.html", {
+            'user': request.user,
             'customer': customer,
-        }
-        return render(request, "customer_profile.html", context)
+        })
 
 
 class EditCustomerProfile(View):
@@ -755,13 +749,10 @@ class EditCustomerProfile(View):
         if profile_image:
             # ลบ Object รูปเดิมทิ้งไปก่อน
             if customer.image:
-                old_image_obj = customer.image
-                customer.image = None 
-                old_image_obj.delete()
+                customer.image.delete()
                 
             # สร้าง Object รูปใหม่ แล้วให้ Cloudinary จัดการ
             image_obj = Image.objects.create(image_path=profile_image)
-            
             # ผูกรูปใหม่เข้ากับ Customer
             customer.image = image_obj
 
