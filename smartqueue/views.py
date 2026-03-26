@@ -259,30 +259,51 @@ class QueueReserve(View):
         queue_time_str = request.POST.get('queue_time')
         table_id = request.POST.get('table_id')
 
+        # 1. ตรวจสอบค่าว่าง
         if not queue_date_str or not queue_time_str or not table_id:
             return render(request, 'queue_reserve.html', {
-                'shop': shop,
-                'tables': tables,
+                'shop': shop, 'tables': tables,
                 'error_message': 'กรุณาเลือกวันที่ เวลา และประเภทโต๊ะให้ครบถ้วน'
             })
 
         try:
             customer = Customer.objects.get(auth=request.user)
-            
             parsed_date = parse_date(queue_date_str)
             parsed_time = parse_time(queue_time_str)
 
-            # --- เพิ่มจุดเช็คเวลาตรงนี้ ---
-            if parsed_time.minute not in [0, 30]:
+            # 2. ตรวจสอบนาที (ต้องเป็น :00 เท่านั้นตามที่คุณต้องการล่าสุด)
+            if parsed_time.minute != 0:
                 return render(request, 'queue_reserve.html', {
-                    'shop': shop,
-                    'tables': tables,
-                    'error_message': 'ขออภัย ระบบรองรับการจองเฉพาะนาทีที่ :00 และ :30 เท่านั้น'
+                    'shop': shop, 'tables': tables,
+                    'error_message': 'ขออภัย ระบบรองรับการจองเฉพาะนาทีที่ :00 (ต้นชั่วโมง) เท่านั้น'
                 })
-            # ---------------------------
 
+            # 3. ตรวจสอบเวลาเปิด-ปิดร้านจาก Model OpenDate
+            weekday = parsed_date.weekday() # 0=Mon, 6=Sun
+            open_info = shop.open_date
+            
+            day_config = {
+                0: (open_info.mon_is_closed, open_info.mon_open, open_info.mon_close),
+                1: (open_info.tue_is_closed, open_info.tue_open, open_info.tue_close),
+                2: (open_info.wed_is_closed, open_info.wed_open, open_info.wed_close),
+                3: (open_info.thu_is_closed, open_info.thu_open, open_info.thu_close),
+                4: (open_info.fri_is_closed, open_info.fri_open, open_info.fri_close),
+                5: (open_info.sat_is_closed, open_info.sat_open, open_info.sat_close),
+                6: (open_info.sun_is_closed, open_info.sun_open, open_info.sun_close),
+            }
+            
+            is_closed, o_time, c_time = day_config.get(weekday)
+
+            if is_closed or not o_time or not c_time:
+                raise Exception("ขออภัย ร้านปิดทำการในวันที่คุณเลือก")
+            
+            if not (o_time <= parsed_time < c_time):
+                raise Exception(f"กรุณาเลือกเวลาในช่วงที่ร้านเปิดทำการ ({o_time.strftime('%H:%M')} - {c_time.strftime('%H:%M')})")
+
+            # 4. รวมวันที่และเวลา
             combined_datetime = datetime.datetime.combine(parsed_date, parsed_time)
 
+            # 5. เริ่มกระบวนการตรวจสอบคิวและบันทึก
             with transaction.atomic():
                 table = Table.objects.select_for_update().get(pk=table_id, shop=shop)
                 
@@ -294,11 +315,11 @@ class QueueReserve(View):
 
                 if existing_queues_count >= table.amount:
                     return render(request, 'queue_reserve.html', {
-                        'shop': shop,
-                        'tables': tables,
+                        'shop': shop, 'tables': tables,
                         'error_message': f'ขออภัย โต๊ะประเภท "{table.name}" ในเวลาดังกล่าวถูกจองเต็มแล้ว'
                     })
 
+                # บันทึกข้อมูล
                 Queue.objects.create(
                     customer=customer,
                     shop=shop,
@@ -309,12 +330,18 @@ class QueueReserve(View):
             
             return redirect('home-c') 
 
+        except Customer.DoesNotExist:
+            error = 'ไม่พบข้อมูลลูกค้า'
+        except Table.DoesNotExist:
+            error = 'ไม่พบประเภทโต๊ะที่ระบุ'
         except Exception as e:
-            return render(request, 'queue_reserve.html', {
-                'shop': shop,
-                'tables': tables,
-                'error_message': f'เกิดข้อผิดพลาดในการจองคิว: {str(e)}'
-            })
+            error = str(e)
+
+        return render(request, 'queue_reserve.html', {
+            'shop': shop,
+            'tables': tables,
+            'error_message': error
+        })
         
 
 # หน้าหลักร้านค้า
@@ -448,7 +475,16 @@ class QueueDelete(View):
     def post(self, request, queue_id):
         queue = get_object_or_404(Queue, pk=queue_id)
         queue.delete()
-        return redirect("home-s")
+        
+        next_page = request.GET.get('next')
+        
+        if next_page == 'all':
+            messages.success(request, 'ลบรายการคิวเรียบร้อยแล้ว')
+            return redirect('queue-all')
+        else:
+            messages.success(request, 'ลบรายการคิววันนี้เรียบร้อยแล้ว')
+            return redirect('home-s')
+
 
 class TableManage(View):
     def get(self, request):
