@@ -15,13 +15,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*h8ayzptk_v(9ind^xy1%3&79!!8v*s(4nyml*=ckf9q%pc$19'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -37,7 +30,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'smartqueue'
+    'smartqueue',
+    'cloudinary_storage',
+    'cloudinary',
+    'django.contrib.staticfiles'
 ]
 
 MIDDLEWARE = [
@@ -81,20 +77,35 @@ import dj_database_url
 #     'default': dj_database_url.parse('postgresql://postgres.hflpnhmbgoxwygmvlmfn:รหัสผ่านของคุณ@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres')
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres.hflpnhmbgoxwygmvlmfn', # <--- ต้องใส่แบบยาวๆ แบบนี้ครับ!
-        'PASSWORD': '8UpOk8cwzQ7AChrv',
-        'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
-        'PORT': '6543',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',
+#         'USER': 'postgres.hflpnhmbgoxwygmvlmfn', # <--- ต้องใส่แบบยาวๆ แบบนี้ครับ!
+#         'PASSWORD': '8UpOk8cwzQ7AChrv',
+#         'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
+#         'PORT': '6543',
+#     }
+# }
 
 # ความหมายคือ: ถ้าเว็บรันอยู่บน Vercel ให้มันดึงฐานข้อมูลออนไลน์มาใช้ทับของเดิมซะ
 if 'DATABASE_URL' in os.environ:
     DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
+
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET')
+}
+
+# ตั้งค่าให้ Media Files ไปเก็บที่ Cloudinary
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# --- ส่วนของความปลอดภัยพื้นฐาน (Secret Key) ---
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-if-not-found')
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+
 
 
 # Password validation

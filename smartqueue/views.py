@@ -804,10 +804,10 @@ class EditCustomerProfile(View):
                 if os.path.isfile(old_file_path):
                     os.remove(old_file_path)
                 
-                # # ลบ Object รูปเดิมออกจาก Database เพื่อไม่ให้เป็นขยะ
-                # old_image_obj = customer.image
-                # customer.image = None # ตัดการผูกกับ db
-                # old_image_obj.delete()
+                # ลบ Object รูปเดิมออกจาก Database เพื่อไม่ให้เป็นขยะ
+                old_image_obj = customer.image
+                customer.image = None # ตัดการผูกกับ db
+                old_image_obj.delete()
                 
             # สร้าง Object รูปใหม่ลงตาราง Image
             image_obj = Image.objects.create(image_path=db_image_path)
