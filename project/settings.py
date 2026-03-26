@@ -15,6 +15,11 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+# --- ส่วนของความปลอดภัยพื้นฐาน (Secret Key) ---
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-if-not-found')
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -24,17 +29,17 @@ ALLOWED_HOSTS = ['.vercel.app', '*']
 # Application definition
 
 INSTALLED_APPS = [
+    'cloudinary_storage', # ต้องอยู่ก่อน staticfiles
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'django.contrib.staticfiles', 
+    'cloudinary', # ไว้ตรงไหนก็ได้หลัง storage
     'smartqueue',
-    'cloudinary_storage',
-    'cloudinary',
-    'django.contrib.staticfiles'
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -77,20 +82,14 @@ import dj_database_url
 #     'default': dj_database_url.parse('postgresql://postgres.hflpnhmbgoxwygmvlmfn:รหัสผ่านของคุณ@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres')
 # }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'postgres',
-#         'USER': 'postgres.hflpnhmbgoxwygmvlmfn', # <--- ต้องใส่แบบยาวๆ แบบนี้ครับ!
-#         'PASSWORD': '8UpOk8cwzQ7AChrv',
-#         'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
-#         'PORT': '6543',
-#     }
-# }
 
-# ความหมายคือ: ถ้าเว็บรันอยู่บน Vercel ให้มันดึงฐานข้อมูลออนไลน์มาใช้ทับของเดิมซะ
-if 'DATABASE_URL' in os.environ:
-    DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
 
 
 CLOUDINARY_STORAGE = {
@@ -101,10 +100,6 @@ CLOUDINARY_STORAGE = {
 
 # ตั้งค่าให้ Media Files ไปเก็บที่ Cloudinary
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# --- ส่วนของความปลอดภัยพื้นฐาน (Secret Key) ---
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-if-not-found')
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
 
 
