@@ -207,14 +207,19 @@ class QueueCheck(View):
     
 
 class QueueReserve(View):
-    def get(self, request, shop_id):  
+    def get(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
-        # 1. ดึงประเภทโต๊ะของร้านนี้มาเตรียมส่งไปให้หน้าเว็บ
-        tables = Table.objects.filter(shop=shop) 
+        tables = Table.objects.filter(shop=shop)
         
+        # สร้าง list ของชั่วโมง เช่น [10, 11, 12, ..., 21]
+        opening_hour = shop.open_time.hour
+        closing_hour = shop.close_time.hour
+        hour_range = range(opening_hour, closing_hour) 
+
         context = {
             'shop': shop,
-            'tables': tables # ส่งตัวแปร tables เข้าไปด้วย
+            'tables': tables,
+            'hour_range': hour_range, # ส่งช่วงเวลาไปให้ Template
         }
         return render(request, 'queue_reserve.html', context)
     
