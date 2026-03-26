@@ -10,7 +10,7 @@
       
       <div class="w-full h-64 md:h-[400px] bg-gray-200 rounded-3xl mb-8 overflow-hidden relative shadow-inner group">
         {% if shop.image and shop.image.image_path %}
-            <img src="{% static shop.image.image_path %}" alt="{{ shop.shop_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+            <img src="{{ shop.image.image_path }}" alt="{{ shop.shop_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
         {% else %}
             <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
                 <span class="text-4xl">🏪</span>

@@ -22,7 +22,7 @@
                     <a href="{% url 'shop-detail' shop.shop_id %}" class="block group relative h-72 bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 border border-gray-100">
                         
                         {% if shop.image and shop.image.image_path %}
-                            <img src="{% static shop.image.image_path %}" alt="{{ shop.shop_name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 bg-gray-200">
+                            <img src="{{ shop.image.image_path }}" alt="{{ shop.shop_name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 bg-gray-200">
                         {% else %}
                             <div class="flex items-center justify-center h-full w-full bg-gray-200 text-7xl group-hover:scale-110 transition-transform duration-500"> 
                                 🏪 
