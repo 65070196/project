@@ -7,6 +7,7 @@ from django.core.files.storage import FileSystemStorage
 from django.contrib import messages
 from django.conf import settings
 from django.contrib.auth import authenticate, logout, login
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
@@ -206,7 +207,7 @@ class QueueCheck(View):
         return render(request, "queue_check.html", context)
     
 
-class QueueReserve(View):
+class QueueReserve(LoginRequiredMixin, View):
     def get(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
         tables = Table.objects.filter(shop=shop)
