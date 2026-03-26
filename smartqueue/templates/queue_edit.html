@@ -58,13 +58,14 @@
         </div>
 
         <div class="flex gap-4 pt-6">
-          <a href="{% url 'home-s' %}"
-             class="flex-1 py-3 bg-gray-400 hover:bg-gray-500 transition text-center rounded-xl font-bold text-white shadow-sm">
-            ย้อนกลับ
-          </a>
+          <button type="button" onclick="history.back()"
+                  class="flex-1 py-3 bg-gray-400 hover:bg-gray-500 transition text-center rounded-xl font-bold text-white shadow-sm">
+              ย้อนกลับ
+          </button>
+
           <button type="submit"
-             class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 transition text-white rounded-xl font-bold shadow-sm">
-            บันทึกสถานะ
+                  class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 transition text-white rounded-xl font-bold shadow-sm">
+              บันทึกสถานะ
           </button>
         </div>
 

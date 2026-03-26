@@ -65,9 +65,7 @@
               </div>
 
               <div class="flex justify-center gap-2">
-                <a href="{% url 'queue-edit' queue.queue_id %}" class="px-3 py-1.5 bg-orange-400 hover:bg-orange-500 text-white rounded-lg text-sm font-bold transition-colors whitespace-nowrap">
-                  แก้ไข
-                </a>
+                <a href="{% url 'edit-queue' q.queue_id %}?next=all" class="...">แก้ไขสถานะ</a>
                 <button onclick="openDelete(`{% url 'queue-delete' queue.queue_id %}`)" class="px-3 py-1.5 bg-[#df4141] hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-sm transition-colors whitespace-nowrap">
                   ลบ
                 </button>

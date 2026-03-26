@@ -389,21 +389,26 @@ class ShopDetail(View):
 
 class QueueEdit(View):
     def get(self, request, queue_id):
-        queue = get_object_or_404(Queue, queue_id=queue_id)
+        queue = get_object_or_404(Queue, pk=queue_id)
+        # รับค่าจาก URL ว่ามาจากหน้าไหน (default เป็น 'today')
+        next_page = request.GET.get('next', 'today')
         
-        context = {
-            'queue': queue
-        }
-        return render(request, "queue_edit.html", context)
-    
+        return render(request, "edit_queue.html", {
+            'queue': queue,
+            'next_page': next_page
+        })
+
     def post(self, request, queue_id):
-        queue = get_object_or_404(Queue, queue_id=queue_id)
-        new_status = request.POST.get('status')
-        
-        if new_status:
-            queue.status = new_status
-            queue.save()
-        return redirect('home-s')
+        queue = get_object_or_404(Queue, pk=queue_id)
+        queue.status = request.POST.get('status')
+        queue.save()
+
+        # ตรวจสอบว่าหลังจากบันทึกเสร็จ ควร Redirect ไปที่ไหน
+        next_page = request.GET.get('next')
+        if next_page == 'all':
+            return redirect('queue-all')
+        else:
+            return redirect('home-s')
     
 
 class QueueDelete(View):
