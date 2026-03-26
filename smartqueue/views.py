@@ -440,21 +440,11 @@ class TableAdd(View):
         image_file = request.FILES.get('image')
 
         shop = Shop.objects.get(auth=request.user)
+        image_obj = None
 
-        image_obj = None # เตรียมตัวแปรเก็บ Object รูปภาพไว้ก่อน
-
-        # จัดการรูปภาพ (ถ้ามีการแนบไฟล์มา)
+        # จัดการรูปภาพ (แบบใหม่ให้ Cloudinary จัดการ)
         if image_file:
-            # ต้องการเซฟไฟล์ไปที่โฟลเดอร์ static/images/shop_images/ ที่สร้างไว้
-            target_folder = os.path.join(settings.BASE_DIR, 'static', 'images', 'shop_images')
-            fs = FileSystemStorage(location=target_folder)
-            
-            saved_filename = fs.save(image_file.name, image_file)
-            
-            # สร้างข้อความ Path เพื่อเก็บลงตาราง Image
-            db_image_path = f"images/shop_images/{saved_filename}"
-
-            image_obj = Image.objects.create(image_path=db_image_path)
+            image_obj = Image.objects.create(image_path=image_file)
 
         Table.objects.create(
             shop=shop,                  
@@ -651,7 +641,6 @@ class ViewShopProfile(View):
 class EditShopProfile(View):
     def get(self, request):
         user = request.user
-        # ดึงข้อมูลร้านค้าที่ผูกกับ User หรือสร้างใหม่ถ้ายังไม่มี
         shop, created = Shop.objects.get_or_create(auth=user) 
         context = {
             'user': user,
@@ -663,17 +652,14 @@ class EditShopProfile(View):
         user = request.user
         shop, created = Shop.objects.get_or_create(auth=user)
         
-        # 1. รับค่าข้อมูลส่วนตัว (จากตาราง User)
         new_first_name = request.POST.get('first_name', '').strip()
         new_last_name = request.POST.get('last_name', '').strip()
         new_email = request.POST.get('email', '').strip()
         
-        # 2. รับค่าข้อมูลร้านค้า (จากตาราง Shop)
         new_shop_name = request.POST.get('shop_name', '').strip()
         new_description = request.POST.get('description', '').strip()
         new_phone = request.POST.get('phone', '').strip()
 
-        # เช็คว่าถ้ามีข้อมูลพิมพ์มาใหม่ ถึงจะเอาไปทับของเดิม
         if new_first_name:
             user.first_name = new_first_name
         if new_last_name:
@@ -688,35 +674,18 @@ class EditShopProfile(View):
         if new_phone:
             shop.phone = new_phone
 
-        # รับไฟล์รูปร้านค้า (โลโก้ร้าน)
         profile_image = request.FILES.get('profile_image')
 
-        # ถ้าอัปรูปใหม่เข้ามา
+        # ถ้าอัปรูปใหม่เข้ามา (แบบใหม่)
         if profile_image:
-            # เปลี่ยนชื่อโฟลเดอร์เป็น shop
-            folder_name = 'shop'
-            target_folder = os.path.join(settings.BASE_DIR, 'static', 'images', 'profile_images', folder_name)
-            
-            os.makedirs(target_folder, exist_ok=True)
-            
-            fs = FileSystemStorage(location=target_folder)
-            saved_filename = fs.save(profile_image.name, profile_image)
-            db_image_path = f"images/profile_images/{folder_name}/{saved_filename}"
-
+            # ถ้ามีรูปเดิมอยู่ ลบ Object เดิมทิ้งไปก่อนเลย
             if shop.image:
-                old_file_path = os.path.join(settings.BASE_DIR, 'static', shop.image.image_path)
-                
-                # เช็คว่าไฟล์นี้มีอยู่จริงไหม ถ้ามีให้ลบไฟล์ทิ้ง
-                if os.path.isfile(old_file_path):
-                    os.remove(old_file_path)
-                
-                # ลบ Object รูปเดิมออกจาก Database เพื่อไม่ให้เป็นขยะ
                 old_image_obj = shop.image
-                shop.image = None # ตัดการผูกกับ db
+                shop.image = None
                 old_image_obj.delete()
                 
-            # สร้าง Object รูปใหม่ลงตาราง Image
-            image_obj = Image.objects.create(image_path=db_image_path)
+            # สร้าง Object รูปใหม่ โยนไฟล์ให้ Cloudinary
+            image_obj = Image.objects.create(image_path=profile_image)
             
             # ผูกรูปใหม่เข้ากับ Shop
             shop.image = image_obj
@@ -725,8 +694,6 @@ class EditShopProfile(View):
             user.save()      
             shop.save()
             messages.success(request, 'อัปเดตข้อมูลร้านค้าสำเร็จ')
-        
-            # กลับไปหน้าดูโปรไฟล์ร้านค้า (อย่าลืมตั้งชื่อ url เป็น 'view-s-profile' ใน urls.py นะครับ)
             return redirect('view-s-profile') 
             
         except Exception as e:
@@ -768,13 +735,11 @@ class EditCustomerProfile(View):
         user = request.user
         customer, created = Customer.objects.get_or_create(auth=user)
         
-        # รับค่าจากฟอร์ม (ถ้าไม่ได้พิมพ์อะไรมา ค่าจะเป็น string ว่าง '')
         new_first_name = request.POST.get('first_name', '').strip()
         new_last_name = request.POST.get('last_name', '').strip()
         new_email = request.POST.get('email', '').strip()
         new_phone = request.POST.get('phone', '').strip()
 
-        # เช็คว่าถ้ามีข้อมูลพิมพ์มาใหม่ ถึงจะเอาไปทับของเดิม
         if new_first_name:
             user.first_name = new_first_name
         if new_last_name:
@@ -786,31 +751,16 @@ class EditCustomerProfile(View):
 
         profile_image = request.FILES.get('profile_image')
 
-        # ถ้าอัปรูปใหม่เข้ามา
+        # ถ้าอัปรูปใหม่เข้ามา (แบบใหม่)
         if profile_image:
-            folder_name = 'customer'
-            target_folder = os.path.join(settings.BASE_DIR, 'static', 'images', 'profile_images', folder_name)
-            
-            os.makedirs(target_folder, exist_ok=True)
-            
-            fs = FileSystemStorage(location=target_folder)
-            saved_filename = fs.save(profile_image.name, profile_image)
-            db_image_path = f"images/profile_images/{folder_name}/{saved_filename}"
-
+            # ลบ Object รูปเดิมทิ้งไปก่อน
             if customer.image:
-                old_file_path = os.path.join(settings.BASE_DIR, 'static', customer.image.image_path)
-                
-                # เช็คว่าไฟล์นี้มีอยู่จริงไหม ถ้ามีให้ลบไฟล์ทิ้ง
-                if os.path.isfile(old_file_path):
-                    os.remove(old_file_path)
-                
-                # ลบ Object รูปเดิมออกจาก Database เพื่อไม่ให้เป็นขยะ
                 old_image_obj = customer.image
-                customer.image = None # ตัดการผูกกับ db
+                customer.image = None 
                 old_image_obj.delete()
                 
-            # สร้าง Object รูปใหม่ลงตาราง Image
-            image_obj = Image.objects.create(image_path=db_image_path)
+            # สร้าง Object รูปใหม่ แล้วให้ Cloudinary จัดการ
+            image_obj = Image.objects.create(image_path=profile_image)
             
             # ผูกรูปใหม่เข้ากับ Customer
             customer.image = image_obj
@@ -819,7 +769,6 @@ class EditCustomerProfile(View):
             user.save()      
             customer.save()
             messages.success(request, 'อัปเดตข้อมูลลูกค้าสำเร็จ')
-        
             return redirect('view-c-profile') 
             
         except Exception as e:

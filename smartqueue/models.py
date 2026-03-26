@@ -107,6 +107,7 @@ class OpenDate(models.Model):
 # --- โมเดลของลูกค้า ---
 class Image(models.Model):
     image_id = models.AutoField(primary_key=True)
-    image_path = models.CharField(max_length=1000, null=False)
+    # upload_to='images/' คือการบอกให้ Cloudinary สร้างโฟลเดอร์ชื่อ images
+    image_path = models.ImageField(upload_to='images/', null=False) 
     def __str__(self):
-        return self.image_path
+        return str(self.image_path)
