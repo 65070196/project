@@ -6,16 +6,21 @@
   <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x overflow-y-auto no-scrollbar">
     <div class="p-6 md:p-10 pb-24">
       
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">รายการคิวลูกค้าทั้งหมด</h2>
+      <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">รายการคิวลูกค้าทั้งหมด</h2>
+            <p class="text-sm text-gray-500">ประวัติการจองคิวทั้งหมดของร้านคุณ</p>
+        </div>
+        <a href="{% url 'home-s' %}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-sm transition-colors">
+            ⬅️ กลับหน้าหลัก
+        </a>
       </div>
 
       <div class="bg-white rounded-xl overflow-hidden shadow border border-gray-200">
-        
         <div class="w-full overflow-x-auto">
           <div class="min-w-[900px]">
             
-            <div class="grid grid-cols-7 gap-4 bg-indigo-200 text-lg font-bold text-gray-800 px-4 py-4">
+            <div class="grid grid-cols-7 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
               <div class="truncate">หมายเลขคิว</div>
               <div class="truncate">ชื่อลูกค้า</div>
               <div class="truncate text-center">ประเภทโต๊ะ</div>
@@ -26,79 +31,90 @@
             </div>
 
             {% for queue in queues %}
-            <div class="grid grid-cols-7 gap-4 items-center px-4 py-5 text-base bg-gray-100 border-b border-white hover:bg-gray-200 transition-colors">
+            <div class="grid grid-cols-7 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
               
-              <div class="font-bold text-gray-800 truncate">
+              <div class="font-bold text-gray-800">
                 #{{ queue.queue_id }}
               </div>
               
-              <div class="font-bold text-gray-800 truncate" title="{{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}">
+              <div class="font-bold text-gray-800 truncate" title="{{ queue.customer.auth.get_full_name }}">
                 {{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}
               </div>
 
-              <div class="font-bold text-gray-700 text-center truncate" title="{{ queue.table.name|default:'ไม่ได้ระบุ' }}">
+              <div class="text-gray-600 text-center truncate">
                 {{ queue.table.name|default:"ไม่ได้ระบุ" }}
               </div>
               
-              <div class="font-bold text-gray-700 text-center truncate">
-                {{ queue.queue_time|date:"d/m/Y" }}
+              <div class="text-gray-600 text-center">
+                {{ queue.queue_date|date:"d/m/Y" }}
               </div>
               
-              <div class="font-bold text-gray-700 text-center truncate">
+              <div class="text-gray-600 text-center font-semibold">
                 {{ queue.queue_time|date:"H:i" }} น.
               </div>
               
               <div class="text-center">
                 {% if queue.status == 'doing' %}
-                  <span class="px-3 py-1.5 text-sm rounded-full bg-yellow-100 text-yellow-700 font-bold border border-yellow-200 whitespace-nowrap">
-                    ⏳ {{ queue.get_status_display }}
+                  <span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 font-bold border border-yellow-200">
+                    ⏳ กำลังทำ
                   </span>
                 {% elif queue.status == 'done' %}
-                  <span class="px-3 py-1.5 text-sm rounded-full bg-green-100 text-green-700 font-bold border border-green-200 whitespace-nowrap">
-                    ✅ {{ queue.get_status_display }}
+                  <span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-bold border border-green-200">
+                    ✅ เสร็จสิ้น
                   </span>
                 {% elif queue.status == 'cancel' %}
-                  <span class="px-3 py-1.5 text-sm rounded-full bg-red-100 text-red-700 font-bold border border-red-200 whitespace-nowrap">
-                    ❌ {{ queue.get_status_display }}
+                  <span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-bold border border-red-200">
+                    ❌ ยกเลิก
+                  </span>
+                {% else %}
+                  <span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 font-bold border border-gray-200">
+                    🕒 รอคิว
                   </span>
                 {% endif %}
               </div>
 
               <div class="flex justify-center gap-2">
-                <a href="{% url 'queue-edit' q.queue_id %}?next=all" class="...">แก้ไขสถานะ</a>
-                <button onclick="openDelete(`{% url 'queue-delete' queue.queue_id %}`)" class="px-3 py-1.5 bg-[#df4141] hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-sm transition-colors whitespace-nowrap">
+                <a href="{% url 'queue-edit' queue.queue_id %}?next=all" 
+                   class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-colors">
+                  แก้ไข
+                </a>
+                <button onclick="openDelete(`{% url 'queue-delete' queue.queue_id %}`)" 
+                        class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-bold shadow-sm transition-colors">
                   ลบ
                 </button>
               </div>
 
             </div>
             {% empty %}
-            <div class="px-4 py-8 text-center text-gray-500 bg-gray-50 text-base">
-              ไม่มีคิวในระบบ
+            <div class="px-4 py-12 text-center text-gray-400 bg-gray-50">
+              <span class="text-4xl block mb-2">📋</span>
+              ไม่มีข้อมูลคิวในระบบ
             </div>
             {% endfor %}
 
           </div>
         </div>
-
       </div>
-
     </div>
   </div>
 </div>
 
-<div id="deleteModal" class="hidden fixed inset-0 bg-black/20 z-50 items-center justify-center transition-opacity">
-  <div class="bg-white rounded-2xl shadow-2xl p-8 w-[380px] text-center">
-    <p class="text-gray-800 font-bold mb-8 text-[20px]">คุณยืนยันว่าต้องการที่จะลบใช่หรือไม่</p>
+<div id="deleteModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+    <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    </div>
+    <p class="text-gray-800 font-bold mb-2 text-xl">ยืนยันการลบข้อมูล?</p>
+    <p class="text-gray-500 text-sm mb-8">หากลบแล้วข้อมูลคิวนี้จะหายไปจากระบบทันทีและไม่สามารถกู้คืนได้</p>
     
     <form id="deleteForm" method="POST" action="">
       {% csrf_token %}
-      <div class="flex justify-center gap-6">
-        <button type="submit" class="bg-[#66d148] hover:bg-green-500 text-white font-bold py-2 px-10 rounded-lg shadow-sm transition-colors">
-          ใช่
+      <div class="flex justify-center gap-3">
+        <button type="button" onclick="closeDelete()" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">
+          ยกเลิก
         </button>
-        <button type="button" onclick="closeDelete()" class="bg-[#df4141] hover:bg-red-600 text-white font-bold py-2 px-10 rounded-lg shadow-sm transition-colors">
-          ไม่
+        <button type="submit" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-200 transition-colors">
+          ยืนยันการลบ
         </button>
       </div>
     </form>
