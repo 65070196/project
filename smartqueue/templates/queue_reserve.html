@@ -64,15 +64,13 @@
               {{ error_message }}
           </div>
         {% endif %}
-
         <div class="flex flex-col md:flex-row gap-4 pt-4">
-          <button type="submit" class="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition shadow-sm hover:shadow-md">
-            ยืนยันการจอง
-          </button>
-          
           <a href="{% url 'shop-detail' shop.shop_id %}" class="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition shadow-sm hover:shadow-md text-center flex items-center justify-center">
             ยกเลิกการจอง
           </a>
+          <button type="submit" class="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition shadow-sm hover:shadow-md">
+            ยืนยันการจอง
+          </button>
         </div>
 
       </form>
