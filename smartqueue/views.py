@@ -625,14 +625,11 @@ class EditOpendate(View):
 
 class ViewShopProfile(View):
     def get(self, request):
-        user = request.user
-        try:
-            shop = Shop.objects.get(auth=user)
-        except Shop.DoesNotExist:
-            shop = None
-            
+        
+        shop = Shop.objects.filter(auth=request.user).first()
+        
         context = {
-            'user': user,
+            'user': request.user,
             'shop': shop,
         }
         return render(request, "shop_profile.html", context)
@@ -640,10 +637,10 @@ class ViewShopProfile(View):
 
 class EditShopProfile(View):
     def get(self, request):
-        user = request.user
-        shop, created = Shop.objects.get_or_create(auth=user) 
+        # ใช้ get_or_create ป้องกันกรณี User ไม่มี Profile Shop
+        shop, created = Shop.objects.get_or_create(auth=request.user) 
         context = {
-            'user': user,
+            'user': request.user,
             'shop': shop,
         }
         return render(request, "edit_shop_profile.html", context)
@@ -652,58 +649,54 @@ class EditShopProfile(View):
         user = request.user
         shop, created = Shop.objects.get_or_create(auth=user)
         
-        new_first_name = request.POST.get('first_name', '').strip()
-        new_last_name = request.POST.get('last_name', '').strip()
-        new_email = request.POST.get('email', '').strip()
-        
-        new_shop_name = request.POST.get('shop_name', '').strip()
-        new_description = request.POST.get('description', '').strip()
-        new_phone = request.POST.get('phone', '').strip()
-
-        if new_first_name:
-            user.first_name = new_first_name
-        if new_last_name:
-            user.last_name = new_last_name
-        if new_email:
-            user.email = new_email
-            
-        if new_shop_name:
-            shop.shop_name = new_shop_name
-        if new_description:
-            shop.description = new_description
-        if new_phone:
-            shop.phone = new_phone
-
+        # รับค่าจากฟอร์ม
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        shop_name = request.POST.get('shop_name', '').strip()
+        description = request.POST.get('description', '').strip()
+        phone = request.POST.get('phone', '').strip()
         profile_image = request.FILES.get('profile_image')
 
-        # ถ้าอัปรูปใหม่เข้ามา (แบบใหม่)
-        if profile_image:
-            # ถ้ามีรูปเดิมอยู่ ลบ Object เดิมทิ้งไปก่อนเลย
-            if shop.image:
-                old_image_obj = shop.image
-                shop.image = None
-                old_image_obj.delete()
-                
-            # สร้าง Object รูปใหม่ โยนไฟล์ให้ Cloudinary
-            image_obj = Image.objects.create(image_path=profile_image)
-            
-            # ผูกรูปใหม่เข้ากับ Shop
-            shop.image = image_obj
-
         try:
-            user.save()      
-            shop.save()
+            # ใช้ transaction.atomic เพื่อให้แน่ใจว่าต้องสำเร็จทั้ง User และ Shop
+            with transaction.atomic():
+                # อัปเดตข้อมูล User
+                if first_name: user.first_name = first_name
+                if last_name: user.last_name = last_name
+                if email: user.email = email
+                user.save()
+
+                # อัปเดตข้อมูล Shop
+                if shop_name: shop.shop_name = shop_name
+                if description: shop.description = description
+                if phone: shop.phone = phone
+
+                # จัดการรูปภาพ (Cloudinary)
+                if profile_image:
+                    # ถ้ามีรูปเดิม ให้ลบ Object เดิมออก (เพื่อลบไฟล์บน Cloudinary ด้วย)
+                    if shop.image:
+                        old_image = shop.image
+                        shop.image = None # ตัดความสัมพันธ์ก่อนลบ
+                        old_image.delete()
+                    
+                    # สร้าง Object รูปใหม่
+                    new_image = Image.objects.create(image_path=profile_image)
+                    shop.image = new_image
+                
+                shop.save()
+                
             messages.success(request, 'อัปเดตข้อมูลร้านค้าสำเร็จ')
-            return redirect('view-s-profile') 
-            
+            return redirect('view-s-profile')
+
         except Exception as e:
             messages.error(request, f'เกิดข้อผิดพลาด: {str(e)}')
             
-        context = {
+        # ถ้าพัง ให้กลับไปหน้าเดิมพร้อมข้อมูลที่กรอกค้างไว้
+        return render(request, "edit_shop_profile.html", {
             'user': user,
             'shop': shop,
-        }
-        return render(request, "edit_shop_profile.html", context)
+        })
 
 
 class ViewCustomerProfile(View):
@@ -715,9 +708,12 @@ class ViewCustomerProfile(View):
         })
 
 
+from django.db import transaction # อย่าลืม import ตัวนี้ที่ด้านบนของไฟล์นะครับ
+
 class EditCustomerProfile(View):
     def get(self, request):
         user = request.user
+        # ดึงข้อมูล Customer หรือสร้างถ้ายังไม่มี
         customer, created = Customer.objects.get_or_create(auth=user) 
         context = {
             'user': user,
@@ -729,40 +725,48 @@ class EditCustomerProfile(View):
         user = request.user
         customer, created = Customer.objects.get_or_create(auth=user)
         
+        # รับค่าจาก POST
         new_first_name = request.POST.get('first_name', '').strip()
         new_last_name = request.POST.get('last_name', '').strip()
         new_email = request.POST.get('email', '').strip()
         new_phone = request.POST.get('phone', '').strip()
-
-        if new_first_name:
-            user.first_name = new_first_name
-        if new_last_name:
-            user.last_name = new_last_name
-        if new_email:
-            user.email = new_email
-        if new_phone:
-            customer.phone = new_phone
-
         profile_image = request.FILES.get('profile_image')
 
-        # ถ้าอัปรูปใหม่เข้ามา (แบบใหม่)
-        if profile_image:
-            # ลบ Object รูปเดิมทิ้งไปก่อน
-            if customer.image:
-                customer.image.delete()
-                
-            # สร้าง Object รูปใหม่ แล้วให้ Cloudinary จัดการ
-            image_obj = Image.objects.create(image_path=profile_image)
-            # ผูกรูปใหม่เข้ากับ Customer
-            customer.image = image_obj
-
         try:
-            user.save()      
-            customer.save()
-            messages.success(request, 'อัปเดตข้อมูลลูกค้าสำเร็จ')
+            # ใช้ transaction เพื่อให้เซฟทั้งสองตารางพร้อมกันแบบสมบูรณ์
+            with transaction.atomic():
+                # อัปเดตข้อมูล User หลัก
+                if new_first_name: user.first_name = new_first_name
+                if new_last_name: user.last_name = new_last_name
+                if new_email: user.email = new_email
+                user.save()
+
+                # อัปเดตข้อมูล Customer
+                if new_phone: customer.phone = new_phone
+
+                # จัดการรูปภาพโปรไฟล์
+                if profile_image:
+                    # ลบรูปเก่าทิ้ง (ถ้ามี) เพื่อไม่ให้ขยะเต็ม Cloudinary
+                    if customer.image:
+                        old_image = customer.image
+                        customer.image = None # ตัดความสัมพันธ์ก่อน
+                        old_image.delete() # ลบ object และไฟล์
+                    
+                    # สร้างรูปใหม่และผูกเข้ากับ Customer
+                    image_obj = Image.objects.create(image_path=profile_image)
+                    customer.image = image_obj
+
+                customer.save()
+
+            messages.success(request, 'อัปเดตข้อมูลส่วนตัวสำเร็จแล้ว!')
             return redirect('view-c-profile') 
             
         except Exception as e:
             messages.error(request, f'เกิดข้อผิดพลาด: {str(e)}')
             
-        return render(request, "edit_customer_profile.html")
+        # ถ้าเกิด Error ให้ส่งกลับหน้าเดิมพร้อมข้อมูลปัจจุบัน
+        context = {
+            'user': user,
+            'customer': customer,
+        }
+        return render(request, "edit_customer_profile.html", context)
