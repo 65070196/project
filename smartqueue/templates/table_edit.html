@@ -26,7 +26,7 @@
             </label>
 
             <img id="image-preview" 
-                 src="{% if table.image %}{% static table.image.image_path %}{% else %}#{% endif %}" 
+                 src="{% if table.image %}{{ table.image.image_path.url }}{% else %}#{% endif %}" 
                  alt="Table Image Preview" 
                  class="{% if not table.image %}hidden{% endif %} absolute inset-0 w-full h-full object-cover rounded-2xl p-1 pointer-events-none">
             
@@ -37,47 +37,45 @@
                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
             </button>
-            
           </div>
         </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
           <div class="md:col-span-2">
             <label class="block text-sm font-semibold text-gray-600 mb-2">หมายเลขประเภทโต๊ะ</label>
             <input type="text" value="{{ table.table_id }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-200 text-gray-600 border border-gray-300 cursor-not-allowed">
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-2">ชื่อประเภทโต๊ะเดิม</label>
-            <input type="text" value="{{ table.name }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-200 text-gray-600 border border-gray-300 cursor-not-allowed">
+            <label class="block text-sm font-semibold text-gray-600 mb-2">ชื่อประเภทโต๊ะปัจจุบัน</label>
+            <input type="text" value="{{ table.name }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed">
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">ชื่อประเภทโต๊ะใหม่</label>
-            <input type="text" name="name" placeholder="กรอกชื่อใหม่" class="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-800">
+            <label class="block text-sm font-semibold text-gray-700 mb-2 font-bold">ชื่อประเภทโต๊ะใหม่</label>
+            <input type="text" name="name" placeholder="กรอกชื่อใหม่ (หากต้องการเปลี่ยน)" class="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-800">
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-2">รายละเอียดเดิม</label>
-            <input type="text" value="{{ table.description|default:'-' }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-200 text-gray-600 border border-gray-300 cursor-not-allowed">
+            <label class="block text-sm font-semibold text-gray-600 mb-2">รายละเอียดปัจจุบัน</label>
+            <input type="text" value="{{ table.description|default:'-' }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed">
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">รายละเอียดใหม่</label>
+            <label class="block text-sm font-semibold text-gray-700 mb-2 font-bold">รายละเอียดใหม่</label>
             <input type="text" name="description" placeholder="กรอกรายละเอียดใหม่" class="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-800">
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-2">จำนวนโต๊ะเดิม</label>
-            <input type="text" value="{{ table.amount }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-200 text-gray-600 border border-gray-300 cursor-not-allowed">
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">จำนวนโต๊ะใหม่</label>
-            <input type="number" name="amount" placeholder="กรอกจำนวนโต๊ะใหม่" min="0" class="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-800">
+            <label class="block text-sm font-semibold text-gray-600 mb-2 font-bold">จำนวนโต๊ะปัจจุบัน ({{ table.amount }})</label>
+            <input type="number" name="amount" value="{{ table.amount }}" min="0" class="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-800">
+            <p class="text-[10px] text-gray-400 mt-1">*หากไม่ต้องการเปลี่ยนจำนวน ให้ใช้ค่าเดิม</p>
           </div>
         </div>
 
         <div class="flex gap-4 pt-6 border-t border-gray-200 mt-8">
           <a href="{% url 'table-manage' %}" class="flex-1 py-3 bg-gray-100 text-center rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition border border-gray-300">ยกเลิก</a>
-          <button type="submit" class="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition shadow-sm">บันทึกการแก้ไข</button>
+          <button type="submit" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-md shadow-blue-100">บันทึกการแก้ไข</button>
         </div>
 
       </form>
     </div>
   </div>
 </div>
+
 {% endblock %}
