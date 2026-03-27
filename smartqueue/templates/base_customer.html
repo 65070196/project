@@ -61,7 +61,7 @@
         
         <div class="relative inline-block text-left">
             <button onclick="toggleUserMenu()" class="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full hover:bg-gray-100 transition shadow-sm focus:outline-none">
-                <span>{{ user.username }}</span>
+                <span>{{ user.get_full_name }}</span>
                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
             

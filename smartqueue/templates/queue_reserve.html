@@ -29,7 +29,7 @@
           <label class="block text-sm font-semibold text-gray-700 mb-2">
             จำนวนลูกค้า <span class="text-red-500">*</span>
           </label>
-          <input type="number" name="pax" min="1" placeholder="ระบุจำนวนคน (เช่น 2)" required 
+          <input type="number" name="pax" min="1" value="{{ pax_value|default:'' }}" placeholder="ระบุจำนวนคน (เช่น 2)" required 
                  class="w-full h-14 bg-gray-100 rounded-xl px-4 text-gray-700 font-bold outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all">
         </div>
 
@@ -48,11 +48,11 @@
             <label class="block text-sm font-semibold text-gray-700 mb-2">
                 เวลาที่ทำการจอง <span class="text-red-500">*</span>
             </label>
-            <select name="queue_time" required class="w-full h-14 bg-gray-100 rounded-xl px-4 text-gray-700 font-bold outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all cursor-pointer">
+            <select name="queue_time" id="timeSelect" required class="w-full h-14 bg-gray-100 rounded-xl px-4 text-gray-700 font-bold outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all cursor-pointer">
               {% if is_closed %}
                   <option value="" disabled selected>-- วันนี้ร้านปิดทำการ --</option>
               {% elif not hour_range %}
-                  <option value="" disabled selected>-- คิวสำหรับวันนี้เต็ม/หมดเวลาจองแล้ว --</option>
+                  <option value="" disabled selected>-- คิวสำหรับวันนี้หมดเวลาจองแล้ว --</option>
               {% else %}
                   <option value="" disabled selected>-- เลือกเวลา --</option>
                   {% for hour in hour_range %}
@@ -67,11 +67,38 @@
         </div>
 
         {% if error_message %}
-          <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl text-sm text-center font-bold">
-              {{ error_message }}
+          <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-xl text-sm font-bold shadow-sm">
+              🚨 {{ error_message }}
           </div>
         {% endif %}
 
+        {% if alternative_times %}
+          <div class="bg-green-50 border-2 border-green-400 p-5 rounded-xl shadow-sm animate-pulse">
+              <h4 class="font-bold text-green-800 mb-3 flex items-center gap-2">
+                <span class="text-xl">💡</span> เราพบช่วงเวลาที่ใกล้เคียงและยังว่างอยู่:
+              </h4>
+              <div class="flex flex-wrap gap-3">
+                  {% for alt_time in alternative_times %}
+                  <button type="button" onclick="selectAlternativeTime('{{ alt_time }}')" 
+                          class="px-5 py-2.5 bg-white border-2 border-green-500 text-green-700 rounded-xl hover:bg-green-600 hover:text-white transition-all font-bold shadow-sm">
+                      เวลา {{ alt_time }} น.
+                  </button>
+                  {% endfor %}
+              </div>
+              <p class="text-xs text-green-600 mt-3 font-semibold">* คลิกที่เวลาด้านบน เพื่อเปลี่ยนเวลาจองอัตโนมัติ แล้วกดยืนยันได้เลย</p>
+          </div>
+          
+          <script>
+            function selectAlternativeTime(timeValue) {
+                const selectElement = document.getElementById('timeSelect');
+                selectElement.value = timeValue;
+                
+                // กระพริบให้รู้ว่าเลือกแล้ว
+                selectElement.classList.add('ring-4', 'ring-green-400');
+                setTimeout(() => selectElement.classList.remove('ring-4', 'ring-green-400'), 500);
+            }
+          </script>
+        {% endif %}
         <div class="flex flex-col md:flex-row gap-4 pt-4">
           <a href="{% url 'shop-detail' shop.shop_id %}" class="flex-1 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold transition shadow-sm hover:shadow-md text-center flex items-center justify-center">
             ยกเลิก
