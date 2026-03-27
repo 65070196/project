@@ -42,13 +42,21 @@
         <div class="text-xl font-bold text-black tracking-wide">On-Queue</div>
       </a>
       
-      <form action="{% url 'home-c' %}" method="GET" class="hidden md:flex items-center gap-2">
-        <div class="flex items-center bg-white rounded-full px-4 py-1.5 w-64 shadow-inner border border-transparent focus-within:border-[#a7a1f9] transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-gray-500 mr-2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-          </svg>
-          <input type="text" name="q" value="{{ request.GET.q }}" placeholder="ค้นหาร้านอาหาร..." class="outline-none text-sm w-full bg-transparent placeholder-gray-400 text-black">
+      <form action="{% url 'home-c' %}" method="GET" class="hidden md:flex items-center gap-2 relative">
+        <div class="relative w-64">
+          <div class="flex items-center bg-white rounded-full px-4 py-1.5 w-full shadow-inner border border-transparent focus-within:border-[#a7a1f9] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-gray-500 mr-2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input type="text" id="searchInput" name="q" value="{{ request.GET.q }}" autocomplete="off" placeholder="ค้นหาร้านอาหาร..." class="outline-none text-sm w-full bg-transparent placeholder-gray-400 text-black">
+          </div>
+          
+          <div id="searchDropdown" class="absolute left-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 hidden z-50 overflow-hidden">
+            <ul id="searchList" class="divide-y divide-gray-50">
+                </ul>
+          </div>
         </div>
+
         <button type="submit" class="bg-[#eefc57] text-black font-bold px-6 py-1.5 rounded-full hover:bg-yellow-300 transition text-sm shadow-sm">ค้นหา</button>
       </form>
     </div>
@@ -103,6 +111,56 @@
     window.addEventListener('click', function(e) {
         if (!document.getElementById('userMenuDropdown').contains(e.target) && !e.target.closest('button[onclick="toggleUserMenu()"]')) {
             document.getElementById('userMenuDropdown').classList.add('hidden');
+        }
+    });
+
+    const searchInput = document.getElementById('searchInput');
+    const searchDropdown = document.getElementById('searchDropdown');
+    const searchList = document.getElementById('searchList');
+
+    searchInput.addEventListener('input', async function() {
+        const query = this.value.trim();
+        
+        if (query.length > 0) {
+            try {
+                // ยิงคำที่พิมพ์ไปถามหลังบ้าน (Django)
+                const response = await fetch(`/api/search-suggestion/?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                searchList.innerHTML = ''; // เคลียร์ของเก่า
+                
+                if (data.results.length > 0) {
+                    // ถ้าเจอร้าน ให้วนลูปสร้างรายชื่อ
+                    data.results.forEach(shop => {
+                        const li = document.createElement('li');
+                        // 💡 ว้าวซ่า: คลิกร้านใน Dropdown แล้วเด้งไปหน้าร้านนั้นเลย! 
+                        li.innerHTML = `
+                            <a href="/shop/${shop.shop_id}/" class="block px-4 py-3 hover:bg-[#a7a1f9]/10 text-black text-sm transition-colors cursor-pointer flex items-center gap-2">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                ${shop.shop_name}
+                            </a>
+                        `;
+                        searchList.appendChild(li);
+                    });
+                } else {
+                    // ถ้าไม่เจอร้าน
+                    searchList.innerHTML = `<li class="px-4 py-3 text-gray-400 text-sm italic">ไม่พบร้านค้าที่ค้นหา...</li>`;
+                }
+                
+                searchDropdown.classList.remove('hidden'); // โชว์กล่อง
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        } else {
+            // ถ้าลบคำค้นหาจนหมด ให้ซ่อนกล่อง
+            searchDropdown.classList.add('hidden');
+        }
+    });
+
+    // ถ้าลูกค้าคลิกที่อื่นบนจอ (นอกจากช่องค้นหา) ให้พับกล่องเก็บไปเนียนๆ
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+            searchDropdown.classList.add('hidden');
         }
     });
   </script>
