@@ -1,4 +1,7 @@
 import os
+import requests
+import uuid
+
 from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
 from django.shortcuts import render
@@ -190,41 +193,93 @@ class ResetPassword(View):
         return render(request, "reset_password.html")
     
 
-class LineBindVerify(LoginRequiredMixin, View):
+class LineAuthRedirect(View):
     def get(self, request):
-        # 1. โชว์หน้าโหลดดิ้งดึงข้อมูล LIFF
-        return render(request, 'line_bind.html')
+        # 1. รับค่าว่าลูกค้ากดปุ่มมาจากหน้าไหน (เข้าสู่ระบบ หรือ ผูกบัญชี)
+        action = request.GET.get('action', 'login')
+        request.session['line_action'] = action # จำใส่เซสชันไว้
+        
+        channel_id = settings.LINE_LOGIN_CHANNEL_ID
+        callback_url = settings.LINE_LOGIN_CALLBACK_URL
+        state = uuid.uuid4().hex # รหัสป้องกันการแฮ็ก
+        
+        # 2. สร้างลิงก์ส่งลูกค้าไปหน้าเว็บล็อกอินของ LINE
+        line_auth_url = (
+            f"https://access.line.me/oauth2/v2.1/authorize"
+            f"?response_type=code"
+            f"&client_id={channel_id}"
+            f"&redirect_uri={callback_url}"
+            f"&state={state}"
+            f"&scope=profile%20openid"
+        )
+        return redirect(line_auth_url) # เด้งไปหน้า LINE สีเขียวๆ ทันที!
 
-    def post(self, request):
-        # 2. รับค่าไอดีไลน์ที่ JS ส่งมา
-        line_uid = request.POST.get('line_uid')
-
-        if not line_uid:
-            messages.error(request, 'ไม่สามารถดึงข้อมูล LINE ได้ กรุณาลองใหม่อีกครั้ง')
-            return redirect('view-c-profile')
+class LineAuthCallback(View):
+    def get(self, request):
+        code = request.GET.get('code')
+        if not code:
+            messages.error(request, 'ยกเลิกการเชื่อมต่อ LINE แล้ว')
+            return redirect('login')
 
         try:
-            # 3. เช็คกันเหนียว: ไอดีไลน์นี้ถูกคนอื่นเอาไปผูกไว้แล้วหรือยัง?
-            # ใช้ .first() เพื่อดูว่ามีคนอื่นใช้ไปแล้วไหม (ยกเว้นตัวเอง)
-            existing_line = Customer.objects.filter(line_uid=line_uid).exclude(auth=request.user).first()
-            if existing_line:
-                messages.error(request, 'ขออภัย บัญชี LINE นี้ถูกเชื่อมต่อกับผู้ใช้งานอื่นไปแล้ว')
-                return redirect('view-c-profile')
-
-            # 4. อัปเดตข้อมูลใส่บัญชีที่กำลังล็อกอินอยู่
-            # 🌟 หมัดฮุก: ใช้ get_or_create ป้องกัน Error กรณีลูกค้าคนนี้ยังไม่มีตาราง Customer
-            customer, created = Customer.objects.get_or_create(auth=request.user)
-            customer.line_uid = line_uid
-            customer.save()
+            # 1. เอา Code ที่ LINE ให้มา ไปแลกเป็น Access Token
+            token_url = "https://api.line.me/oauth2/v2.1/token"
+            token_data = {
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': settings.LINE_LOGIN_CALLBACK_URL,
+                'client_id': settings.LINE_LOGIN_CHANNEL_ID,
+                'client_secret': settings.LINE_LOGIN_CHANNEL_SECRET
+            }
+            token_headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+            token_res = requests.post(token_url, data=token_data, headers=token_headers).json()
             
-            messages.success(request, 'เชื่อมต่อบัญชี LINE สำเร็จ! คุณจะได้รับการแจ้งเตือนการจองคิว')
+            access_token = token_res.get('access_token')
+            if not access_token: raise Exception("ขอ Token ไม่สำเร็จ")
+            
+            # 2. เอา Access Token ไปดึงข้อมูลโปรไฟล์ (UID และ ชื่อ)
+            profile_url = "https://api.line.me/v2/profile"
+            profile_headers = {'Authorization': f'Bearer {access_token}'}
+            profile_res = requests.get(profile_url, headers=profile_headers).json()
+            
+            line_uid = profile_res.get('userId')
+            display_name = profile_res.get('displayName')
+            if not line_uid: raise Exception("ไม่สามารถดึงข้อมูล UID ได้")
+
+            # 3. เช็คว่ากำลังทำ Action อะไรอยู่ (ล็อกอิน หรือ ผูกบัญชี)
+            action = request.session.get('line_action')
+            
+            if action == 'bind':
+                # ---- กรณี 3.1: ลูกค้ากด "ผูกบัญชี" จากหน้าโปรไฟล์ ----
+                existing_line = Customer.objects.filter(line_uid=line_uid).exclude(auth=request.user).first()
+                if existing_line:
+                    messages.error(request, 'ขออภัย บัญชี LINE นี้ถูกเชื่อมต่อกับผู้ใช้งานอื่นไปแล้ว')
+                else:
+                    customer, _ = Customer.objects.get_or_create(auth=request.user)
+                    customer.line_uid = line_uid
+                    customer.save()
+                    messages.success(request, f'เชื่อมต่อกับ LINE: {display_name} สำเร็จ!')
+                return redirect('view-c-profile')
+                
+            else:
+                # ---- กรณี 3.2: ลูกค้ากด "เข้าสู่ระบบด้วย LINE" ----
+                customer = Customer.objects.filter(line_uid=line_uid).first()
+                if customer:
+                    login(request, customer.auth) # เคยมีบัญชีแล้ว ล็อกอินเลย
+                else:
+                    # สร้างบัญชีใหม่ให้เนียนๆ
+                    new_user = User.objects.create_user(
+                        username=f"line_{line_uid[:8]}_{uuid.uuid4().hex[:5]}",
+                        password=uuid.uuid4().hex,
+                        first_name=display_name[:30]
+                    )
+                    Customer.objects.create(auth=new_user, line_uid=line_uid)
+                    login(request, new_user)
+                return redirect('home-c')
 
         except Exception as e:
-            # ดักจับ Error อื่นๆ เผื่อ Database มีปัญหา
-            messages.error(request, f'เกิดข้อผิดพลาดในการเชื่อมต่อระบบ: {str(e)}')
-
-        # เด้งกลับไปหน้าโปรไฟล์
-        return redirect('view-c-profile')
+            messages.error(request, f'ระบบขัดข้อง: {str(e)}')
+            return redirect('view-c-profile' if request.user.is_authenticated else 'login')
 
 
 

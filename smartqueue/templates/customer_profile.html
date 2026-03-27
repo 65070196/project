@@ -101,8 +101,8 @@
             {% else %}
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-3">
                     <span class="text-gray-600 text-sm font-medium">ยังไม่ได้เชื่อมต่อ! คุณอาจพลาดการแจ้งเตือนเมื่อจองคิวสำเร็จ</span>
-                    <a href="{% url 'line-bind' %}" class="px-6 py-2.5 bg-[#00B900] hover:bg-[#009900] text-white rounded-lg font-bold transition shadow-md whitespace-nowrap flex items-center gap-2 w-full sm:w-auto justify-center">
-                        เชื่อมต่อ LINE ทันที
+                    <a href="{% url 'line-auth-redirect' %}?action=bind" class="px-6 py-2.5 bg-[#00B900] hover:bg-[#009900] text-white rounded-lg font-bold transition shadow-md whitespace-nowrap flex items-center gap-2 w-full sm:w-auto justify-center">
+                      เชื่อมต่อ LINE ทันที
                     </a>
                 </div>
             {% endif %}
