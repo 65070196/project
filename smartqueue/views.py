@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.db.models import Case, When, Value, IntegerField
 from django.contrib.auth import authenticate, logout, login
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
@@ -1101,4 +1102,14 @@ class EditCustomerProfile(View):
             'customer': customer,
         }
         return render(request, "edit_customer_profile.html", context)
-    
+
+class SearchSuggestion(View):
+    def get(self, request):
+        query = request.GET.get('q', '').strip()
+        if query:
+            # ค้นหาร้านที่ชื่อตรงกับคำที่พิมพ์ (จำกัดแค่ 5 ร้านพอ จะได้ไม่ล้นจอ)
+            shops = Shop.objects.filter(shop_name__icontains=query).values('shop_id', 'shop_name')[:5]
+            # ส่งข้อมูลกลับไปเป็นแบบ JSON ให้ JavaScript อ่าน
+            return JsonResponse({'results': list(shops)})
+        
+        return JsonResponse({'results': []})
