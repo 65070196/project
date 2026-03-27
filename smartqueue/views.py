@@ -188,6 +188,11 @@ class RegisterShop(View):
             context['error_message'] = str(e)
             return render(request, 'register_shop.html', context)
 
+class ResetPassword(View):
+    def get(self, request):
+        return render(request, "reset_password.html")
+    
+
 class LineAuthRedirect(View):
     def get(self, request):
         action = request.GET.get('action', 'login')
@@ -197,6 +202,7 @@ class LineAuthRedirect(View):
         callback_url = settings.LINE_LOGIN_CALLBACK_URL
         state = uuid.uuid4().hex 
         
+        # 🌟 ใช้ urllib.parse.urlencode เพื่อเข้ารหัสลิงก์ (URL Encoding) ป้องกัน Error สัญลักษณ์
         params = {
             'response_type': 'code',
             'client_id': channel_id,
