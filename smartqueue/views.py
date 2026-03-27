@@ -1,4 +1,5 @@
 import os
+from django.conf import settings
 import requests
 import uuid
 import urllib.parse
@@ -9,7 +10,6 @@ from django.db import transaction
 from django.core.files.storage import FileSystemStorage
 from django.contrib import messages
 from django.db.models import Case, When, Value, IntegerField
-from django.conf import settings
 from django.contrib.auth import authenticate, logout, login
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -199,10 +199,13 @@ class LineAuthRedirect(View):
         request.session['line_action'] = action
         
         channel_id = settings.LINE_LOGIN_CHANNEL_ID
-        callback_url = settings.LINE_LOGIN_CALLBACK_URL
+        
+        # 🚀 1. บังคับพิมพ์ลิงก์จริงลงไปเลย ห้ามดึงจาก settings
+        callback_url = "https://project-nu-three-88.vercel.app/line/callback/"
+        
         state = uuid.uuid4().hex 
         
-        # 🌟 ใช้ urllib.parse.urlencode เพื่อเข้ารหัสลิงก์ (URL Encoding) ป้องกัน Error สัญลักษณ์
+        # ใช้ urllib.parse.urlencode
         params = {
             'response_type': 'code',
             'client_id': channel_id,
@@ -223,12 +226,15 @@ class LineAuthCallback(View):
             return redirect('login')
 
         try:
+            # 🚀 2. บังคับพิมพ์ลิงก์จริงลงไปตรงนี้ด้วย (ต้องเหมือนข้างบนเป๊ะๆ)
+            callback_url = "https://project-nu-three-88.vercel.app/line/callback/"
+            
             # 1. เอา Code ที่ LINE ให้มา ไปแลกเป็น Access Token
             token_url = "https://api.line.me/oauth2/v2.1/token"
             token_data = {
                 'grant_type': 'authorization_code',
                 'code': code,
-                'redirect_uri': settings.LINE_LOGIN_CALLBACK_URL,
+                'redirect_uri': callback_url, # 👈 ส่งลิงก์จริงไปยืนยัน
                 'client_id': settings.LINE_LOGIN_CHANNEL_ID,
                 'client_secret': settings.LINE_LOGIN_CHANNEL_SECRET
             }
