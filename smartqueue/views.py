@@ -319,11 +319,16 @@ class QueueReserve(LoginRequiredMixin, View):
         pax_str = request.GET.get('pax', '')
         date_str = request.GET.get('queue_date')
         if date_str:
-            selected_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-            if selected_date < today: selected_date = today
+            try:
+                selected_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+
+                if selected_date < today:
+                    return redirect(f"{request.path}?queue_date={today.strftime('%Y-%m-%d')}&pax={pax_str}")
+            except ValueError:
+                selected_date = today
         else:
             selected_date = today
-
+            
         weekday = selected_date.weekday()
         open_info = shop.open_date
         
@@ -341,10 +346,13 @@ class QueueReserve(LoginRequiredMixin, View):
 
         hour_range = []
         if not is_closed and start_time and end_time:
-            buffer_time = (now + datetime.timedelta(hours=1)).time()
+            buffer_datetime = now + datetime.timedelta(hours=1)
+            
             for h in range(start_time.hour, end_time.hour):
                 slot_time = datetime.time(hour=h, minute=0)
-                if selected_date == today and slot_time < buffer_time:
+                slot_datetime = timezone.make_aware(datetime.datetime.combine(selected_date, slot_time))
+                
+                if slot_datetime < buffer_datetime:
                     continue
                 hour_range.append(h)
 
@@ -377,6 +385,9 @@ class QueueReserve(LoginRequiredMixin, View):
             parsed_date = parse_date(queue_date_str)
             parsed_time = parse_time(queue_time_str)
             pax = int(pax_str)
+            
+            if parsed_date < today:
+                raise Exception("ไม่สามารถจองคิวย้อนหลังได้")
 
             if pax <= 0: raise Exception("จำนวนลูกค้าต้องมากกว่า 0 ท่าน")
             if parsed_date < today: raise Exception("ไม่สามารถจองคิวย้อนหลังได้")

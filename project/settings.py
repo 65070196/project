@@ -87,7 +87,7 @@ WSGI_APPLICATION = 'project.wsgi.application'
 LINE_CHANNEL_ACCESS_TOKEN = 'h/TBk7izgXqunNBsnnzcnZPIePPDqcwIJ4Ct9DTLOpBxK1Ib8bDG1mOeGEOr8BcA/MhQHkjE1xaUsM6+TcP8B0F39gR96rINSQED4IEM2kxwhSgBjQC1QCYynTItSIF6XIQmbbXkGRYl1ay6XsbhTwdB04t89/1O/w1cDnyilFU='
 LINE_LOGIN_CHANNEL_ID = '2009625334'
 LINE_LOGIN_CHANNEL_SECRET = '50540993751d319d30a14a3a71abc4aa'
-LINE_LOGIN_CALLBACK_URL = 'https://project-nu-three-88/line/callback/'
+# LINE_LOGIN_CALLBACK_URL = 'https://project-nu-three-88/line/callback/'
 
 DATABASES = {
     'default': dj_database_url.config(
