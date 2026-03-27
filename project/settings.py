@@ -84,6 +84,7 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 
 
+LINE_CHANNEL_ACCESS_TOKEN = 'ใส่_TOKEN_ที่ก๊อปปี้มาตรงนี้'
 
 
 DATABASES = {

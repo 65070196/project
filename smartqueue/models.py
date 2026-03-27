@@ -8,6 +8,7 @@ class Customer(models.Model):
     auth = models.OneToOneField(User, on_delete=models.CASCADE, db_column='auth_id')
     phone = models.CharField(max_length=10, blank=True, null=True)
     image = models.ForeignKey('Image', on_delete=models.CASCADE, null=True)
+    line_uid = models.CharField(max_length=255, blank=True, null=True, help_text="ไอดีสำหรับส่ง LINE แจ้งเตือน")
     def __str__(self):
         return f"{self.auth.first_name} {self.auth.last_name}"
 
