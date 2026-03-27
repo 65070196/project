@@ -17,6 +17,8 @@ urlpatterns = [
     path("home/c/", HomeCustomer.as_view(), name="home-c"), 
     path("home/s/", HomeShop.as_view(), name="home-s"),
 
+    path('api/search-suggestion/', SearchSuggestion.as_view(), name='search-suggestion'),
+
     path("shop-detail/<int:shop_id>/", ShopDetail.as_view(), name="shop-detail"),
     
     path("queue-reserve/<int:shop_id>/", QueueReserve.as_view(), name="queue-reserve"),
