@@ -80,18 +80,17 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 
 
+# set DATABASE_URL=postgresql://postgres.hflpnhmbgoxwygmvlmfn:8UpOk8cwzQ7AChrv@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres
+# py manage.py migrate
+
+
 DATABASES = {
-    'default': dj_database_url.parse('postgresql://postgres.hflpnhmbgoxwygmvlmfn:8UpOk8cwzQ7AChrv@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres')
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
-
-
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         default=os.environ.get('DATABASE_URL'),
-#         conn_max_age=600,
-#         ssl_require=True
-#     )
-# }
 
 
 CLOUDINARY_STORAGE = {
