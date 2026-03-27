@@ -19,17 +19,18 @@
 
       <div class="bg-white rounded-xl overflow-hidden shadow border border-gray-200">
         <div class="w-full overflow-x-auto">
-          <div class="min-w-[1000px]">
+          <div class="min-w-[900px]">
             
-            <div class="grid grid-cols-6 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
+            <div class="grid grid-cols-5 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
               <div>ชื่อประเภทโต๊ะ</div>
               <div>รายละเอียด</div>
-              <div class="text-center">ที่นั่งสูงสุด</div> <div class="text-center">จำนวนทั้งหมด</div>
+              <div class="text-center">ที่นั่งสูงสุด</div> 
+              <div class="text-center">จำนวนทั้งหมด</div>
               <div class="text-center">จัดการ</div>
             </div>
 
             {% for table in tables %}
-            <div class="grid grid-cols-6 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
+            <div class="grid grid-cols-5 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
               
               <div class="font-bold text-gray-800 truncate" title="{{ table.name }}">
                 {{ table.name }}
@@ -53,7 +54,7 @@
 
               <div class="flex justify-center gap-2">
                 <a href="{% url 'table-edit' table.table_id %}" 
-                   class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-colors whitespace-nowrap">
+                  class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-colors whitespace-nowrap">
                   แก้ไข
                 </a>
                 <button type="button" onclick="openDelete(`{% url 'table-delete' table.table_id %}`)" 
