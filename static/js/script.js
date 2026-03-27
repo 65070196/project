@@ -38,17 +38,30 @@ window.closeDelete = function() {
 
 
 
-// อัปรูป
+// อัปรูป และ เช็คขนาดรูป
 window.previewImage = function(event) {
     const file = event.target.files[0];
     if (file) {
+        // ตรวจสอบขนาดไฟล์ (4.5MB = 4.5 * 1024 * 1024 bytes)
+        if (file.size > 4.5 * 1024 * 1024) {
+            alert('ขนาดไฟล์ใหญ่เกินไป กรุณาอัปโหลดรูปภาพขนาดไม่เกิน 4.5MB');
+            event.target.value = ''; // เคลียร์ไฟล์ที่เลือกออก
+            return; // หยุดการทำงาน
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
+            // 1. แสดงรูปภาพพรีวิว
             document.getElementById('image-preview').src = e.target.result;
             document.getElementById('image-preview').classList.remove('hidden');
+            
+            // 2. แสดงปุ่มลบ
             document.getElementById('remove-image-btn').classList.remove('hidden');
+            
+            // 3. ซ่อนข้อความ Placeholder (อัปโหลดรูปภาพ)
             document.getElementById('placeholder-content').classList.add('hidden');
             
+            // 4. เปลี่ยนสไตล์กรอบจากเส้นปะเป็นเส้นทึบให้ดูสวยงาม
             const label = document.getElementById('image-label');
             label.classList.add('p-1', 'border-solid', 'border-gray-100');
             label.classList.remove('border-dashed', 'border-gray-300');
@@ -73,3 +86,5 @@ window.removeImage = function(event) {
     label.classList.remove('p-1', 'border-solid', 'border-gray-100');
     label.classList.add('border-dashed', 'border-gray-300');
 };
+
+

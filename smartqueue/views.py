@@ -210,7 +210,6 @@ class QueueCheck(View):
 class QueueReserve(LoginRequiredMixin, View):
     def get(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
-        tables = Table.objects.filter(shop=shop)
         
         # 1. รับค่าวันที่ลูกค้าเลือกจากพารามิเตอร์ (ถ้ายังไม่เลือกให้ใช้วันนี้)
         date_str = request.GET.get('queue_date')
@@ -221,7 +220,7 @@ class QueueReserve(LoginRequiredMixin, View):
 
         # 2. หาวันในสัปดาห์ (0=จันทร์, 6=อาทิตย์)
         weekday = selected_date.weekday()
-        open_info = shop.open_date # ดึงข้อมูลจาก OneToOneField
+        open_info = shop.open_date
         
         # 3. Logic การดึงเวลาเปิด-ปิดตามวัน
         day_map = {
@@ -239,13 +238,11 @@ class QueueReserve(LoginRequiredMixin, View):
         # 4. สร้างรายการชั่วโมง (เฉพาะนาที :00)
         hour_range = []
         if not is_closed and start_time and end_time:
-            # วนลูปตั้งแต่ชั่วโมงที่เปิด จนถึงชั่วโมงก่อนปิด
             for h in range(start_time.hour, end_time.hour):
                 hour_range.append(h)
 
         context = {
             'shop': shop,
-            'tables': tables,
             'hour_range': hour_range,
             'is_closed': is_closed,
             'selected_date': selected_date.strftime('%Y-%m-%d'),
@@ -254,33 +251,33 @@ class QueueReserve(LoginRequiredMixin, View):
     
     def post(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
-        tables = Table.objects.filter(shop=shop) 
         
         queue_date_str = request.POST.get('queue_date')
         queue_time_str = request.POST.get('queue_time')
-        table_id = request.POST.get('table_id')
+        pax_str = request.POST.get('pax') # เปลี่ยนจากรับ table_id มารับจำนวนคน (pax)
 
         # 1. ตรวจสอบค่าว่าง
-        if not queue_date_str or not queue_time_str or not table_id:
+        if not queue_date_str or not queue_time_str or not pax_str:
             return render(request, 'queue_reserve.html', {
-                'shop': shop, 'tables': tables,
-                'error_message': 'กรุณาเลือกวันที่ เวลา และประเภทโต๊ะให้ครบถ้วน'
+                'shop': shop,
+                'error_message': 'กรุณาเลือกวันที่ เวลา และระบุจำนวนคนให้ครบถ้วน'
             })
 
         try:
             customer = Customer.objects.get(auth=request.user)
             parsed_date = parse_date(queue_date_str)
             parsed_time = parse_time(queue_time_str)
+            pax = int(pax_str)
 
-            # 2. ตรวจสอบนาที (ต้องเป็น :00 เท่านั้นตามที่คุณต้องการล่าสุด)
+            if pax <= 0:
+                raise Exception("จำนวนลูกค้าต้องมากกว่า 0 ท่าน")
+
+            # 2. ตรวจสอบนาที (ต้องเป็น :00 เท่านั้น)
             if parsed_time.minute != 0:
-                return render(request, 'queue_reserve.html', {
-                    'shop': shop, 'tables': tables,
-                    'error_message': 'ขออภัย ระบบรองรับการจองเฉพาะนาทีที่ :00 (ต้นชั่วโมง) เท่านั้น'
-                })
+                raise Exception("ขออภัย ระบบรองรับการจองเฉพาะนาทีที่ :00 (ต้นชั่วโมง) เท่านั้น")
 
-            # 3. ตรวจสอบเวลาเปิด-ปิดร้านจาก Model OpenDate
-            weekday = parsed_date.weekday() # 0=Mon, 6=Sun
+            # 3. ตรวจสอบเวลาเปิด-ปิดร้าน
+            weekday = parsed_date.weekday()
             open_info = shop.open_date
             
             day_config = {
@@ -304,43 +301,54 @@ class QueueReserve(LoginRequiredMixin, View):
             # 4. รวมวันที่และเวลา
             combined_datetime = datetime.datetime.combine(parsed_date, parsed_time)
 
-            # 5. เริ่มกระบวนการตรวจสอบคิวและบันทึก
+            # 5. อัลกอริทึม Best-Fit หาโต๊ะที่พอดีที่สุด
             with transaction.atomic():
-                table = Table.objects.select_for_update().get(pk=table_id, shop=shop)
+                # กรองโต๊ะที่จุพอ และเรียงจากเล็กไปใหญ่ (Best-Fit)
+                suitable_tables = Table.objects.filter(shop=shop, capacity__gte=pax).order_by('capacity')
                 
-                existing_queues_count = Queue.objects.filter(
-                    shop=shop,
-                    table=table,
-                    queue_time=combined_datetime
-                ).count()
+                allocated_table = None
 
-                if existing_queues_count >= table.amount:
-                    return render(request, 'queue_reserve.html', {
-                        'shop': shop, 'tables': tables,
-                        'error_message': f'ขออภัย โต๊ะประเภท "{table.name}" ในเวลาดังกล่าวถูกจองเต็มแล้ว'
-                    })
+                for table in suitable_tables:
+                    # ล็อกแถวของโต๊ะนี้ไว้ก่อนเพื่อป้องกันคนแย่งจองพร้อมกัน (Race condition)
+                    locked_table = Table.objects.select_for_update().get(pk=table.pk)
+                    
+                    # เช็กว่าในเวลานี้ โต๊ะประเภทนี้ถูกจองที่สถานะ 'กำลังดำเนินการ' ไปกี่ตัวแล้ว
+                    existing_queues_count = Queue.objects.filter(
+                        shop=shop,
+                        table=locked_table,
+                        queue_time=combined_datetime,
+                        status='doing'
+                    ).count()
 
-                # บันทึกข้อมูล
+                    # ถ้าจำนวนที่ถูกจองยังน้อยกว่าจำนวนโต๊ะที่มี = มีโต๊ะว่าง!
+                    if existing_queues_count < locked_table.amount:
+                        allocated_table = locked_table
+                        break # เจอโต๊ะแล้ว หยุดหาทันที
+                
+                # ถ้าวนหาจนจบแล้วยังไม่มีโต๊ะ (allocated_table เป็น None)
+                if not allocated_table:
+                    raise Exception(f"ขออภัย ไม่มีโต๊ะว่างสำหรับ {pax} ท่าน ในเวลาดังกล่าว")
+
+                # บันทึกข้อมูลคิว
                 Queue.objects.create(
                     customer=customer,
                     shop=shop,
-                    table=table,
+                    table=allocated_table, # โต๊ะที่ระบบเลือกให้
+                    pax=pax,               
                     queue_date=parsed_date,
-                    queue_time=combined_datetime
+                    queue_time=combined_datetime,
+                    status='doing'
                 )
             
             return redirect('home-c') 
 
         except Customer.DoesNotExist:
             error = 'ไม่พบข้อมูลลูกค้า'
-        except Table.DoesNotExist:
-            error = 'ไม่พบประเภทโต๊ะที่ระบุ'
         except Exception as e:
             error = str(e)
 
         return render(request, 'queue_reserve.html', {
             'shop': shop,
-            'tables': tables,
             'error_message': error
         })
         
@@ -505,8 +513,10 @@ class TableAdd(View):
         name = request.POST.get('name')
         description = request.POST.get('description')
         amount = request.POST.get('amount')
+        capacity = request.POST.get('capacity') # 🌟 เพิ่มการรับค่าความจุ (นั่งได้กี่คน)
         image_file = request.FILES.get('image')
 
+        # สมมติว่าล็อกอินในฐานะเจ้าของร้านแล้ว (คุณอาจต้องใส่ LoginRequiredMixin แบบหน้าจองคิวด้วยนะถ้ายังไม่มี)
         shop = Shop.objects.get(auth=request.user)
         image_obj = None
 
@@ -519,6 +529,7 @@ class TableAdd(View):
             name=name,
             description=description,
             amount=amount,
+            capacity=capacity, 
             image=image_obj
         )
         return redirect('table-manage')
@@ -538,14 +549,19 @@ class TableEdit(View):
         new_name = request.POST.get('name', '').strip()
         new_desc = request.POST.get('description', '').strip()
         new_amount = request.POST.get('amount', '').strip()
+        new_capacity = request.POST.get('capacity', '').strip()
 
+        
         if new_name != '':
             table.name = new_name
         if new_desc != '':
             table.description = new_desc
         if new_amount != '':
             table.amount = new_amount
+        if new_capacity != '':
+            table.capacity = new_capacity
             
+
         table.save()
         return redirect('table-manage')
     

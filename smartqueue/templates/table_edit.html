@@ -17,12 +17,12 @@
         <div class="mb-10 max-w-sm mx-auto">
           <label class="block text-sm font-bold text-gray-700 mb-3 text-center">รูปภาพประเภทโต๊ะ</label>
           
-          <div id="image-label" class="w-full aspect-square bg-white rounded-2xl flex flex-col items-center justify-center hover:bg-gray-50 border-2 border-dashed border-gray-300 hover:border-indigo-400 transition-all overflow-hidden relative group shadow-sm">
+          <div id="image-label" class="w-full aspect-square bg-white rounded-2xl flex flex-col items-center justify-center hover:bg-gray-50 border-2 {% if table.image %}border-solid border-gray-100 p-1{% else %}border-dashed border-gray-300{% endif %} hover:border-indigo-400 transition-all overflow-hidden relative group shadow-sm">
             
             <label for="image-input" id="placeholder-content" class="absolute inset-0 flex flex-col items-center justify-center text-center p-4 cursor-pointer {% if table.image %}hidden{% endif %}">
               <span class="text-5xl text-gray-400 mb-3 transition-transform group-hover:scale-110">🪑</span>
               <span class="text-sm font-semibold text-gray-500">อัปโหลดรูปภาพโต๊ะ</span>
-              <span class="text-xs text-gray-400 mt-1">คลิกเพื่อเลือกไฟล์ (สูงสุด 5MB)</span>
+              <span class="text-xs text-gray-400 mt-1">คลิกเพื่อเลือกไฟล์ (สูงสุด 4.5MB)</span>
             </label>
 
             <img id="image-preview" 
@@ -41,10 +41,12 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+          
           <div class="md:col-span-2">
             <label class="block text-sm font-semibold text-gray-600 mb-2">หมายเลขประเภทโต๊ะ</label>
             <input type="text" value="{{ table.table_id }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-200 text-gray-600 border border-gray-300 cursor-not-allowed">
           </div>
+          
           <div>
             <label class="block text-sm font-semibold text-gray-600 mb-2">ชื่อประเภทโต๊ะปัจจุบัน</label>
             <input type="text" value="{{ table.name }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed">
@@ -53,19 +55,38 @@
             <label class="block text-sm font-semibold text-gray-700 mb-2 font-bold">ชื่อประเภทโต๊ะใหม่</label>
             <input type="text" name="name" placeholder="กรอกชื่อใหม่ (หากต้องการเปลี่ยน)" class="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-800">
           </div>
+          
           <div>
             <label class="block text-sm font-semibold text-gray-600 mb-2">รายละเอียดปัจจุบัน</label>
-            <input type="text" value="{{ table.description|default:'-' }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed">
+            <input type="text" value="{{ table.description|default:'ไม่มีรายละเอียด' }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed">
           </div>
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2 font-bold">รายละเอียดใหม่</label>
             <input type="text" name="description" placeholder="กรอกรายละเอียดใหม่" class="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-800">
           </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-2 font-bold">จำนวนโต๊ะปัจจุบัน ({{ table.amount }})</label>
-            <input type="number" name="amount" value="{{ table.amount }}" min="0" class="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-800">
-            <p class="text-[10px] text-gray-400 mt-1">*หากไม่ต้องการเปลี่ยนจำนวน ให้ใช้ค่าเดิม</p>
+          
+          <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-gray-200 mt-2">
+            
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">จำนวนโต๊ะทั้งหมดที่มี (ปัจจุบัน: {{ table.amount }})</label>
+              <div class="h-12 bg-white rounded-xl flex items-center px-4 border border-gray-300 focus-within:ring-2 focus-within:ring-blue-400 transition">
+                <span class="text-gray-400 mr-2 text-sm">🪑</span>
+                <input type="number" name="amount" value="{{ table.amount }}" min="1" required class="w-full bg-transparent outline-none text-gray-800 font-semibold">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">ความจุสูงสุด (ปัจจุบัน: {{ table.capacity|default:'0' }})</label>
+              <div class="h-12 bg-white rounded-xl flex items-center px-4 border border-gray-300 focus-within:ring-2 focus-within:ring-blue-400 transition">
+                <span class="text-gray-400 mr-2 text-sm">👥</span>
+                <input type="number" name="capacity" value="{{ table.capacity|default:'' }}" min="1" required class="w-full bg-transparent outline-none text-gray-800 font-semibold">
+                <span class="text-gray-500 text-sm ml-2">ท่าน</span>
+              </div>
+            </div>
+
+            <p class="md:col-span-2 text-xs text-gray-500 text-center">*หากไม่ต้องการเปลี่ยนจำนวนหรือความจุ ให้คงค่าเดิมไว้</p>
           </div>
+
         </div>
 
         <div class="flex gap-4 pt-6 border-t border-gray-200 mt-8">

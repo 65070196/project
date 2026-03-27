@@ -23,11 +23,12 @@ class Queue(models.Model):
     customer = models.ForeignKey('Customer', on_delete=models.CASCADE, null=False)
     shop = models.ForeignKey('Shop', on_delete=models.CASCADE, null=False)
     table = models.ForeignKey('Table', on_delete=models.SET_NULL, null=True, blank=True)
+    pax = models.IntegerField(null=False, default=1)
     queue_date = models.DateField(null=False)
     queue_time = models.DateTimeField(null=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='doing')
     def __str__(self):
-        return f"Queue {self.queue_id} - {self.get_status_display()}"
+        return f"Queue {self.queue_id} ({self.pax} คน) - {self.get_status_display()}"
 
 
 # --- โมเดลของร้านค้า ---
@@ -60,7 +61,10 @@ class Table(models.Model):
     name = models.CharField(max_length=24, null=False)
     description = models.CharField(max_length=200, blank=True, null=True)
     amount = models.IntegerField(null=False)
+    capacity = models.IntegerField(null=False, default=1)
     image = models.ForeignKey('Image', on_delete=models.CASCADE, null=False)
+    def __str__(self):
+        return f"{self.name} (นั่งได้ {self.capacity} คน) - ว่าง {self.amount} โต๊ะ"
 
 
 # --- โมเดลของลูกค้า ---

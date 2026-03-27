@@ -80,18 +80,18 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 
 
-# DATABASES = {
-#     'default': dj_database_url.parse('postgresql://postgres.hflpnhmbgoxwygmvlmfn:รหัสผ่านของคุณ@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres')
-# }
-
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=True
-    )
+    'default': dj_database_url.parse('postgresql://postgres.hflpnhmbgoxwygmvlmfn:8UpOk8cwzQ7AChrv@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres')
 }
+
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.environ.get('DATABASE_URL'),
+#         conn_max_age=600,
+#         ssl_require=True
+#     )
+# }
 
 
 CLOUDINARY_STORAGE = {
