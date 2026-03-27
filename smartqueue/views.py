@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.db import transaction
 from django.core.files.storage import FileSystemStorage
 from django.contrib import messages
+from django.db.models import Case, When, Value, IntegerField
 from django.conf import settings
 from django.contrib.auth import authenticate, logout, login
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -336,6 +337,9 @@ class QueueReserve(LoginRequiredMixin, View):
                 # กรองโต๊ะที่จุพอ และเรียงจากเล็กไปใหญ่ (Best-Fit)
                 suitable_tables = Table.objects.filter(shop=shop, capacity__gte=pax).order_by('capacity')
                 
+                if not suitable_tables.exists():
+                    raise Exception(f"ขออภัย ไม่พบโต๊ะสำหรับลูกค้า {pax} ท่าน")
+
                 allocated_table = None
 
                 for table in suitable_tables:
@@ -401,7 +405,14 @@ class HomeShop(View):
             my_shop = Shop.objects.get(auth=request.user)
             today = timezone.localdate()
             
-            queues = Queue.objects.filter(shop=my_shop, queue_date=today).order_by('queue_time')
+            queues = Queue.objects.filter(shop=my_shop, queue_date=today).annotate(
+                status_order=Case(
+                    When(status='doing', then=Value(1)),
+                    When(status='done', then=Value(2)),
+                    When(status='cancel', then=Value(3)),
+                    output_field=IntegerField(),
+                )
+            ).order_by('status_order', 'queue_time')
             
             context = {
                 'queues': queues,
@@ -417,7 +428,15 @@ class HomeShop(View):
             return redirect('login')
             
         today = timezone.localdate()
-        queues = Queue.objects.filter(shop__auth=request.user, queue_date=today).order_by('queue_time')
+        
+        queues = Queue.objects.filter(shop__auth=request.user, queue_date=today).annotate(
+            status_order=Case(
+                When(status='doing', then=Value(1)),
+                When(status='done', then=Value(2)),
+                When(status='cancel', then=Value(3)),
+                output_field=IntegerField(),
+            )
+        ).order_by('status_order', 'queue_time')
     
         context = {
             'queues': queues,
@@ -425,13 +444,23 @@ class HomeShop(View):
         }
         return render(request, "home_shop.html", context)
 
+
 class AllQueueShop(View):
     def get(self, request):
         if not request.user.is_authenticated:
             return redirect('login')
         try:
             my_shop = Shop.objects.get(auth=request.user)
-            queues = Queue.objects.filter(shop=my_shop).order_by('queue_date', 'queue_time')  
+            
+            queues = Queue.objects.filter(shop=my_shop).annotate(
+                status_order=Case(
+                    When(status='doing', then=Value(1)),
+                    When(status='done', then=Value(2)),
+                    When(status='cancel', then=Value(3)),
+                    output_field=IntegerField(),
+                )
+            ).order_by('status_order', 'queue_date', 'queue_time')  
+            
             context = {
                 'queues': queues
             }
@@ -443,10 +472,16 @@ class AllQueueShop(View):
         if not request.user.is_authenticated:
             return redirect('login')
 
-        queues = Queue.objects.filter(shop__auth=request.user).order_by('queue_date', 'queue_time')
+        queues = Queue.objects.filter(shop__auth=request.user).annotate(
+            status_order=Case(
+                When(status='doing', then=Value(1)),
+                When(status='done', then=Value(2)),
+                When(status='cancel', then=Value(3)),
+                output_field=IntegerField(),
+            )
+        ).order_by('status_order', 'queue_date', 'queue_time')
 
         context = {
-
             'queues': queues
         }
         return render(request, "queue_all.html", context)
