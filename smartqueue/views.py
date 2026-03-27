@@ -199,20 +199,18 @@ class LineAuthRedirect(View):
         request.session['line_action'] = action
         
         channel_id = settings.LINE_LOGIN_CHANNEL_ID
-        
-        # 🚀 1. บังคับพิมพ์ลิงก์จริงลงไปเลย ห้ามดึงจาก settings
         callback_url = "https://project-nu-three-88.vercel.app/line/callback/"
-        
         state = uuid.uuid4().hex 
         
-        # ใช้ urllib.parse.urlencode
         params = {
             'response_type': 'code',
             'client_id': channel_id,
             'redirect_uri': callback_url,
             'state': state,
-            'scope': 'profile openid'
+            'scope': 'profile openid',
+            'bot_prompt': 'aggressive' 
         }
+        
         query_string = urllib.parse.urlencode(params)
         line_auth_url = f"https://access.line.me/oauth2/v2.1/authorize?{query_string}"
         
