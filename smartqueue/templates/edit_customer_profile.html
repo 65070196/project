@@ -36,9 +36,10 @@
               </label>
 
               <img id="image-preview" 
-                   src="{% if customer.image %}{{ customer.image.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                   src="{% if customer.image %}{{ customer.image.url }}{% else %}#{% endif %}" 
                    alt="Profile Preview" 
-                   class="{% if not customer.image %}hidden{% endif %} absolute inset-0 w-full h-full object-cover rounded-2xl p-1 pointer-events-none">
+                   class="{% if not customer.image %}hidden{% endif %} absolute inset-0 w-full h-full object-cover rounded-2xl p-1 pointer-events-none"
+                   onerror="this.classList.add('hidden'); document.getElementById('placeholder-content').classList.remove('hidden'); document.getElementById('remove-image-btn').classList.add('hidden');">
               
               <input type="file" name="profile_image" id="image-input" class="sr-only" accept="image/*" onchange="previewImage(event)">
               
