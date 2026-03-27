@@ -1,6 +1,7 @@
 import os
 import requests
 import uuid
+import urllib.parse
 
 from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
@@ -187,31 +188,26 @@ class RegisterShop(View):
             context['error_message'] = str(e)
             return render(request, 'register_shop.html', context)
 
-class ResetPassword(View):
-    def get(self, request):
-        return render(request, "reset_password.html")
-    
-
 class LineAuthRedirect(View):
     def get(self, request):
-        # 1. รับค่าว่าลูกค้ากดปุ่มมาจากหน้าไหน (เข้าสู่ระบบ หรือ ผูกบัญชี)
         action = request.GET.get('action', 'login')
-        request.session['line_action'] = action # จำใส่เซสชันไว้
+        request.session['line_action'] = action
         
         channel_id = settings.LINE_LOGIN_CHANNEL_ID
         callback_url = settings.LINE_LOGIN_CALLBACK_URL
-        state = uuid.uuid4().hex # รหัสป้องกันการแฮ็ก
+        state = uuid.uuid4().hex 
         
-        # 2. สร้างลิงก์ส่งลูกค้าไปหน้าเว็บล็อกอินของ LINE
-        line_auth_url = (
-            f"https://access.line.me/oauth2/v2.1/authorize"
-            f"?response_type=code"
-            f"&client_id={channel_id}"
-            f"&redirect_uri={callback_url}"
-            f"&state={state}"
-            f"&scope=profile%20openid"
-        )
-        return redirect(line_auth_url) # เด้งไปหน้า LINE สีเขียวๆ ทันที!
+        params = {
+            'response_type': 'code',
+            'client_id': channel_id,
+            'redirect_uri': callback_url,
+            'state': state,
+            'scope': 'profile openid'
+        }
+        query_string = urllib.parse.urlencode(params)
+        line_auth_url = f"https://access.line.me/oauth2/v2.1/authorize?{query_string}"
+        
+        return redirect(line_auth_url)
 
 class LineAuthCallback(View):
     def get(self, request):
