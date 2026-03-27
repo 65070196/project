@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>กำลังเชื่อมต่อ LINE...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center h-screen">
+
+    <div class="text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-500 mx-auto mb-4"></div>
+        <h2 class="text-xl font-bold text-gray-700">กำลังเชื่อมต่อบัญชีของคุณเข้ากับ LINE...</h2>
+        <p class="text-sm text-gray-500 mt-2">กรุณารอสักครู่ ระบบกำลังดำเนินการ</p>
+    </div>
+
+    <form id="liff-bind-form" method="POST" action="{% url 'line-bind' %}" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="line_uid" id="line_uid">
+    </form>
+
+    <script>
+        async function main() {
+            try {
+                // 🚀 ใส่ LIFF ID เดิมของคุณตรงนี้ได้เลย (ใช้ตัวเดียวกับตอน Login ได้ครับ)
+                await liff.init({ liffId: "ใส่_LIFF_ID_ของคุณตรงนี้" }); 
+                
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    
+                    // ยัดไอดีใส่ฟอร์ม
+                    document.getElementById('line_uid').value = profile.userId;
+                    
+                    // สั่งกด Submit อัตโนมัติ
+                    document.getElementById('liff-bind-form').submit();
+                } else {
+                    // ถ้ายังไม่ล็อกอิน ให้ล็อกอินก่อน
+                    liff.login();
+                }
+            } catch (err) {
+                console.error("LIFF Init Error: ", err);
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อ LINE");
+                window.location.href = "{% url 'view-c-profile' %}"; // พังก็กลับหน้าโปรไฟล์
+            }
+        }
+        main();
+    </script>
+</body>
+</html>

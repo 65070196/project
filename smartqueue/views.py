@@ -66,6 +66,7 @@ class RegisterCustomer(View):
         return render(request, 'register_customer.html')
 
     def post(self, request):
+        # 1. ดึงค่าจากฟอร์ม
         username_form = request.POST.get('username', '').strip()
         email_form = request.POST.get('email', '').strip()
         password1_form = request.POST.get('password', '')
@@ -74,6 +75,7 @@ class RegisterCustomer(View):
         lastname_form = request.POST.get('lastname', '').strip()
         phone_form = request.POST.get('phone', '').strip()
 
+        # 2. เตรียมข้อมูลส่งกลับ (เผื่อมี Error)
         context = {
             'old_username': username_form,
             'old_email': email_form,
@@ -82,46 +84,41 @@ class RegisterCustomer(View):
             'old_phone': phone_form,
         }
 
-        if not all([username_form, email_form, password1_form, password2_form, firstname_form, lastname_form]):
-            context['error_message'] = "กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน"
-            return render(request, 'register_customer.html', context)
-
-        if password1_form != password2_form:
-            context['error_message'] = "รหัสผ่านทั้งสองช่องไม่ตรงกัน"
-            return render(request, 'register_customer.html', context)
-            
-        if len(password1_form) < 8:
-            context['error_message'] = "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร"
-            return render(request, 'register_customer.html', context)
-
-        if User.objects.filter(username=username_form).exists():
-            context['error_message'] = "ชื่อผู้ใช้งานนี้ถูกใช้ไปแล้ว"
-            return render(request, 'register_customer.html', context)
-        
-        if User.objects.filter(email=email_form).exists():
-            context['error_message'] = "อีเมลนี้ถูกใช้ไปแล้ว"
-            return render(request, 'register_customer.html', context)
-
+        # 3. Validation ต่างๆ
         try:
-            django_user = User.objects.create_user(
-                username=username_form,
-                password=password1_form,
-                email=email_form,
-                first_name=firstname_form,
-                last_name=lastname_form,
-            )
-            Customer.objects.create(
-                auth=django_user,
-                phone=phone_form,
-            )
-            login(request, django_user)
-            return redirect('home-c')
+            if not all([username_form, email_form, password1_form, password2_form, firstname_form, lastname_form]):
+                raise Exception("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน")
+
+            if password1_form != password2_form:
+                raise Exception("รหัสผ่านทั้งสองช่องไม่ตรงกัน")
+                
+            if len(password1_form) < 8:
+                raise Exception("รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร")
+
+            if User.objects.filter(username=username_form).exists():
+                raise Exception("ชื่อผู้ใช้งานนี้ถูกใช้ไปแล้ว")
+            
+            if User.objects.filter(email=email_form).exists():
+                raise Exception("อีเมลนี้ถูกใช้ไปแล้ว")
+
+            # 4. เริ่มสร้าง User (ใช้ Transaction เพื่อความปลอดภัย)
+            with transaction.atomic():
+                django_user = User.objects.create_user(
+                    username=username_form,
+                    password=password1_form,
+                    email=email_form,
+                    first_name=firstname_form,
+                    last_name=lastname_form,
+                )
+                Customer.objects.create(
+                    auth=django_user,
+                    phone=phone_form,
+                )
+                login(request, django_user)
+                return redirect('home-c')
 
         except Exception as e:
-            if 'django_user' in locals() and django_user.id:
-                django_user.delete()
-                
-            context['error_message'] = f"เกิดข้อผิดพลาดในการสมัครสมาชิก: {str(e)}"
+            context['error_message'] = str(e)
             return render(request, 'register_customer.html', context)
 
 
@@ -130,6 +127,7 @@ class RegisterShop(View):
         return render(request, "register_shop.html")
     
     def post(self, request):
+        # 1. ดึงค่าจากฟอร์ม
         shop_name_form = request.POST.get('shop_name', '').strip()
         username_form = request.POST.get('username', '').strip()
         email_form = request.POST.get('email', '').strip()
@@ -137,6 +135,7 @@ class RegisterShop(View):
         password1_form = request.POST.get('password', '')
         password2_form = request.POST.get('password_confirm', '')
 
+        # 2. เตรียมข้อมูลส่งกลับเพื่อเก็บค่าไว้ในฟอร์ม
         context = {
             'old_shop_name': shop_name_form,
             'old_username': username_form,
@@ -144,50 +143,88 @@ class RegisterShop(View):
             'old_phone': phone_form,
         }
 
-        if not all([shop_name_form, username_form, password1_form, password2_form]):
-            context['error_message'] = "กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน"
-            return render(request, 'register_shop.html', context)
-        
-        if password1_form != password2_form:
-            context['error_message'] = "รหัสผ่านทั้งสองช่องไม่ตรงกัน"
-            return render(request, 'register_shop.html', context)
-        
-        if len(password1_form) < 8:
-            context['error_message'] = "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร"
-            return render(request, 'register_shop.html', context)
-        
-        if User.objects.filter(username=username_form).exists():
-            context['error_message'] = "ชื่อผู้ใช้งานนี้ถูกใช้ไปแล้ว"
-            return render(request, 'register_shop.html', context)
-        
-        if email_form and User.objects.filter(email=email_form).exists():
-            context['error_message'] = "อีเมลนี้ถูกใช้ไปแล้ว"
-            return render(request, 'register_shop.html', context)
-        
         try:
-            # สร้าง User 
-            user = User.objects.create_user(
-                username=username_form,
-                email=email_form,
-                password=password1_form
-            )
-            # สร้างข้อมูล Shop แล้วผูกกับ User
-            Shop.objects.create(
-                auth=user,
-                shop_name=shop_name_form,
-                phone=phone_form
-            )
-            return redirect('home-s')
+            # 3. Validation
+            if not all([shop_name_form, username_form, password1_form, password2_form]):
+                raise Exception("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน")
+            
+            if password1_form != password2_form:
+                raise Exception("รหัสผ่านทั้งสองช่องไม่ตรงกัน")
+            
+            if len(password1_form) < 8:
+                raise Exception("รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร")
+            
+            if User.objects.filter(username=username_form).exists():
+                raise Exception("ชื่อผู้ใช้งานนี้ถูกใช้ไปแล้ว")
+            
+            if email_form and User.objects.filter(email=email_form).exists():
+                raise Exception("อีเมลนี้ถูกใช้ไปแล้ว")
+
+            # 4. เริ่มบันทึกข้อมูล (ใช้ transaction.atomic เพื่อป้องกันข้อมูลค้างถ้าเกิด Error กลางทาง)
+            with transaction.atomic():
+                # สร้าง User
+                user = User.objects.create_user(
+                    username=username_form,
+                    email=email_form,
+                    password=password1_form
+                )
+                # สร้างข้อมูล Shop
+                Shop.objects.create(
+                    auth=user,
+                    shop_name=shop_name_form,
+                    phone=phone_form
+                )
+                
+                # สมัครเสร็จให้ Login ให้อัตโนมัติ (เลือกใช้ได้)
+                # login(request, user) 
+                
+                return redirect('home-s')
 
         except Exception as e:
-            if 'user' in locals() and user.id:
-                user.delete()
-            context['error_message'] = f"เกิดข้อผิดพลาดในการสมัครสมาชิก: {str(e)}"
+            # ส่ง Error และค่าเดิมกลับไปที่หน้าเดิม
+            context['error_message'] = str(e)
             return render(request, 'register_shop.html', context)
 
 class ResetPassword(View):
     def get(self, request):
         return render(request, "reset_password.html")
+    
+
+class LineBindVerify(LoginRequiredMixin, View):
+    def get(self, request):
+        # 1. โชว์หน้าโหลดดิ้งดึงข้อมูล LIFF
+        return render(request, 'line_bind.html')
+
+    def post(self, request):
+        # 2. รับค่าไอดีไลน์ที่ JS ส่งมา
+        line_uid = request.POST.get('line_uid')
+
+        if not line_uid:
+            messages.error(request, 'ไม่สามารถดึงข้อมูล LINE ได้ กรุณาลองใหม่อีกครั้ง')
+            return redirect('view-c-profile')
+
+        try:
+            # 3. เช็คกันเหนียว: ไอดีไลน์นี้ถูกคนอื่นเอาไปผูกไว้แล้วหรือยัง?
+            # ใช้ .first() เพื่อดูว่ามีคนอื่นใช้ไปแล้วไหม (ยกเว้นตัวเอง)
+            existing_line = Customer.objects.filter(line_uid=line_uid).exclude(auth=request.user).first()
+            if existing_line:
+                messages.error(request, 'ขออภัย บัญชี LINE นี้ถูกเชื่อมต่อกับผู้ใช้งานอื่นไปแล้ว')
+                return redirect('view-c-profile')
+
+            # 4. อัปเดตข้อมูลใส่บัญชีที่กำลังล็อกอินอยู่
+            # 🌟 หมัดฮุก: ใช้ get_or_create ป้องกัน Error กรณีลูกค้าคนนี้ยังไม่มีตาราง Customer
+            customer, created = Customer.objects.get_or_create(auth=request.user)
+            customer.line_uid = line_uid
+            customer.save()
+            
+            messages.success(request, 'เชื่อมต่อบัญชี LINE สำเร็จ! คุณจะได้รับการแจ้งเตือนการจองคิว')
+
+        except Exception as e:
+            # ดักจับ Error อื่นๆ เผื่อ Database มีปัญหา
+            messages.error(request, f'เกิดข้อผิดพลาดในการเชื่อมต่อระบบ: {str(e)}')
+
+        # เด้งกลับไปหน้าโปรไฟล์
+        return redirect('view-c-profile')
 
 
 
@@ -217,7 +254,7 @@ class QueueReserve(LoginRequiredMixin, View):
         shop = get_object_or_404(Shop, pk=shop_id)
         now = timezone.localtime()
         today = now.date()
-        
+        pax_str = request.GET.get('pax', '')
         date_str = request.GET.get('queue_date')
         if date_str:
             selected_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -255,6 +292,7 @@ class QueueReserve(LoginRequiredMixin, View):
             'is_closed': is_closed,
             'selected_date': selected_date.strftime('%Y-%m-%d'),
             'today_str': today.strftime('%Y-%m-%d'),
+            'pax_value': pax_str,
         }
         return render(request, 'queue_reserve.html', context)
     
@@ -955,3 +993,4 @@ class EditCustomerProfile(View):
             'customer': customer,
         }
         return render(request, "edit_customer_profile.html", context)
+    

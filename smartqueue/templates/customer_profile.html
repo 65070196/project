@@ -20,6 +20,27 @@
         </a>
       </div>
 
+      {% if messages %}
+        <div class="max-w-4xl mx-auto mb-6 space-y-3">
+          {% for message in messages %}
+            <div class="px-5 py-4 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2
+              {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200
+              {% elif message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+              {% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+              
+              {% if message.tags == 'success' %}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              {% elif message.tags == 'error' %}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              {% else %}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              {% endif %}
+              
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
       <div class="max-w-4xl mx-auto bg-gray-50 rounded-2xl shadow-sm border border-gray-200 p-8">
         
         <div class="flex flex-col items-center mb-10">
@@ -64,7 +85,29 @@
             </p>
           </div>
 
-        </div>
+          <div class="col-span-1 md:col-span-2 mt-4 p-5 bg-[#00B900]/10 rounded-xl border border-[#00B900]/30">
+            <h3 class="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <svg class="w-6 h-6 text-[#00B900]" fill="currentColor" viewBox="0 0 24 24"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.114.281.072.717.035.993-.046.335-.224 1.343-.271 1.637-.061.385.297.551.58.423.238-.108 1.408-.686 2.029-1.042 1.396-.8 3.398-2.022 4.673-3.234 3.659-3.483 5.861-6.602 5.861-8.977z"/></svg>
+                การแจ้งเตือนใบเสร็จผ่าน LINE
+            </h3>
+            
+            {% if customer.line_uid %}
+                <div class="flex items-center gap-2 text-[#00B900] font-bold mt-2 bg-white px-4 py-3 rounded-lg shadow-sm w-fit border border-green-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span>เชื่อมต่อเรียบร้อยแล้ว</span>
+                </div>
+            {% else %}
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-3">
+                    <span class="text-gray-600 text-sm font-medium">ยังไม่ได้เชื่อมต่อ! คุณอาจพลาดการแจ้งเตือนเมื่อจองคิวสำเร็จ</span>
+                    <a href="{% url 'line-bind' %}" class="px-6 py-2.5 bg-[#00B900] hover:bg-[#009900] text-white rounded-lg font-bold transition shadow-md whitespace-nowrap flex items-center gap-2 w-full sm:w-auto justify-center">
+                        เชื่อมต่อ LINE ทันที
+                    </a>
+                </div>
+            {% endif %}
+          </div>
+          </div>
 
         <div class="mt-8 text-center md:hidden">
           <a href="{% url 'edit-c-profile' %}" class="inline-flex items-center justify-center w-full gap-2 px-4 py-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold rounded-lg transition-colors">
