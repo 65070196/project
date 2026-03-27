@@ -19,31 +19,32 @@
 
       <div class="bg-white rounded-xl overflow-hidden shadow border border-gray-200">
         <div class="w-full overflow-x-auto">
-          <div class="min-w-[900px]">
+          <div class="min-w-[1000px]">
             
-            <div class="grid grid-cols-5 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
-              <div>รหัสโต๊ะ</div>
+            <div class="grid grid-cols-6 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
               <div>ชื่อประเภทโต๊ะ</div>
               <div>รายละเอียด</div>
-              <div class="text-center">จำนวนทั้งหมด</div>
+              <div class="text-center">ที่นั่งสูงสุด</div> <div class="text-center">จำนวนทั้งหมด</div>
               <div class="text-center">จัดการ</div>
             </div>
 
             {% for table in tables %}
-            <div class="grid grid-cols-5 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
-              
-              <div class="font-bold text-gray-800">
-                #{{ table.table_id }}
-              </div>
+            <div class="grid grid-cols-6 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
               
               <div class="font-bold text-gray-800 truncate" title="{{ table.name }}">
                 {{ table.name }}
               </div>
 
-              <div class="text-gray-500 truncate" title="{{ table.description }}">
+              <div class="font-bold text-gray-800 truncate" title="{{ table.description }}">
                 {{ table.description|default:"- ไม่มีรายละเอียด -" }}
               </div>
               
+              <div class="text-center">
+                <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full font-extrabold text-xs border border-amber-200">
+                  👥 {{ table.capacity }} ที่นั่ง
+                </span>
+              </div>
+
               <div class="text-center">
                 <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-extrabold text-xs border border-blue-200">
                   {{ table.amount }} โต๊ะ
@@ -72,7 +73,6 @@
           </div>
         </div>
       </div>
-
 
     </div>
   </div>
