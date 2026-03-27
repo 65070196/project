@@ -27,7 +27,7 @@
 
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-2">
-            จำนวนลูกค้า (เช่น 1 ท่าน) <span class="text-red-500">*</span>
+            จำนวนลูกค้า <span class="text-red-500">*</span>
           </label>
           <input type="number" name="pax" min="1" placeholder="ระบุจำนวนคน (เช่น 2)" required 
                  class="w-full h-14 bg-gray-100 rounded-xl px-4 text-gray-700 font-bold outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all">
@@ -39,7 +39,7 @@
             <label class="block text-sm font-semibold text-gray-700 mb-2">
               วันที่ทำการจอง
             </label>
-            <input type="date" name="queue_date" value="{{ selected_date }}" required
+            <input type="date" name="queue_date" value="{{ selected_date }}" min="{{ today_str }}" required
               onchange="window.location.href='?queue_date=' + this.value"
               class="w-full h-14 bg-gray-100 rounded-xl px-4 text-gray-700 font-bold outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all cursor-pointer">
           </div>
@@ -51,6 +51,8 @@
             <select name="queue_time" required class="w-full h-14 bg-gray-100 rounded-xl px-4 text-gray-700 font-bold outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all cursor-pointer">
               {% if is_closed %}
                   <option value="" disabled selected>-- วันนี้ร้านปิดทำการ --</option>
+              {% elif not hour_range %}
+                  <option value="" disabled selected>-- คิวสำหรับวันนี้เต็ม/หมดเวลาจองแล้ว --</option>
               {% else %}
                   <option value="" disabled selected>-- เลือกเวลา --</option>
                   {% for hour in hour_range %}

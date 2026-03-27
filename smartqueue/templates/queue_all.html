@@ -38,15 +38,15 @@
                 {{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}
               </div>
 
-              <div class="text-gray-600 text-center truncate">
+              <div class="text-gray-800 text-center truncate">
                 {{ queue.table.name|default:"ไม่ได้ระบุ" }}
               </div>
               
-              <div class="text-gray-600 text-center">
+              <div class="text-gray-800 text-center">
                 {{ queue.queue_date|date:"d/m/Y" }}
               </div>
               
-              <div class="text-gray-600 text-center font-semibold">
+              <div class="text-gray-800 text-center font-semibold">
                 {{ queue.queue_time|date:"H:i" }} น.
               </div>
               

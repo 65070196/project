@@ -211,12 +211,19 @@ class QueueReserve(LoginRequiredMixin, View):
     def get(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
         
+        # ดึงเวลาปัจจุบัน (อิงตาม TIME_ZONE ใน settings.py)
+        now = timezone.localtime()
+        today = now.date()
+        
         # 1. รับค่าวันที่ลูกค้าเลือกจากพารามิเตอร์ (ถ้ายังไม่เลือกให้ใช้วันนี้)
         date_str = request.GET.get('queue_date')
         if date_str:
             selected_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+            # กันเหนียว: ถ้าลูกค้าแอบแก้ URL เป็นวันในอดีต ให้บังคับกลับมาเป็นวันนี้
+            if selected_date < today:
+                selected_date = today
         else:
-            selected_date = datetime.date.today()
+            selected_date = today
 
         # 2. หาวันในสัปดาห์ (0=จันทร์, 6=อาทิตย์)
         weekday = selected_date.weekday()
@@ -235,10 +242,20 @@ class QueueReserve(LoginRequiredMixin, View):
 
         is_closed, start_time, end_time = day_map.get(weekday)
 
-        # 4. สร้างรายการชั่วโมง (เฉพาะนาที :00)
+        # 4. สร้างรายการชั่วโมง (เฉพาะนาที :00) และเช็คเวลาล่วงหน้า 1 ชม.
         hour_range = []
         if not is_closed and start_time and end_time:
+            # คำนวณเวลาที่อนุญาตให้จองได้ (ปัจจุบัน + 1 ชั่วโมง)
+            buffer_time = (now + datetime.timedelta(hours=1)).time()
+            
             for h in range(start_time.hour, end_time.hour):
+                slot_time = datetime.time(hour=h, minute=0)
+                
+                # ถ้าเลือกวันจองเป็น "วันนี้" -> เวลาต้องมากกว่าปัจจุบัน 1 ชม.
+                if selected_date == today:
+                    if slot_time < buffer_time:
+                        continue # ข้ามเวลานี้ไป ไม่เอาใส่ลงใน Dropdown
+                        
                 hour_range.append(h)
 
         context = {
@@ -246,6 +263,7 @@ class QueueReserve(LoginRequiredMixin, View):
             'hour_range': hour_range,
             'is_closed': is_closed,
             'selected_date': selected_date.strftime('%Y-%m-%d'),
+            'today_str': today.strftime('%Y-%m-%d'), # ส่งค่าวันนี้ไปล็อคปฏิทินใน HTML
         }
         return render(request, 'queue_reserve.html', context)
     
@@ -254,7 +272,7 @@ class QueueReserve(LoginRequiredMixin, View):
         
         queue_date_str = request.POST.get('queue_date')
         queue_time_str = request.POST.get('queue_time')
-        pax_str = request.POST.get('pax') # เปลี่ยนจากรับ table_id มารับจำนวนคน (pax)
+        pax_str = request.POST.get('pax')
 
         # 1. ตรวจสอบค่าว่าง
         if not queue_date_str or not queue_time_str or not pax_str:
@@ -268,9 +286,21 @@ class QueueReserve(LoginRequiredMixin, View):
             parsed_date = parse_date(queue_date_str)
             parsed_time = parse_time(queue_time_str)
             pax = int(pax_str)
+            
+            now = timezone.localtime()
+            today = now.date()
 
             if pax <= 0:
                 raise Exception("จำนวนลูกค้าต้องมากกว่า 0 ท่าน")
+
+            # ตรวจสอบการจองย้อนหลัง (ป้องกันคนส่งฟอร์มข้าม HTML มา)
+            if parsed_date < today:
+                raise Exception("ไม่สามารถจองคิวย้อนหลังได้")
+                
+            if parsed_date == today:
+                buffer_time = (now + datetime.timedelta(hours=1)).time()
+                if parsed_time < buffer_time:
+                    raise Exception("กรุณาจองคิวล่วงหน้าอย่างน้อย 1 ชั่วโมง")
 
             # 2. ตรวจสอบนาที (ต้องเป็น :00 เท่านั้น)
             if parsed_time.minute != 0:
@@ -312,7 +342,7 @@ class QueueReserve(LoginRequiredMixin, View):
                     # ล็อกแถวของโต๊ะนี้ไว้ก่อนเพื่อป้องกันคนแย่งจองพร้อมกัน (Race condition)
                     locked_table = Table.objects.select_for_update().get(pk=table.pk)
                     
-                    # เช็กว่าในเวลานี้ โต๊ะประเภทนี้ถูกจองที่สถานะ 'กำลังดำเนินการ' ไปกี่ตัวแล้ว
+                    # เช็กว่าในเวลานี้ โต๊ะประเภทนี้ถูกจองที่สถานะ 'doing' ไปกี่ตัวแล้ว
                     existing_queues_count = Queue.objects.filter(
                         shop=shop,
                         table=locked_table,
@@ -327,7 +357,7 @@ class QueueReserve(LoginRequiredMixin, View):
                 
                 # ถ้าวนหาจนจบแล้วยังไม่มีโต๊ะ (allocated_table เป็น None)
                 if not allocated_table:
-                    raise Exception(f"ขออภัย ไม่มีโต๊ะว่างสำหรับ {pax} ท่าน ในเวลาดังกล่าว")
+                    raise Exception(f"ขออภัย ไม่มีโต๊ะว่างสำหรับลูกค้า {pax} ท่าน ในเวลาดังกล่าว")
 
                 # บันทึกข้อมูลคิว
                 Queue.objects.create(
@@ -347,9 +377,18 @@ class QueueReserve(LoginRequiredMixin, View):
         except Exception as e:
             error = str(e)
 
+        # หากมี Error ให้ Query hour_range กลับไปให้หน้าเว็บด้วย เพื่อให้ฟอร์มยังแสดงช่องเวลาได้ถูกต้อง
+        now = timezone.localtime()
+        today = now.date()
+        date_str = request.POST.get('queue_date')
+        selected_date = parse_date(date_str) if date_str else today
+        
+        # fallback เผื่อ error ส่งกลับ
         return render(request, 'queue_reserve.html', {
             'shop': shop,
-            'error_message': error
+            'error_message': error,
+            'selected_date': selected_date.strftime('%Y-%m-%d') if selected_date else today.strftime('%Y-%m-%d'),
+            'today_str': today.strftime('%Y-%m-%d')
         })
         
 
