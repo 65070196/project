@@ -291,9 +291,20 @@ class LineAuthCallback(View):
 # หน้าหลักผู้ใช้งาน 
 class HomeCustomer(View):
     def get(self, request):
-        shops = Shop.objects.all().order_by('shop_id')
+        # ดึงคำค้นหาจาก URL (ถ้าไม่มีให้เป็นค่าว่าง)
+        query = request.GET.get('q', '').strip()
+        
+        # ถ้ามีการพิมพ์ค้นหามา ให้ฟิลเตอร์ร้านค้า
+        if query:
+            # ใช้ shop_name__icontains เพื่อหาคำที่อยู่ในชื่อร้าน
+            shops = Shop.objects.filter(shop_name__icontains=query).order_by('shop_id')
+        else:
+            # ถ้าไม่ได้ค้นหาอะไร ก็ดึงมาแสดงทั้งหมดเหมือนเดิม
+            shops = Shop.objects.all().order_by('shop_id')
+            
         context = {
-            'shops': shops
+            'shops': shops,
+            'search_query': query # ส่งคำค้นหากลับไปแสดงผลด้วย
         }
         return render(request, "home_customer.html", context)
 
@@ -346,8 +357,14 @@ class QueueReserve(LoginRequiredMixin, View):
         if not is_closed and start_time and end_time:
             buffer_datetime = now + datetime.timedelta(hours=1)
             
-            for h in range(start_time.hour, end_time.hour):
+            end_hr = end_time.hour + (1 if end_time.minute > 0 else 0)
+            
+            for h in range(start_time.hour, end_hr):
                 slot_time = datetime.time(hour=h, minute=0)
+                
+                if not (start_time <= slot_time < end_time):
+                    continue
+                    
                 slot_datetime = timezone.make_aware(datetime.datetime.combine(selected_date, slot_time))
                 
                 if slot_datetime < buffer_datetime:
@@ -389,9 +406,10 @@ class QueueReserve(LoginRequiredMixin, View):
 
             if pax <= 0: raise Exception("จำนวนลูกค้าต้องมากกว่า 0 ท่าน")
             if parsed_date < today: raise Exception("ไม่สามารถจองคิวย้อนหลังได้")
+            
             if parsed_date == today:
-                buffer_time = (now + datetime.timedelta(hours=1)).time()
-                if parsed_time < buffer_time:
+                buffer_datetime = now + datetime.timedelta(hours=1)
+                if combined_datetime < buffer_datetime:
                     raise Exception("กรุณาจองคิวล่วงหน้าอย่างน้อย 1 ชั่วโมง")
             if parsed_time.minute != 0: raise Exception("รองรับการจองเฉพาะนาทีที่ :00 เท่านั้น")
 
@@ -463,21 +481,28 @@ class QueueReserve(LoginRequiredMixin, View):
                             
                     return redirect('home-c') 
 
-                # 3. 🔴 ถ้าโต๊ะเต็ม! เข้าสู่ "Smart Alternative Time Algorithm" 🔴
+                # 3. ถ้าโต๊ะเต็ม! เข้าสู่ "Smart Alternative Time Algorithm" 
                 else:
                     alternative_times = []
-                    # สร้างรายการชั่วโมงทั้งหมดที่ร้านเปิด
-                    valid_hours = list(range(o_time.hour, c_time.hour))
-                    
-                    # ตัดเวลาในอดีตทิ้ง (ถ้าเป็นวันนี้)
-                    if parsed_date == today:
-                        valid_hours = [h for h in valid_hours if datetime.time(hour=h, minute=0) >= buffer_time]
-                    
-                    # ตัดชั่วโมงที่ลูกค้าเพิ่งกดเลือกแล้วมันเต็มออก
-                    if parsed_time.hour in valid_hours:
-                        valid_hours.remove(parsed_time.hour)
-                    
-                    # 🌟 จัดเรียงชั่วโมงที่เหลือ โดยเอาเวลาที่ "ใกล้เคียงกับเวลาที่ลูกค้าอยากได้" ขึ้นก่อน
+                    buffer_datetime = now + datetime.timedelta(hours=1)
+                    end_hr = c_time.hour + (1 if c_time.minute > 0 else 0)
+                    valid_hours = []
+
+                    for h in range(o_time.hour, end_hr):
+                        slot_time = datetime.time(hour=h, minute=0)
+                        
+                        if not (o_time <= slot_time < c_time): continue
+                        
+                        alt_datetime = timezone.make_aware(datetime.datetime.combine(parsed_date, slot_time))
+                        
+                        # กรองเวลาในอดีตหรือเวลาที่กระชั้นชิดเกิน 1 ชั่วโมงทิ้ง
+                        if alt_datetime < buffer_datetime: continue
+                            
+                        # ถ้าไม่ใช่เวลาที่ลูกค้าเพิ่งจองแล้วเต็ม ก็เก็บไว้
+                        if h != parsed_time.hour:
+                            valid_hours.append(h)
+
+                    # จัดเรียงหาเวลาที่ใกล้เคียงที่สุดตามเดิมของคุณ
                     valid_hours.sort(key=lambda h: abs(h - parsed_time.hour))
 
                     # วนลูปเช็คเวลาที่ใกล้เคียง ว่ามีโต๊ะว่างไหม
