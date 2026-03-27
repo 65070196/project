@@ -12,12 +12,16 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 import dj_database_url
+from pathlib import Path
+from dotenv import load_dotenv
 
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env_path = os.path.join(BASE_DIR, '.env')
+load_dotenv(env_path)
 
 # --- ส่วนของความปลอดภัยพื้นฐาน (Secret Key) ---
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-if-not-found')
