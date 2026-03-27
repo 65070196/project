@@ -62,7 +62,7 @@ class Table(models.Model):
     description = models.CharField(max_length=200, blank=True, null=True)
     amount = models.IntegerField(null=False)
     capacity = models.IntegerField(null=False, default=1)
-    image = models.ForeignKey('Image', on_delete=models.CASCADE, null=False)
+    image = models.ForeignKey('Image', on_delete=models.CASCADE, null=True)
     def __str__(self):
         return f"{self.name} (นั่งได้ {self.capacity} คน) - ว่าง {self.amount} โต๊ะ"
 
