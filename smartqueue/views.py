@@ -4,7 +4,6 @@ import uuid
 
 from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
-from django.shortcuts import render
 from django.db import transaction
 from django.core.files.storage import FileSystemStorage
 from django.contrib import messages

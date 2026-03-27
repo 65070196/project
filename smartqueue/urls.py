@@ -11,6 +11,8 @@ urlpatterns = [
     path("register/s/", RegisterShop.as_view(), name="register-s"), 
     path("reset-password/", ResetPassword.as_view(), name="reset-password"),
     path("line-bind/", LineBindVerify.as_view(), name="line-bind"),
+    path('line/auth/', views.LineAuthRedirect.as_view(), name='line-auth-redirect'),
+    path('line/callback/', views.LineAuthCallback.as_view(), name='line-auth-callback'),
 
     path('', lambda request: redirect('home-c')), 
     path("home/c/", HomeCustomer.as_view(), name="home-c"), 
