@@ -459,7 +459,7 @@ class QueueReserve(LoginRequiredMixin, View):
             'alternative_times': alternatives, # ส่งเวลาแนะนำไปให้ HTML
             'selected_date': parsed_date.strftime('%Y-%m-%d') if parsed_date else today.strftime('%Y-%m-%d'),
             'today_str': today.strftime('%Y-%m-%d'),
-            'pax_value': pax_str, # คืนค่าจำนวนคนกลับไป ฟอร์มจะได้ไม่โล่ง
+            'pax_value': pax_str,
         })
         
 

@@ -10,6 +10,7 @@ urlpatterns = [
     path("register/c/", RegisterCustomer.as_view(), name="register-c"), 
     path("register/s/", RegisterShop.as_view(), name="register-s"), 
     path("reset-password/", ResetPassword.as_view(), name="reset-password"),
+    path("line-bind/", LineBindVerify.as_view(), name="line-bind"),
 
     path('', lambda request: redirect('home-c')), 
     path("home/c/", HomeCustomer.as_view(), name="home-c"), 
