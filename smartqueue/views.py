@@ -776,7 +776,6 @@ class ViewCustomerProfile(View):
         })
 
 
-from django.db import transaction # อย่าลืม import ตัวนี้ที่ด้านบนของไฟล์นะครับ
 
 class EditCustomerProfile(View):
     def get(self, request):
