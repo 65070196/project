@@ -312,8 +312,20 @@ class HomeCustomer(View):
 class QueueCheck(View):
     def get(self, request):
         user = request.user
-        queues = Queue.objects.filter(customer__auth=user).order_by('-queue_date', '-queue_time')
         
+        # ค้นหาคิวของลูกค้า และจัดเรียง
+        queues = Queue.objects.filter(customer__auth=user).annotate(
+            status_order=Case(
+                When(status='doing', then=Value(1)),
+                When(status='done', then=Value(2)),
+                When(status='cancel', then=Value(3)),
+                output_field=IntegerField(),
+            )
+        ).order_by(
+            'status_order', 
+            'queue_date', 
+            'queue_time'    
+        )
         context = {
             'queues': queues
         }
