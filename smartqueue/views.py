@@ -14,6 +14,10 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
 import datetime
 
+from linebot import LineBotApi
+from linebot.models import TextSendMessage
+from linebot.exceptions import LineBotApiError
+
 from django.contrib.auth.models import User
 from .models import *
 
@@ -325,6 +329,29 @@ class QueueReserve(LoginRequiredMixin, View):
                         customer=customer, shop=shop, table=allocated_table,
                         pax=pax, queue_date=parsed_date, queue_time=combined_datetime, status='doing'
                     )
+                    if customer.line_uid:
+                        try:
+                            line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
+                            
+                            # จัดฟอร์แมตข้อความ
+                            receipt_msg = (
+                                f"🎉 จองคิวสำเร็จแล้ว!\n\n"
+                                f"🏪 ร้าน: {shop.shop_name}\n"
+                                f"🪑 โต๊ะ: {allocated_table.name} ({pax} ท่าน)\n"
+                                f"📅 วันที่: {parsed_date.strftime('%d/%m/%Y')}\n"
+                                f"⏰ เวลา: {parsed_time.strftime('%H:%M')} น.\n\n"
+                                f"🙏 กรุณามาถึงร้านก่อนเวลา 10 นาทีนะคะ"
+                            )
+                            
+                            # สั่งยิงข้อความตรงเข้ามือถือลูกค้า
+                            line_bot_api.push_message(
+                                customer.line_uid, 
+                                TextSendMessage(text=receipt_msg)
+                            )
+                        except LineBotApiError as e:
+                            # ถ้าส่งไม่ผ่าน (เช่น ลูกค้าบล็อกบอท) เว็บก็จะไม่พัง ให้ปริ้นท์ Error บอกหลังบ้าน
+                            print(f"เกิดข้อผิดพลาดในการส่ง LINE: {e}")
+                            
                     return redirect('home-c') 
 
                 # 3. 🔴 ถ้าโต๊ะเต็ม! เข้าสู่ "Smart Alternative Time Algorithm" 🔴
@@ -884,7 +911,6 @@ class EditCustomerProfile(View):
         user = request.user
         customer, created = Customer.objects.get_or_create(auth=user)
         
-        # รับค่าจาก POST
         new_first_name = request.POST.get('first_name', '').strip()
         new_last_name = request.POST.get('last_name', '').strip()
         new_email = request.POST.get('email', '').strip()
