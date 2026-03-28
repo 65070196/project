@@ -21,7 +21,7 @@
             <button onclick="filterQueue('cancel')" id="btn-cancel" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-red-100 hover:text-red-700 transition-all flex-1 md:flex-none">❌ ยกเลิก</button>
         </div>
       </div>
-      
+
       <div class="space-y-6 max-w-5xl mx-auto" id="queueContainer"> 
 
         {% for queue in queues %}
@@ -93,7 +93,7 @@
                       <svg class="w-4 h-4 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                       <span>หากต้องการยกเลิกการจอง กรุณาติดต่อทางร้านค้าโดยตรง</span>
                       {% if queue.shop.phone %}
-                        <span class="ml-1 text-gray-700">โทร: <a href="tel:{{ queue.shop.phone }}" class="text-purple-600 hover:text-fuchsia-600 font-bold underline transition-colors">{{ queue.shop.phone }}</a></span>
+                        <span class="ml-1 text-gray-700">โทร: {{ queue.shop.phone }}</span>
                       {% endif %}
                   </p>
                 </div>
