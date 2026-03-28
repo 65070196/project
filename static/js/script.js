@@ -88,3 +88,41 @@ window.removeImage = function(event) {
 };
 
 
+window.filterQueue = function(status) {
+    const allBtns = document.querySelectorAll('.filter-btn');
+    allBtns.forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+        btn.classList.add('text-gray-600');
+    });
+
+    const activeBtn = document.getElementById('btn-' + status);
+    activeBtn.classList.remove('text-gray-600');
+    activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+
+    const rows = document.querySelectorAll('.queue-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        if (status === 'all' || row.dataset.status === status) {
+        row.style.display = 'grid'; 
+        visibleCount++;
+        } else {
+        row.style.display = 'none'; 
+        }
+    });
+
+    const filterEmptyState = document.getElementById('filterEmptyState');
+    const noDataEmpty = document.getElementById('noDataEmpty');
+
+    if (noDataEmpty) {
+        return; 
+    }
+
+    if (visibleCount === 0) {
+        filterEmptyState.classList.remove('hidden');
+        filterEmptyState.classList.add('block');
+    } else {
+        filterEmptyState.classList.remove('block');
+        filterEmptyState.classList.add('hidden');
+    }
+}
