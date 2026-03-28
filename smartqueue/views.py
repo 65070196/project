@@ -802,7 +802,7 @@ class TableEdit(View):
         new_amount = request.POST.get('amount', '').strip()
         new_capacity = request.POST.get('capacity', '').strip()
 
-        
+        # อัปเดตข้อมูลข้อความ
         if new_name != '':
             table.name = new_name
         if new_desc != '':
@@ -812,6 +812,11 @@ class TableEdit(View):
         if new_capacity != '':
             table.capacity = new_capacity
             
+        new_image = request.FILES.get('image')
+        
+        if new_image:
+            image_obj = Image.objects.create(image_path=new_image)
+            table.image = image_obj
 
         table.save()
         return redirect('table-manage')
