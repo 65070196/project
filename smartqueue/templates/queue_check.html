@@ -2,83 +2,84 @@
 {% load static %}
 
 {% block content %}
-<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden z-0">
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden z-0 bg-gray-50/50">
   
   <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar">
     
     <div class="p-6 md:p-10 pb-24">
 
-      <div class="mb-6 border-l-4 border-yellow-400 pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-3 shadow-sm -mx-6 md:-mx-10 px-6 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div class="mb-8 border-l-4 border-transparent bg-gradient-to-r from-purple-600 to-fuchsia-500 [border-image:linear-gradient(to_bottom,#9333ea,#ec4899)_1] pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-3 shadow-sm -mx-6 md:-mx-10 px-6 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-800">ตรวจสอบคิวของฉัน</h2>
-            <p class="text-gray-500 text-sm">รายการจองทั้งหมดของคุณ</p>
+            <h2 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-purple-600">ตรวจสอบคิวของฉัน</h2>
+            <p class="text-gray-500 text-sm font-medium mt-1">รายการจองทั้งหมดของคุณ</p>
         </div>
         
-        <div class="flex flex-wrap gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200 w-full md:w-auto">
-            <button onclick="filterQueue('all')" id="btn-all" class="filter-btn active px-4 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white shadow-sm transition-all flex-1 md:flex-none">ทั้งหมด</button>
+        <div class="flex flex-wrap gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200 w-full md:w-auto shadow-inner">
+            <button onclick="filterQueue('all')" id="btn-all" class="filter-btn active px-4 py-2 rounded-lg text-sm font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md transition-all flex-1 md:flex-none">ทั้งหมด</button>
             <button onclick="filterQueue('doing')" id="btn-doing" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-amber-100 hover:text-amber-700 transition-all flex-1 md:flex-none">⏳ กำลังทำ</button>
             <button onclick="filterQueue('done')" id="btn-done" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-green-100 hover:text-green-700 transition-all flex-1 md:flex-none">✅ เสร็จสิ้น</button>
             <button onclick="filterQueue('cancel')" id="btn-cancel" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-red-100 hover:text-red-700 transition-all flex-1 md:flex-none">❌ ยกเลิก</button>
         </div>
       </div>
 
-      <div class="space-y-5 max-w-5xl mx-auto" id="queueContainer"> 
+      <div class="space-y-6 max-w-5xl mx-auto" id="queueContainer"> 
 
         {% for queue in queues %}
 
-        <div class="queue-card bg-white border border-gray-200 rounded-2xl p-4 md:p-5 shadow-sm hover:shadow-md hover:border-yellow-400 transition-all duration-300 flex flex-col sm:flex-row gap-4 md:gap-6 items-stretch" data-status="{{ queue.status }}">
+        <div class="queue-card bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow-xl hover:border-fuchsia-200 transition-all duration-300 flex flex-col sm:flex-row gap-5 items-stretch" data-status="{{ queue.status }}">
             
-            <div class="w-full sm:w-36 md:w-48 h-48 sm:h-auto min-h-[160px] rounded-xl overflow-hidden shrink-0 border border-gray-100 shadow-sm bg-gray-50 flex items-center justify-center text-gray-400">
+            <div class="w-full sm:w-40 md:w-48 h-48 sm:h-auto min-h-[160px] rounded-2xl overflow-hidden shrink-0 border border-gray-100 shadow-inner bg-gray-50 flex items-center justify-center text-gray-400 relative group">
                 {% if queue.shop.image and queue.shop.image.image_path %}
-                    <img src="{{ queue.shop.image.image_path.url }}" alt="{{ queue.shop.shop_name }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+                    <img src="{{ queue.shop.image.image_path.url }}" alt="{{ queue.shop.shop_name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 {% else %}
-                    <span class="text-5xl opacity-50">🏪</span>
+                    <span class="text-5xl opacity-50 group-hover:scale-110 transition-transform duration-500">🏪</span>
                 {% endif %}
             </div>
 
             <div class="flex-grow flex flex-col justify-between w-full">
                 
-                <div class="flex flex-row justify-between items-start gap-3 mb-3 pb-3 border-b border-gray-100">
+                <div class="flex flex-row justify-between items-start gap-3 mb-4 pb-4 border-b border-gray-50">
                     <h3 class="text-xl md:text-2xl font-extrabold text-gray-900 leading-tight tracking-tight line-clamp-2 mt-1">
                       ร้าน {{ queue.shop.shop_name }}
                     </h3>
                     
                     <div class="flex-shrink-0">
                       {% if queue.status == 'doing' %}
-                        <span class="px-3 py-1.5 text-xs rounded-full bg-amber-100 text-amber-700 font-bold border border-amber-200 shadow-sm whitespace-nowrap">
+                        <span class="px-3.5 py-1.5 text-xs rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 shadow-sm whitespace-nowrap">
                           ⏳ กำลังทำ
                         </span>
                       {% elif queue.status == 'done' %}
-                        <span class="px-3 py-1.5 text-xs rounded-full bg-green-100 text-green-700 font-bold border border-green-200 shadow-sm whitespace-nowrap">
+                        <span class="px-3.5 py-1.5 text-xs rounded-full bg-green-50 text-green-700 font-bold border border-green-200 shadow-sm whitespace-nowrap">
                           ✅ เสร็จสิ้น
                         </span>
                       {% elif queue.status == 'cancel' %}
-                        <span class="px-3 py-1.5 text-xs rounded-full bg-red-100 text-red-700 font-bold border border-red-200 shadow-sm whitespace-nowrap">
+                        <span class="px-3.5 py-1.5 text-xs rounded-full bg-red-50 text-red-700 font-bold border border-red-200 shadow-sm whitespace-nowrap">
                           ❌ ยกเลิก
                         </span>
                       {% endif %}
                     </div>
                 </div>
 
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 w-full mb-3 flex-grow flex items-center"> 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                <div class="bg-purple-50/50 p-4 md:p-5 rounded-2xl border border-purple-100/50 w-full mb-3 flex-grow flex items-center"> 
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full divide-y md:divide-y-0 md:divide-x divide-purple-100">
                         
-                        <div class="md:col-span-1 border-b md:border-b-0 md:border-r border-gray-200 pb-3 md:pb-0">
-                            <span class="text-gray-500 block text-xs font-bold mb-1">🛋️ ประเภทโต๊ะ</span>
-                            <p class="font-bold text-indigo-700 text-lg line-clamp-1">
+                        <div class="md:col-span-1 pb-3 md:pb-0 md:pr-4">
+                            <span class="text-purple-600/70 block text-xs font-bold mb-1">🛋️ ประเภทโต๊ะ</span>
+                            <p class="font-bold text-purple-900 text-lg line-clamp-1">
                                 {{ queue.table.name|default:"ไม่ได้ระบุ" }}
                             </p>
                         </div>
 
-                        <div class="md:col-span-1 md:pl-3">
-                            <span class="text-gray-500 block text-xs font-medium mb-1">📅 วันที่จอง</span>
+                        <div class="md:col-span-1 pt-3 md:pt-0 md:px-4">
+                            <span class="text-purple-600/70 block text-xs font-bold mb-1">📅 วันที่จอง</span>
                             <p class="font-bold text-gray-900 text-base">
                               {{ queue.queue_date|date:"d M Y" }}
                             </p>
                         </div>
 
-                        <div class="md:col-span-1">   
-                            <span class="text-gray-500 block text-xs font-medium mb-1">⏰ เวลาที่จอง</span>
+                        <div class="md:col-span-1 pt-3 md:pt-0 md:pl-4">   
+                            <span class="text-purple-600/70 block text-xs font-bold mb-1">⏰ เวลาที่จอง</span>
                             <p class="font-bold text-gray-900 text-base">
                               {{ queue.queue_time|date:"H:i" }} น.
                             </p>
@@ -87,12 +88,12 @@
                     </div>
                 </div>
 
-                <div class="mt-1 text-right">
+                <div class="mt-2 text-right">
                   <p class="text-[13px] text-gray-500 flex flex-wrap items-center justify-end gap-1.5 font-medium">
-                      <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      <svg class="w-4 h-4 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                       <span>หากต้องการยกเลิกการจอง กรุณาติดต่อทางร้านค้าโดยตรง</span>
                       {% if queue.shop.phone %}
-                        <span class="ml-1 text-gray-700">โทร: <a href="tel:{{ queue.shop.phone }}" class="text-indigo-600 hover:text-indigo-800 font-bold underline transition-colors">{{ queue.shop.phone }}</a></span>
+                        <span class="ml-1 text-gray-700">โทร: <a href="tel:{{ queue.shop.phone }}" class="text-purple-600 hover:text-fuchsia-600 font-bold underline transition-colors">{{ queue.shop.phone }}</a></span>
                       {% endif %}
                   </p>
                 </div>
@@ -101,21 +102,21 @@
         </div>
 
         {% empty %}
-          <div id="noDataEmpty" class="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+          <div id="noDataEmpty" class="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-3xl border border-purple-100 shadow-inner">
             <span class="text-6xl mb-4 opacity-80 drop-shadow-sm">📭</span>
-            <div class="text-center text-gray-600 font-bold text-lg">
+            <div class="text-center text-purple-900 font-extrabold text-xl mb-2">
               ขณะนี้คุณยังไม่มีรายการจองคิว
             </div>
-            <p class="text-gray-400 text-sm mt-2">เริ่มจองร้านอาหารที่คุณชื่นชอบได้เลย!</p>
+            <p class="text-purple-600/80 text-sm font-medium">เริ่มจองร้านอาหารที่คุณชื่นชอบได้เลย!</p>
           </div>
         {% endfor %}
 
-        <div id="filterEmptyState" class="hidden flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-            <span class="text-6xl mb-4 opacity-80 drop-shadow-sm">🔍</span>
-            <div class="text-center text-gray-600 font-bold text-lg">
+        <div id="filterEmptyState" class="hidden flex-col items-center justify-center py-20 bg-gradient-to-br from-gray-50 to-slate-50 rounded-3xl border border-gray-200 shadow-inner">
+            <span class="text-6xl mb-4 opacity-80 drop-shadow-sm filter grayscale">🔍</span>
+            <div class="text-center text-gray-600 font-bold text-xl mb-2">
                 ไม่พบรายการจองในสถานะนี้
             </div>
-            <p class="text-gray-400 text-sm mt-2">ลองเลือกสถานะอื่นดูอีกครั้ง</p>
+            <p class="text-gray-400 text-sm font-medium">ลองเลือกสถานะอื่นดูอีกครั้ง</p>
         </div>
 
       </div>
@@ -123,4 +124,49 @@
     </div>
   </div>
 </div>
+
+<script>
+  function filterQueue(status) {
+    const allBtns = document.querySelectorAll('.filter-btn');
+    allBtns.forEach(btn => {
+      // 🌟 เปลี่ยนจากลบ bg-indigo-600 เป็นลบ Gradient ของเราแทน 🌟
+      btn.classList.remove('bg-gradient-to-r', 'from-purple-600', 'to-indigo-600', 'text-white', 'shadow-md');
+      btn.classList.add('text-gray-600');
+    });
+
+    const activeBtn = document.getElementById('btn-' + status);
+    if(activeBtn) {
+        activeBtn.classList.remove('text-gray-600');
+        // 🌟 ใส่ Gradient ให้ปุ่มที่ Active 🌟
+        activeBtn.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-indigo-600', 'text-white', 'shadow-md');
+    }
+
+    const cards = document.querySelectorAll('.queue-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      if (status === 'all' || card.dataset.status === status) {
+        card.style.display = 'flex'; 
+        visibleCount++;
+      } else {
+        card.style.display = 'none'; 
+      }
+    });
+
+    const filterEmptyState = document.getElementById('filterEmptyState');
+    const noDataEmpty = document.getElementById('noDataEmpty');
+    
+    if (noDataEmpty) {
+        return; 
+    }
+
+    if (visibleCount === 0) {
+        filterEmptyState.classList.remove('hidden');
+        filterEmptyState.classList.add('flex');
+    } else {
+        filterEmptyState.classList.remove('flex');
+        filterEmptyState.classList.add('hidden');
+    }
+  }
+</script>
 {% endblock %}
