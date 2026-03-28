@@ -11,90 +11,98 @@
         <p class="text-gray-500 text-sm font-medium mt-1">กำหนดเวลาเปิด-ปิดร้านในแต่ละวัน</p>
       </div>
 
-      <form method="POST" action="" class="max-w-4xl mx-auto space-y-4 bg-white p-4 md:p-8 rounded-3xl border border-slate-200/60 shadow-sm">
-        {% csrf_token %}
-
-        <div class="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-gradient-to-r from-slate-800 to-blue-800 text-white font-extrabold rounded-xl text-center shadow-md">
-            <div class="col-span-3 text-left pl-2">วันในสัปดาห์</div>
-            <div class="col-span-3">สถานะ</div>
-            <div class="col-span-3">เวลาเปิด</div>
-            <div class="col-span-3">เวลาปิด</div>
-        </div>
-
-        <div class="space-y-4 md:space-y-3">
-            
-            {% for day in days_data %}
-            <div class="day-row grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-white p-5 md:p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all" data-key="{{ day.key }}">
-                
-                <div class="col-span-1 md:col-span-3 font-extrabold text-slate-800 text-lg md:text-base flex items-center gap-3 md:pl-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 md:hidden"></span>
-                    วัน{{ day.name }}
-                </div>
-                
-                <div class="col-span-1 md:col-span-3 flex items-center md:justify-center">
-                    <label class="inline-flex items-center cursor-pointer group">
-                        <span class="me-3 text-sm font-extrabold transition-colors duration-300 {% if day.is_closed %}text-slate-300{% else %}text-emerald-500{% endif %}" id="status_open_{{ day.key }}">เปิดร้าน</span>
-                        
-                        <div class="relative items-center">
-                            <input type="checkbox" name="{{ day.key }}_is_closed" id="closed_{{ day.key }}" class="sr-only peer" 
-                                onchange="toggleTimeInputs('{{ day.key }}', this.checked)"
-                                {% if day.is_closed %}checked{% endif %}>
-                            
-                            <div class="relative w-14 h-7 bg-emerald-500 peer-focus:outline-none rounded-full peer 
-                                peer-checked:after:translate-x-[28px] rtl:peer-checked:after:-translate-x-[28px] 
-                                peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] 
-                                after:start-[2px] after:bg-white after:border-slate-300 after:border 
-                                after:rounded-full after:h-6 after:w-6 after:transition-all 
-                                peer-checked:bg-rose-500 shadow-inner group-hover:brightness-110 transition-all">
-                            </div>
-                        </div>
-
-                        <span class="ms-3 text-sm font-extrabold transition-colors duration-300 {% if day.is_closed %}text-rose-500{% else %}text-slate-300{% endif %}" id="status_closed_{{ day.key }}">ปิดร้าน</span>
-                    </label>
-                </div>
-
-                <div class="col-span-1 md:col-span-3 flex flex-col relative">
-                    <label class="md:hidden text-xs text-slate-400 mb-1 font-bold uppercase tracking-wider">เวลาเปิด</label>
-                    <select id="open_{{ day.key }}" name="{{ day.key }}_open" 
-                            data-initial="{{ day.open_time|time:'H:i'|default:'' }}"
-                            onchange="updateCloseOptions('{{ day.key }}')"
-                            class="w-full h-12 md:h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-bold outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all disabled:opacity-40 disabled:bg-slate-100 disabled:cursor-not-allowed cursor-pointer appearance-none">
-                        <option value="">- เลือกเวลาเปิด -</option>
-                        </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 pt-5 md:pt-0 text-slate-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                </div>
-
-                <div class="col-span-1 md:col-span-3 flex flex-col relative">
-                    <label class="md:hidden text-xs text-slate-400 mb-1 font-bold uppercase tracking-wider">เวลาปิด</label>
-                    <select id="close_{{ day.key }}" name="{{ day.key }}_close" 
-                            data-initial="{{ day.close_time|time:'H:i'|default:'' }}"
-                            class="w-full h-12 md:h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-bold outline-none focus:ring-2 focus:ring-rose-400 focus:bg-white transition-all disabled:opacity-40 disabled:bg-slate-100 disabled:cursor-not-allowed cursor-pointer appearance-none">
-                        <option value="">- เลือกเวลาปิด -</option>
-                        </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 pt-5 md:pt-0 text-slate-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                </div>
-
-            </div>
+      <div class="max-w-4xl mx-auto">
+          {% if messages %}
+            {% for message in messages %}
+              <div class="mb-6 p-4 rounded-2xl text-sm font-bold flex items-center gap-3 shadow-sm animate-bounce-short
+                {% if message.tags == 'success' %}bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500{% else %}bg-amber-50 text-amber-700 border-l-4 border-amber-500{% endif %}">
+                <span class="text-xl">{% if message.tags == 'success' %}✅{% else %}🔔{% endif %}</span>
+                <span>{{ message }}</span>
+              </div>
             {% endfor %}
+          {% endif %}
 
-        </div>
+          <form method="POST" action="" class="space-y-4 bg-white p-4 md:p-8 rounded-3xl border border-slate-200/60 shadow-sm">
+            {% csrf_token %}
 
-        <div class="pt-8 md:pt-10 max-w-sm mx-auto">
-          <button type="submit" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-extrabold text-lg shadow-md hover:shadow-lg hover:shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-            บันทึกเวลาทำการ
-          </button>
-        </div>
+            <div class="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-gradient-to-r from-slate-800 to-blue-800 text-white font-extrabold rounded-xl text-center shadow-md">
+                <div class="col-span-3 text-left pl-2">วันในสัปดาห์</div>
+                <div class="col-span-3">สถานะ</div>
+                <div class="col-span-3">เวลาเปิด</div>
+                <div class="col-span-3">เวลาปิด</div>
+            </div>
 
-      </form>
+            <div class="space-y-4 md:space-y-3">
+                {% for day in days_data %}
+                <div class="day-row grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-white p-5 md:p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all" data-key="{{ day.key }}">
+                    <div class="col-span-1 md:col-span-3 font-extrabold text-slate-800 text-lg md:text-base flex items-center gap-3 md:pl-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 md:hidden"></span>
+                        วัน{{ day.name }}
+                    </div>
+                    
+                    <div class="col-span-1 md:col-span-3 flex items-center md:justify-center">
+                        <label class="inline-flex items-center cursor-pointer group">
+                            <span class="me-3 text-sm font-extrabold transition-colors duration-300 {% if day.is_closed %}text-slate-300{% else %}text-emerald-500{% endif %}" id="status_open_{{ day.key }}">เปิดร้าน</span>
+                            <div class="relative items-center">
+                                <input type="checkbox" name="{{ day.key }}_is_closed" id="closed_{{ day.key }}" class="sr-only peer" 
+                                       onchange="toggleTimeInputs('{{ day.key }}', this.checked)"
+                                       {% if day.is_closed %}checked{% endif %}>
+                                <div class="relative w-14 h-7 bg-emerald-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[28px] rtl:peer-checked:after:-translate-x-[28px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-500 shadow-inner transition-all"></div>
+                            </div>
+                            <span class="ms-3 text-sm font-extrabold transition-colors duration-300 {% if day.is_closed %}text-rose-500{% else %}text-slate-300{% endif %}" id="status_closed_{{ day.key }}">ปิดร้าน</span>
+                        </label>
+                    </div>
+
+                    <div class="col-span-1 md:col-span-3 flex flex-col relative">
+                        <label class="md:hidden text-xs text-slate-400 mb-1 font-bold uppercase tracking-wider">เวลาเปิด</label>
+                        <select id="open_{{ day.key }}" name="{{ day.key }}_open" 
+                                data-initial="{{ day.open_time|time:'H:i'|default:'' }}"
+                                onchange="updateCloseOptions('{{ day.key }}')"
+                                class="w-full h-12 md:h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-bold outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all appearance-none">
+                            <option value="">- เลือกเวลาเปิด -</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 pt-5 md:pt-0 text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+
+                    <div class="col-span-1 md:col-span-3 flex flex-col relative">
+                        <label class="md:hidden text-xs text-slate-400 mb-1 font-bold uppercase tracking-wider">เวลาปิด</label>
+                        <select id="close_{{ day.key }}" name="{{ day.key }}_close" 
+                                data-initial="{{ day.close_time|time:'H:i'|default:'' }}"
+                                class="w-full h-12 md:h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-bold outline-none focus:ring-2 focus:ring-rose-400 focus:bg-white transition-all appearance-none">
+                            <option value="">- เลือกเวลาปิด -</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 pt-5 md:pt-0 text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="pt-8 md:pt-10 max-w-sm mx-auto">
+              <button type="submit" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-extrabold text-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                บันทึกเวลาทำการ
+              </button>
+            </div>
+          </form>
+      </div>
 
     </div>
   </div>
 </div>
+
+<style>
+    @keyframes bounce-short {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
+    .animate-bounce-short {
+        animation: bounce-short 0.5s ease-in-out 1;
+    }
+</style>
 
 <script>
     // 1. สร้างลิสต์เวลาแบบรายชั่วโมง 00:00 - 23:00

@@ -958,6 +958,8 @@ class EditOpendate(View):
             shop=shop,
             defaults=defaults_data
         )
+
+        messages.success(request, 'บันทึกเวลาทำการสำเร็จเรียบร้อยแล้ว!')
         
         # เปลี่ยนชื่อ URL ตรงนี้ให้ตรงกับหน้าจัดการร้านของคุณ
         return redirect('opendate-edit')
