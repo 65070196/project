@@ -593,6 +593,7 @@ class HomeShop(View):
             context = {
                 'queues': queues,
                 'today_date': today,
+                
             }
             return render(request, "home_shop.html", context)
             
