@@ -403,7 +403,6 @@ class QueueReserve(LoginRequiredMixin, View):
         queue_date_str = request.POST.get('queue_date')
         queue_time_str = request.POST.get('queue_time')
         pax_str = request.POST.get('pax')
-        # 🌟 รับค่าการยืนยันแยกโต๊ะจากหน้าเว็บ (hidden input)
         confirm_split = request.POST.get('confirm_split') == 'true'
 
         now = timezone.localtime()
@@ -421,7 +420,7 @@ class QueueReserve(LoginRequiredMixin, View):
 
             # 1. ป้องกันการจองซ้อน
             if Queue.objects.filter(customer=customer, queue_time=combined_datetime, status='doing').exists():
-                raise Exception(f"คุณมีรายการจองคิวเวลานี้อยู่แล้ว")
+                raise Exception(f"คุณมีรายการจองคิวในเวลานี้อยู่แล้ว")
 
             # 2. Validations
             if pax <= 0: raise Exception("จำนวนลูกค้าต้องมากกว่า 0 ท่าน")
@@ -443,43 +442,62 @@ class QueueReserve(LoginRequiredMixin, View):
             if is_closed or not o_time or not c_time or not (o_time <= parsed_time < c_time):
                 raise Exception("ร้านปิดทำการหรืออยู่นอกเวลาให้บริการ")
 
-            # 🌟 4. Algorithm ค้นหาโต๊ะแบบ Smart Splitting 🌟
+            # 🌟 4. Algorithm ค้นหาโต๊ะแบบ Smart Best-Fit Splitting 🌟
             with transaction.atomic():
-                # ดึงโต๊ะทั้งหมดของร้าน เรียงจากความจุมากไปน้อย
-                all_tables = Table.objects.filter(shop=shop).order_by('-capacity')
+                all_tables = Table.objects.filter(shop=shop).order_by('capacity') # เรียงเล็กไปใหญ่
                 allocated_tables = []
                 
-                # 4.1 ลองหาโต๊ะเดี่ยวที่ว่างก่อน
-                suitable_single_table = all_tables.filter(capacity__gte=pax).order_by('capacity').first()
+                # 4.1 ลองหาโต๊ะเดี่ยวที่ว่างและ "พอดีที่สุด" ก่อน
+                suitable_single_table = all_tables.filter(capacity__gte=pax).first()
                 if suitable_single_table:
                     locked_t = Table.objects.select_for_update().get(pk=suitable_single_table.pk)
                     q_count = Queue.objects.filter(shop=shop, table=locked_t, queue_time=combined_datetime, status='doing').count()
                     if q_count < locked_t.amount:
                         allocated_tables.append(locked_t)
 
-                # 4.2 ถ้าโต๊ะเดี่ยวไม่พอ หรือไม่มีโต๊ะเดี่ยวขนาดนั้น -> ลองคำนวณแยกโต๊ะ
+                # 4.2 ถ้าโต๊ะเดี่ยวไม่พอ -> คำนวณหาคู่โต๊ะที่เหมาะสมที่สุด
                 if not allocated_tables:
-                    temp_pax = pax
-                    possible_tables = []
-                    
-                    for table in all_tables:
-                        locked_t = Table.objects.select_for_update().get(pk=table.pk)
+                    # สร้างรายการโต๊ะที่ว่างทั้งหมดแตกออกมาเป็นใบๆ (Pool)
+                    available_table_pool = []
+                    for t in all_tables:
+                        locked_t = Table.objects.select_for_update().get(pk=t.pk)
                         q_count = Queue.objects.filter(shop=shop, table=locked_t, queue_time=combined_datetime, status='doing').count()
-                        available_in_type = locked_t.amount - q_count
-                        
-                        for _ in range(available_in_type):
-                            if temp_pax <= 0: break
-                            possible_tables.append(locked_t)
-                            temp_pax -= locked_t.capacity
+                        available_count = locked_t.amount - q_count
+                        for _ in range(available_count):
+                            available_table_pool.append(locked_t)
                     
-                    if temp_pax <= 0: # รวมโต๊ะแล้วนั่งพอ
-                        if confirm_split: # ลูกค้ากดยืนยันแยกโต๊ะมาแล้ว
-                            allocated_tables = possible_tables
-                        else: # ส่ง Error เพื่อไปขอคำยืนยันที่หน้าเว็บ
-                            t_names = ", ".join([f"{t.name}" for t in possible_tables])
+                    # เรียง Pool จากใหญ่ไปเล็กเพื่อหยิบตัวหลักก่อน
+                    available_table_pool.sort(key=lambda x: x.capacity, reverse=True)
+
+                    current_pax_to_fill = pax
+                    selected_pool = []
+                    
+                    while current_pax_to_fill > 0 and available_table_pool:
+                        # หาโต๊ะใน pool ที่เล็กที่สุดที่ยัง "ใหญ่พอ" สำหรับจำนวนคนที่เหลือ
+                        best_match = None
+                        # ค้นหาจากเล็กไปใหญ่ใน Pool
+                        for t in reversed(available_table_pool): 
+                            if t.capacity >= current_pax_to_fill:
+                                best_match = t
+                                break
+                        
+                        # ถ้าไม่มีโต๊ะไหนใหญ่พอสำหรับที่เหลือแล้ว ให้หยิบตัวที่ใหญ่ที่สุดที่มีในมือมาหักออก
+                        if not best_match:
+                            best_match = available_table_pool[0]
+                        
+                        selected_pool.append(best_match)
+                        current_pax_to_fill -= best_match.capacity
+                        available_table_pool.remove(best_match)
+
+                    if current_pax_to_fill <= 0: # จัดสรรโต๊ะจนครบจำนวนคนได้สำเร็จ
+                        if confirm_split:
+                            allocated_tables = selected_pool
+                        else:
+                            t_names = " + ".join([f"{t.name}({t.capacity}ที่นั่ง)" for t in selected_pool])
+                            total_cap = sum([t.capacity for t in selected_pool])
                             raise ValueError({
                                 'type': 'confirm_split',
-                                'msg': f"ไม่มีโต๊ะเดี่ยวว่างสำหรับ {pax} ท่าน แต่ท่านสามารถแยกจองเป็น [{t_names}] ได้ ต้องการจองหรือไม่?"
+                                'msg': f"ไม่มีโต๊ะเดี่ยวว่างสำหรับ {pax} ท่าน แต่ท่านสามารถแยกจองเป็น [{t_names}] รวม {total_cap} ที่นั่งได้ ต้องการจองหรือไม่?"
                             })
                     else:
                         raise Exception(f"ขออภัย จำนวนโต๊ะที่ว่างไม่เพียงพอสำหรับ {pax} ท่านในเวลานี้")
@@ -491,7 +509,6 @@ class QueueReserve(LoginRequiredMixin, View):
                             customer=customer, shop=shop, table=table,
                             pax=pax, queue_date=parsed_date, queue_time=combined_datetime, status='doing'
                         )
-                    # (ส่วนส่ง LINE ใส่ตรงนี้ได้เลยครับ)
                     return redirect('home-c')
 
         except ValueError as ve:
@@ -505,7 +522,6 @@ class QueueReserve(LoginRequiredMixin, View):
         return self._render_reserve(request, shop, error, parsed_date, pax_str, now, open_info)
 
     def _render_reserve(self, request, shop, error, parsed_date, pax_str, now, open_info, is_split=False):
-        """Helper function สำหรับเรนเดอร์หน้าเดิมพร้อมกรองเวลาซ้ำ"""
         my_booked_hours = Queue.objects.filter(customer__auth=request.user, queue_date=parsed_date, status='doing').values_list('queue_time__hour', flat=True)
         hour_range = []
         weekday = parsed_date.weekday()
