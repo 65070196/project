@@ -73,9 +73,12 @@
             </div>
 
             <div class="mt-3 text-right">
-              <p class="text-[13px] text-gray-500 flex items-center justify-end gap-1.5 font-medium">
-                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  หากต้องการยกเลิกการจอง กรุณาติดต่อทางร้านค้าโดยตรง
+              <p class="text-[13px] text-gray-500 flex flex-wrap items-center justify-end gap-1.5 font-medium">
+                  <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span>หากต้องการยกเลิกการจอง กรุณาติดต่อทางร้านค้าโดยตรง</span>
+                  {% if queue.shop.phone %}
+                    <span class="ml-1">โทร: <a href="tel:{{ queue.shop.phone }}" class="text-indigo-600 hover:text-indigo-800 font-bold underline transition-colors">{{ queue.shop.phone }}</a></span>
+                  {% endif %}
               </p>
             </div>
 
