@@ -4,11 +4,11 @@
 {% block content %}
 <div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden z-0">
 
-  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar relative">
+  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 flex flex-col relative">
 
-    <div class="p-6 md:p-10 pb-32"> 
+    <div class="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10"> 
       
-      <div class="w-full h-64 md:h-[400px] bg-gray-200 rounded-3xl mb-8 overflow-hidden relative shadow-inner group">
+      <div class="w-full h-64 md:h-[400px] bg-gray-200 rounded-3xl mb-8 overflow-hidden relative shadow-inner group shrink-0">
         {% if shop.image and shop.image.image_path %}
             <img src="{{ shop.image.image_path.url }}" alt="{{ shop.shop_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
         {% else %}
@@ -37,7 +37,7 @@
             </p>
         </div>
 
-        <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm h-fit">
+        <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm">
             <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800">
                 <span>⏰</span> เวลาทำการ
             </h3>
@@ -106,33 +106,7 @@
       </div>
       {% endif %}
 
-      {% if menus %}
-      <div class="mb-12">
-        <h3 class="text-2xl font-bold mb-6 border-l-4 border-yellow-400 pl-3 text-gray-800">🍽️ เมนูแนะนำ</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {% for menu in menus %}
-            <div class="flex gap-4 bg-white border border-gray-100 p-4 rounded-2xl shadow-sm hover:shadow-md transition">
-                <div class="w-24 h-24 shrink-0 rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
-                    {% if menu.image and menu.image.image_path %}
-                        <img src="{{ menu.image.image_path.url }}" class="w-full h-full object-cover">
-                    {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-gray-300">🍲</div>
-                    {% endif %}
-                </div>
-                <div class="flex flex-col justify-center flex-1">
-                    <h4 class="font-bold text-gray-800 line-clamp-1">{{ menu.name }}</h4>
-                    <p class="text-xs text-gray-500 mt-1 line-clamp-1">{{ menu.description|default:"-" }}</p>
-                    <p class="text-orange-500 font-extrabold mt-2 text-xl">฿{{ menu.price }}</p>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-      </div>
-      {% endif %}
-
-    </div>
-
-    <div class="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 py-4 px-6 md:px-10 z-20 flex justify-between items-center shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+    </div> <div class="w-full bg-white/95 backdrop-blur-md border-t border-gray-200 py-4 px-6 md:px-10 z-20 flex justify-between items-center shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] shrink-0">
         <div class="hidden md:block">
             <p class="text-sm text-gray-500 font-medium">พร้อมรับประทานอาหารอร่อยๆ หรือยัง?</p>
             <p class="font-extrabold text-gray-800 text-xl">จองคิว {{ shop.shop_name }}</p>
