@@ -24,7 +24,7 @@
         <div class="w-full overflow-x-auto">
           <div class="min-w-[900px]">
             
-            <div class="grid grid-cols-7 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
+            <div class="grid grid-cols-6 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
               <div class="truncate">ชื่อลูกค้า</div>
               <div class="truncate text-center">ประเภทโต๊ะ</div>
               <div class="truncate text-center">วันที่</div>
@@ -35,7 +35,7 @@
 
             <div id="queueContainer">
                 {% for queue in queues %}
-                <div class="queue-row grid grid-cols-7 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors" data-status="{{ queue.status }}">
+                <div class="queue-row grid grid-cols-6 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors" data-status="{{ queue.status }}">
                   
                   <div class="font-bold text-gray-800 truncate" title="{{ queue.customer.auth.get_full_name }}">
                     {{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}
@@ -82,13 +82,13 @@
 
                 </div>
                 {% empty %}
-                <div id="noDataEmpty" class="px-4 py-16 text-center text-gray-400 bg-gray-50 col-span-7 block">
+                <div id="noDataEmpty" class="px-4 py-16 text-center text-gray-400 bg-gray-50 col-span-6 block">
                   <span class="text-4xl block mb-2">📋</span>
                   ไม่มีรายการคิวสำหรับวันนี้
                 </div>
                 {% endfor %}
 
-                <div id="filterEmptyState" class="px-4 py-16 text-center text-gray-400 bg-gray-50 hidden">
+                <div id="filterEmptyState" class="px-4 py-16 text-center text-gray-400 bg-gray-50 hidden col-span-6">
                   <span class="text-4xl block mb-2">🔍</span>
                   ไม่พบคิวในสถานะที่คุณเลือก
                 </div>
@@ -122,37 +122,31 @@
 
 <script>
   function filterQueue(status) {
-    // 1. รีเซ็ตสีปุ่มทั้งหมดให้เป็นสีเทา
     const allBtns = document.querySelectorAll('.filter-btn');
     allBtns.forEach(btn => {
       btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
       btn.classList.add('text-gray-600');
     });
 
-    // 2. ไฮไลต์ปุ่มที่ถูกกดให้เป็นสีน้ำเงิน
     const activeBtn = document.getElementById('btn-' + status);
     activeBtn.classList.remove('text-gray-600');
     activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
 
-    // 3. จัดการแสดง/ซ่อน แถวข้อมูล
     const rows = document.querySelectorAll('.queue-row');
     let visibleCount = 0;
 
     rows.forEach(row => {
-      // ถ้าเลือก "ทั้งหมด" หรือ ตรงกับสถานะที่เลือก ให้แสดงเป็น grid
       if (status === 'all' || row.dataset.status === status) {
         row.style.display = 'grid'; 
         visibleCount++;
       } else {
-        row.style.display = 'none'; // ซ่อน
+        row.style.display = 'none'; 
       }
     });
 
-    // 4. จัดการหน้าจอ "ไม่พบข้อมูล"
     const filterEmptyState = document.getElementById('filterEmptyState');
     const noDataEmpty = document.getElementById('noDataEmpty');
     
-    // ถ้ามีบล็อก empty ดั้งเดิมอยู่ (กรณีไม่มีคิวเลยตั้งแต่ต้น) ให้ซ่อนตัว filter empty ไปเลย
     if (noDataEmpty) {
         return; 
     }
