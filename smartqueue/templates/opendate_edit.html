@@ -2,57 +2,69 @@
 {% load static %}
 
 {% block content %}
-<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden z-0">
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden bg-slate-50/50">
   <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar">
     <div class="p-6 md:p-10 pb-24">
 
-      <div class="mb-8 border-l-4 border-yellow-400 pl-4">
-        <h2 class="text-3xl font-bold text-gray-800">เวลาทำการ</h2>
-        <p class="text-gray-500 text-sm">กำหนดเวลาเปิด-ปิดร้านในแต่ละวัน</p>
+      <div class="mb-8 border-l-4 border-blue-500 pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-3 shadow-sm -mx-6 md:-mx-10 px-6 md:px-10">
+        <h2 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-blue-700">เวลาทำการ</h2>
+        <p class="text-gray-500 text-sm font-medium mt-1">กำหนดเวลาเปิด-ปิดร้านในแต่ละวัน</p>
       </div>
 
-      <form method="POST" action="" class="max-w-4xl mx-auto space-y-4">
+      <form method="POST" action="" class="max-w-4xl mx-auto space-y-4 bg-white p-4 md:p-8 rounded-3xl border border-slate-200/60 shadow-sm">
         {% csrf_token %}
 
-        <div class="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-800 text-white font-bold rounded-t-xl text-center">
-            <div class="col-span-3 text-left">วันในสัปดาห์</div>
-            <div class="col-span-2">สถานะ</div>
+        <div class="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-gradient-to-r from-slate-800 to-blue-800 text-white font-extrabold rounded-xl text-center shadow-md">
+            <div class="col-span-3 text-left pl-2">วันในสัปดาห์</div>
+            <div class="col-span-3">สถานะ</div>
             <div class="col-span-3">เวลาเปิด</div>
             <div class="col-span-3">เวลาปิด</div>
         </div>
 
-        <div class="space-y-4 md:space-y-0 md:bg-gray-50 md:border md:border-gray-200 md:rounded-b-xl md:p-4">
+        <div class="space-y-4 md:space-y-3">
             
             {% for day in days_data %}
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-white p-5 md:p-3 rounded-xl border border-gray-100 shadow-sm md:shadow-none hover:bg-gray-50 transition">
+            <div class="day-row grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-white p-5 md:p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all" data-key="{{ day.key }}">
                 
-                <div class="col-span-1 md:col-span-3 font-bold text-lg md:text-base flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-blue-500 md:hidden"></span>
+                <div class="col-span-1 md:col-span-3 font-extrabold text-slate-800 text-lg md:text-base flex items-center gap-3 md:pl-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 md:hidden"></span>
                     วัน{{ day.name }}
                 </div>
                 
-                <div class="col-span-1 md:col-span-2 flex items-center md:justify-center">
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="{{ day.key }}_is_closed" class="sr-only peer" 
+                <div class="col-span-1 md:col-span-3 flex items-center md:justify-center">
+                    <label class="inline-flex items-center cursor-pointer group">
+                        <span class="ms-3 text-sm font-extrabold text-slate-500 peer-checked:text-rose-500 transition-colors">เปิดร้าน</span>
+                        <input type="checkbox" name="{{ day.key }}_is_closed" id="closed_{{ day.key }}" class="sr-only peer" 
                                onchange="toggleTimeInputs('{{ day.key }}', this.checked)"
                                {% if day.is_closed %}checked{% endif %}>
-                        <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
-                        <span class="ms-3 text-sm font-semibold text-gray-700 peer-checked:text-red-500">ปิดร้าน</span>
+                        <div class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500 group-hover:shadow-sm"></div>
+                        <span class="ms-3 text-sm font-extrabold text-slate-500 peer-checked:text-rose-500 transition-colors">ปิดร้าน</span>
                     </label>
                 </div>
 
-                <div class="col-span-1 md:col-span-3 flex flex-col">
-                    <label class="md:hidden text-xs text-gray-500 mb-1 font-bold">เวลาเปิด</label>
-                    <input type="time" id="open_{{ day.key }}" name="{{ day.key }}_open" 
-                           value="{{ day.open_time|time:'H:i'|default:'' }}"
-                           class="w-full h-12 md:h-10 px-4 rounded-lg bg-gray-100 border-none outline-none focus:ring-2 focus:ring-blue-400 transition disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed">
+                <div class="col-span-1 md:col-span-3 flex flex-col relative">
+                    <label class="md:hidden text-xs text-slate-400 mb-1 font-bold uppercase tracking-wider">เวลาเปิด</label>
+                    <select id="open_{{ day.key }}" name="{{ day.key }}_open" 
+                            data-initial="{{ day.open_time|time:'H:i'|default:'' }}"
+                            onchange="updateCloseOptions('{{ day.key }}')"
+                            class="w-full h-12 md:h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-bold outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all disabled:opacity-40 disabled:bg-slate-100 disabled:cursor-not-allowed cursor-pointer appearance-none">
+                        <option value="">- เลือกเวลาเปิด -</option>
+                        </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 pt-5 md:pt-0 text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
                 </div>
 
-                <div class="col-span-1 md:col-span-3 flex flex-col">
-                    <label class="md:hidden text-xs text-gray-500 mb-1 font-bold">เวลาปิด</label>
-                    <input type="time" id="close_{{ day.key }}" name="{{ day.key }}_close" 
-                           value="{{ day.close_time|time:'H:i'|default:'' }}"
-                           class="w-full h-12 md:h-10 px-4 rounded-lg bg-gray-100 border-none outline-none focus:ring-2 focus:ring-blue-400 transition disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed">
+                <div class="col-span-1 md:col-span-3 flex flex-col relative">
+                    <label class="md:hidden text-xs text-slate-400 mb-1 font-bold uppercase tracking-wider">เวลาปิด</label>
+                    <select id="close_{{ day.key }}" name="{{ day.key }}_close" 
+                            data-initial="{{ day.close_time|time:'H:i'|default:'' }}"
+                            class="w-full h-12 md:h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-bold outline-none focus:ring-2 focus:ring-rose-400 focus:bg-white transition-all disabled:opacity-40 disabled:bg-slate-100 disabled:cursor-not-allowed cursor-pointer appearance-none">
+                        <option value="">- เลือกเวลาปิด -</option>
+                        </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 pt-5 md:pt-0 text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
                 </div>
 
             </div>
@@ -61,7 +73,8 @@
         </div>
 
         <div class="pt-8 md:pt-10 max-w-sm mx-auto">
-          <button type="submit" class="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold text-lg shadow-md hover:shadow-lg transition-all">
+          <button type="submit" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-extrabold text-lg shadow-md hover:shadow-lg hover:shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
             บันทึกเวลาทำการ
           </button>
         </div>
@@ -73,6 +86,48 @@
 </div>
 
 <script>
+    // 1. สร้างลิสต์เวลาแบบรายชั่วโมง 00:00 - 23:00
+    const hoursList = [];
+    for(let i = 0; i <= 23; i++) {
+        let h = i.toString().padStart(2, '0');
+        hoursList.push(`${h}:00`);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const dayRows = document.querySelectorAll('.day-row');
+
+        dayRows.forEach(row => {
+            const key = row.dataset.key;
+            const openSelect = document.getElementById(`open_${key}`);
+            const closeSelect = document.getElementById(`close_${key}`);
+            const isClosed = document.getElementById(`closed_${key}`).checked;
+
+            const initialOpen = openSelect.dataset.initial;
+            const initialClose = closeSelect.dataset.initial;
+
+            // เติม Option เวลาเปิด
+            hoursList.forEach(time => {
+                let opt = new Option(time + ' น.', time);
+                if (time === initialOpen) opt.selected = true;
+                openSelect.add(opt);
+            });
+
+            // เติม Option เวลาปิด
+            hoursList.forEach(time => {
+                let opt = new Option(time + ' น.', time);
+                if (time === initialClose) opt.selected = true;
+                closeSelect.add(opt);
+            });
+
+            // เซ็ตสถานะเริ่มต้นเมื่อโหลดหน้าเว็บ
+            toggleTimeInputs(key, isClosed);
+            if (!isClosed) {
+                updateCloseOptions(key); 
+            }
+        });
+    });
+
+    // 2. ฟังก์ชันล็อกช่องหากกด "ปิดร้าน"
     function toggleTimeInputs(dayKey, isClosed) {
         const openInput = document.getElementById(`open_${dayKey}`);
         const closeInput = document.getElementById(`close_${dayKey}`);
@@ -80,21 +135,53 @@
         if (isClosed) {
             openInput.disabled = true;
             closeInput.disabled = true;
-            openInput.value = ''; // ล้างค่าทิ้งถ้าปิดร้าน
+            openInput.value = ''; 
             closeInput.value = '';
         } else {
             openInput.disabled = false;
-            closeInput.disabled = false;
+            updateCloseOptions(dayKey); // อัปเดตช่องเวลาปิดตามเวลาเปิด
         }
     }
 
-    // รันตอนเปิดหน้าเว็บครั้งแรก เพื่อเช็คว่าวันไหนปิดร้านอยู่บ้าง จะได้ล็อคช่องให้ถูกต้อง
-    window.addEventListener('DOMContentLoaded', () => {
-        {% for day in days_data %}
-            {% if day.is_closed %}
-                toggleTimeInputs('{{ day.key }}', true);
-            {% endif %}
-        {% endfor %}
-    });
+    // 3. ฟังก์ชันเช็คและล็อกเวลาปิด (ต้องมากกว่าเวลาเปิดเสมอ)
+    function updateCloseOptions(dayKey) {
+        const openSelect = document.getElementById(`open_${dayKey}`);
+        const closeSelect = document.getElementById(`close_${dayKey}`);
+        const isClosed = document.getElementById(`closed_${dayKey}`).checked;
+
+        if (isClosed) return; // ถ้าร้านปิด ไม่ต้องทำอะไร
+
+        const openTime = openSelect.value;
+        const currentClose = closeSelect.value;
+
+        // ถ้ายังไม่ได้เลือกเวลาเปิด ให้ล็อกช่องเวลาปิดไว้ก่อน
+        if (!openTime) {
+            closeSelect.disabled = true;
+            closeSelect.value = '';
+            return;
+        }
+
+        closeSelect.disabled = false;
+        const openHour = parseInt(openTime.split(':')[0]);
+
+        // วนลูปเช็คเวลาในช่องเวลาปิด (เริ่มที่ index 1 เพราะ 0 คือ '- เลือกเวลาปิด -')
+        for (let i = 1; i < closeSelect.options.length; i++) {
+            const optHour = parseInt(closeSelect.options[i].value.split(':')[0]);
+            
+            // ซ่อนเวลาที่น้อยกว่าหรือเท่ากับเวลาเปิด
+            if (optHour <= openHour) {
+                closeSelect.options[i].disabled = true;
+                closeSelect.options[i].classList.add('hidden'); 
+            } else {
+                closeSelect.options[i].disabled = false;
+                closeSelect.options[i].classList.remove('hidden');
+            }
+        }
+
+        // ถ้าเวลาปิดที่เลือกไว้อยู่ ดันน้อยกว่าหรือเท่ากับเวลาเปิด ให้รีเซ็ตค่าทิ้ง
+        if (currentClose && parseInt(currentClose.split(':')[0]) <= openHour) {
+            closeSelect.value = '';
+        }
+    }
 </script>
 {% endblock %}
