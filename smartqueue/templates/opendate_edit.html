@@ -33,12 +33,17 @@
                 
                 <div class="col-span-1 md:col-span-3 flex items-center md:justify-center">
                     <label class="inline-flex items-center cursor-pointer group">
-                        <span class="ms-3 text-sm font-extrabold text-slate-500 peer-checked:text-rose-500 transition-colors">เปิดร้าน</span>
-                        <input type="checkbox" name="{{ day.key }}_is_closed" id="closed_{{ day.key }}" class="sr-only peer" 
-                               onchange="toggleTimeInputs('{{ day.key }}', this.checked)"
-                               {% if day.is_closed %}checked{% endif %}>
-                        <div class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500 group-hover:shadow-sm"></div>
-                        <span class="ms-3 text-sm font-extrabold text-slate-500 peer-checked:text-rose-500 transition-colors">ปิดร้าน</span>
+                        <span class="me-3 text-sm font-extrabold transition-colors duration-300 {% if day.is_closed %}text-slate-300{% else %}text-emerald-500{% endif %}" id="status_open_{{ day.key }}">เปิดร้าน</span>
+                        
+                        <div class="relative items-center">
+                            <input type="checkbox" name="{{ day.key }}_is_closed" id="closed_{{ day.key }}" class="sr-only peer" 
+                                onchange="toggleTimeInputs('{{ day.key }}', this.checked)"
+                                {% if day.is_closed %}checked{% endif %}>
+                            
+                            <div class="relative w-14 h-7 bg-emerald-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-500 shadow-inner group-hover:brightness-110 transition-all"></div>
+                        </div>
+
+                        <span class="ms-3 text-sm font-extrabold transition-colors duration-300 {% if day.is_closed %}text-rose-500{% else %}text-slate-300{% endif %}" id="status_closed_{{ day.key }}">ปิดร้าน</span>
                     </label>
                 </div>
 
