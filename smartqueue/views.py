@@ -341,19 +341,20 @@ class QueueReserve(LoginRequiredMixin, View):
         pax_str = request.GET.get('pax', '')
         date_str = request.GET.get('queue_date')
         
-        if date_str:
-            try:
-                selected_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-                if selected_date < today:
-                    return redirect(f"{request.path}?queue_date={today.strftime('%Y-%m-%d')}&pax={pax_str}")
-            except ValueError:
-                selected_date = today
-        else:
+        try:
+            selected_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else today
+            if selected_date < today: selected_date = today
+        except (ValueError, TypeError):
             selected_date = today
             
         weekday = selected_date.weekday()
         open_info = shop.open_date
         
+        # กรองเวลาที่ลูกค้าคนนี้จองไปแล้วในวันนั้น
+        my_booked_hours = Queue.objects.filter(
+            customer__auth=request.user, queue_date=selected_date, status='doing'
+        ).values_list('queue_time__hour', flat=True)
+
         day_map = {
             0: (open_info.mon_is_closed, open_info.mon_open, open_info.mon_close),
             1: (open_info.tue_is_closed, open_info.tue_open, open_info.tue_close),
@@ -364,150 +365,124 @@ class QueueReserve(LoginRequiredMixin, View):
             6: (open_info.sun_is_closed, open_info.sun_open, open_info.sun_close),
         }
 
-        is_closed, start_time, end_time = day_map.get(weekday)
-
-        existing_booking_hours = Queue.objects.filter(
-            customer__auth=request.user,
-            queue_date=selected_date,
-            status='doing'
-        ).values_list('queue_time__hour', flat=True)
-
+        is_closed, start_time, end_time = day_map.get(weekday, (True, None, None))
         hour_range = []
+        
         if not is_closed and start_time and end_time:
-            buffer_datetime = now + datetime.timedelta(hours=1)
-            end_hr = end_time.hour + (1 if end_time.minute > 0 else 0)
-            
-            for h in range(start_time.hour, end_hr):
-                if h in existing_booking_hours:
-                    continue
-                slot_time = datetime.time(hour=h, minute=0)
-                if not (start_time <= slot_time < end_time):
-                    continue
-                slot_datetime = timezone.make_aware(datetime.datetime.combine(selected_date, slot_time))
-                if slot_datetime < buffer_datetime:
-                    continue
-                hour_range.append(h)
+            buffer_dt = now + datetime.timedelta(hours=1)
+            for h in range(start_time.hour, end_time.hour + (1 if end_time.minute > 0 else 0)):
+                if h in my_booked_hours: continue
+                slot_dt = timezone.make_aware(datetime.datetime.combine(selected_date, datetime.time(h, 0)))
+                if start_time <= datetime.time(h, 0) < end_time and slot_dt >= buffer_dt:
+                    hour_range.append(h)
 
-        context = {
-            'shop': shop,
-            'hour_range': hour_range,
-            'is_closed': is_closed,
+        return render(request, 'queue_reserve.html', {
+            'shop': shop, 'hour_range': hour_range, 'is_closed': is_closed,
             'selected_date': selected_date.strftime('%Y-%m-%d'),
-            'today_str': today.strftime('%Y-%m-%d'),
-            'pax_value': pax_str,
-        }
-        return render(request, 'queue_reserve.html', context)
+            'today_str': today.strftime('%Y-%m-%d'), 'pax_value': pax_str,
+        })
     
     def post(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
         queue_date_str = request.POST.get('queue_date')
         queue_time_str = request.POST.get('queue_time')
-        pax_str = request.POST.get('pax')
+        pax_str = request.POST.get('pax', '0')
         confirm_split = request.POST.get('confirm_split') == 'true'
 
         now = timezone.localtime()
         today = now.date()
-        parsed_date = parse_date(queue_date_str) if queue_date_str else today
-
-        if not queue_date_str or not queue_time_str or not pax_str:
-            return redirect(f"{request.path}?queue_date={parsed_date.strftime('%Y-%m-%d')}")
+        open_info = shop.open_date
 
         try:
+            # แปลงข้อมูลเบื้องต้น
             customer = Customer.objects.get(auth=request.user)
+            parsed_date = parse_date(queue_date_str) if queue_date_str else today
             parsed_time = parse_time(queue_time_str)
             pax = int(pax_str)
+
+            if not parsed_time: raise Exception("กรุณาเลือกเวลาที่ต้องการจอง")
+            
             combined_datetime = timezone.make_aware(datetime.datetime.combine(parsed_date, parsed_time))
 
-            # 1. ป้องกันการจองซ้อน
+            # 1. ป้องกันการจองซ้อน (ทุกร้าน)
             if Queue.objects.filter(customer=customer, queue_time=combined_datetime, status='doing').exists():
-                raise Exception(f"คุณมีรายการจองคิวในเวลานี้อยู่แล้ว")
+                raise Exception("คุณมีรายการจองคิวเวลานี้อยู่แล้ว ไม่สามารถจองซ้อนได้")
 
-            # 2. Validations
             if pax <= 0: raise Exception("จำนวนลูกค้าต้องมากกว่า 0 ท่าน")
             if parsed_date < today: raise Exception("ไม่สามารถจองคิวย้อนหลังได้")
             
-            # 3. Check Hours
+            # 2. เช็คเวลาเปิดปิดร้าน
             weekday = parsed_date.weekday()
-            open_info = shop.open_date
             day_config = {
-                0: (open_info.mon_is_closed, open_info.mon_open, open_info.mon_close),
-                1: (open_info.tue_is_closed, open_info.tue_open, open_info.tue_close),
-                2: (open_info.wed_is_closed, open_info.wed_open, open_info.wed_close),
-                3: (open_info.thu_is_closed, open_info.thu_open, open_info.thu_close),
-                4: (open_info.fri_is_closed, open_info.fri_open, open_info.fri_close),
-                5: (open_info.sat_is_closed, open_info.sat_open, open_info.sat_close),
-                6: (open_info.sun_is_closed, open_info.sun_open, open_info.sun_close),
+                0:(open_info.mon_is_closed, open_info.mon_open, open_info.mon_close),
+                1:(open_info.tue_is_closed, open_info.tue_open, open_info.tue_close),
+                2:(open_info.wed_is_closed, open_info.wed_open, open_info.wed_close),
+                3:(open_info.thu_is_closed, open_info.thu_open, open_info.thu_close),
+                4:(open_info.fri_is_closed, open_info.fri_open, open_info.fri_close),
+                5:(open_info.sat_is_closed, open_info.sat_open, open_info.sat_close),
+                6:(open_info.sun_is_closed, open_info.sun_open, open_info.sun_close),
             }
-            is_closed, o_time, c_time = day_config.get(weekday)
-            if is_closed or not o_time or not c_time or not (o_time <= parsed_time < c_time):
-                raise Exception("ร้านปิดทำการหรืออยู่นอกเวลาให้บริการ")
+            is_closed, o_t, c_t = day_config.get(weekday, (True, None, None))
+            if is_closed or not o_t or not (o_t <= parsed_time < c_t):
+                raise Exception("ร้านปิดทำการหรืออยู่นอกเวลาให้บริการในวันที่เลือก")
 
-            # 🌟 4. Algorithm ค้นหาโต๊ะแบบ Smart Best-Fit Splitting 🌟
+            # 3. Algorithm ค้นหาโต๊ะ (Best-Fit)
             with transaction.atomic():
-                all_tables = Table.objects.filter(shop=shop).order_by('capacity') # เรียงเล็กไปใหญ่
+                all_tables = Table.objects.filter(shop=shop).order_by('capacity')
                 allocated_tables = []
                 
-                # 4.1 ลองหาโต๊ะเดี่ยวที่ว่างและ "พอดีที่สุด" ก่อน
-                suitable_single_table = all_tables.filter(capacity__gte=pax).first()
-                if suitable_single_table:
-                    locked_t = Table.objects.select_for_update().get(pk=suitable_single_table.pk)
+                # 3.1 ลองหาโต๊ะเดี่ยวที่ว่างและพอดีที่สุดก่อน
+                suitable_single = all_tables.filter(capacity__gte=pax).first()
+                if suitable_single:
+                    locked_t = Table.objects.select_for_update().get(pk=suitable_single.pk)
                     q_count = Queue.objects.filter(shop=shop, table=locked_t, queue_time=combined_datetime, status='doing').count()
                     if q_count < locked_t.amount:
                         allocated_tables.append(locked_t)
 
-                # 4.2 ถ้าโต๊ะเดี่ยวไม่พอ -> คำนวณหาคู่โต๊ะที่เหมาะสมที่สุด
+                # 3.2 ถ้าโต๊ะเดี่ยวไม่พอ -> คำนวณแยกโต๊ะ
                 if not allocated_tables:
-                    # สร้างรายการโต๊ะที่ว่างทั้งหมดแตกออกมาเป็นใบๆ (Pool)
-                    available_table_pool = []
+                    available_pool = []
                     for t in all_tables:
                         locked_t = Table.objects.select_for_update().get(pk=t.pk)
                         q_count = Queue.objects.filter(shop=shop, table=locked_t, queue_time=combined_datetime, status='doing').count()
-                        available_count = locked_t.amount - q_count
-                        for _ in range(available_count):
-                            available_table_pool.append(locked_t)
+                        for _ in range(locked_t.amount - q_count):
+                            available_pool.append(locked_t)
                     
-                    # เรียง Pool จากใหญ่ไปเล็กเพื่อหยิบตัวหลักก่อน
-                    available_table_pool.sort(key=lambda x: x.capacity, reverse=True)
-
-                    current_pax_to_fill = pax
+                    available_pool.sort(key=lambda x: x.capacity, reverse=True)
+                    temp_pax = pax
                     selected_pool = []
                     
-                    while current_pax_to_fill > 0 and available_table_pool:
-                        # หาโต๊ะใน pool ที่เล็กที่สุดที่ยัง "ใหญ่พอ" สำหรับจำนวนคนที่เหลือ
+                    while temp_pax > 0 and available_pool:
                         best_match = None
-                        # ค้นหาจากเล็กไปใหญ่ใน Pool
-                        for t in reversed(available_table_pool): 
-                            if t.capacity >= current_pax_to_fill:
+                        for t in reversed(available_pool): 
+                            if t.capacity >= temp_pax:
                                 best_match = t
                                 break
-                        
-                        # ถ้าไม่มีโต๊ะไหนใหญ่พอสำหรับที่เหลือแล้ว ให้หยิบตัวที่ใหญ่ที่สุดที่มีในมือมาหักออก
-                        if not best_match:
-                            best_match = available_table_pool[0]
-                        
+                        if not best_match: best_match = available_pool[0]
                         selected_pool.append(best_match)
-                        current_pax_to_fill -= best_match.capacity
-                        available_table_pool.remove(best_match)
+                        temp_pax -= best_match.capacity
+                        available_pool.remove(best_match)
 
-                    if current_pax_to_fill <= 0: # จัดสรรโต๊ะจนครบจำนวนคนได้สำเร็จ
+                    if temp_pax <= 0:
                         if confirm_split:
                             allocated_tables = selected_pool
                         else:
                             t_names = " + ".join([f"{t.name}({t.capacity}ที่นั่ง)" for t in selected_pool])
                             total_cap = sum([t.capacity for t in selected_pool])
                             raise ValueError({
-                                'type': 'confirm_split',
-                                'msg': f"ไม่มีโต๊ะเดี่ยวว่างสำหรับ {pax} ท่าน แต่ท่านสามารถแยกจองเป็น [{t_names}] รวม {total_cap} ที่นั่งได้ ต้องการจองหรือไม่?"
+                                'type': 'confirm_split', 
+                                'msg': f"ไม่มีโต๊ะเดี่ยวว่างสำหรับ {pax} ท่าน แต่สามารถแยกจองเป็น [{t_names}] รวม {total_cap} ที่นั่งได้ ต้องการจองหรือไม่?"
                             })
                     else:
-                        raise Exception(f"ขออภัย จำนวนโต๊ะที่ว่างไม่เพียงพอสำหรับ {pax} ท่านในเวลานี้")
+                        raise Exception(f"ขออภัย โต๊ะที่ว่างในขณะนี้ไม่เพียงพอสำหรับ {pax} ท่าน")
 
-                # 5. บันทึกการจอง
+                # 4. บันทึกข้อมูล
                 if allocated_tables:
                     for table in allocated_tables:
                         Queue.objects.create(
                             customer=customer, shop=shop, table=table,
-                            pax=pax, queue_date=parsed_date, queue_time=combined_datetime, status='doing'
+                            pax=pax, queue_date=parsed_date, 
+                            queue_time=combined_datetime, status='doing'
                         )
                     return redirect('home-c')
 
@@ -519,25 +494,27 @@ class QueueReserve(LoginRequiredMixin, View):
         except Exception as e:
             error = str(e)
 
-        return self._render_reserve(request, shop, error, parsed_date, pax_str, now, open_info)
+        # กรณีเกิด Error ทั่วไป
+        return self._render_reserve(request, shop, error, parsed_date if 'parsed_date' in locals() else today, pax_str, now, open_info)
 
     def _render_reserve(self, request, shop, error, parsed_date, pax_str, now, open_info, is_split=False):
-        my_booked_hours = Queue.objects.filter(customer__auth=request.user, queue_date=parsed_date, status='doing').values_list('queue_time__hour', flat=True)
+        """Helper สำหรับแสดงหน้าเดิมพร้อมรักษาข้อมูลในฟอร์ม"""
+        my_booked = Queue.objects.filter(customer__auth=request.user, queue_date=parsed_date, status='doing').values_list('queue_time__hour', flat=True)
         hour_range = []
-        weekday = parsed_date.weekday()
         day_config = {0:(open_info.mon_open, open_info.mon_close), 1:(open_info.tue_open, open_info.tue_close), 2:(open_info.wed_open, open_info.wed_close), 3:(open_info.thu_open, open_info.thu_close), 4:(open_info.fri_open, open_info.fri_close), 5:(open_info.sat_open, open_info.sat_close), 6:(open_info.sun_open, open_info.sun_close)}
-        o_t, c_t = day_config.get(weekday, (None, None))
+        o_t, c_t = day_config.get(parsed_date.weekday(), (None, None))
         
         if o_t and c_t:
             buf = now + datetime.timedelta(hours=1)
             for h in range(o_t.hour, c_t.hour):
-                if h in my_booked_hours: continue
-                if timezone.make_aware(datetime.datetime.combine(parsed_date, datetime.time(h,0))) < buf: continue
-                hour_range.append(h)
+                if h in my_booked: continue
+                slot_dt = timezone.make_aware(datetime.datetime.combine(parsed_date, datetime.time(h,0)))
+                if slot_dt >= buf: hour_range.append(h)
 
         return render(request, 'queue_reserve.html', {
             'shop': shop, 'error_message': error, 'selected_date': parsed_date.strftime('%Y-%m-%d'),
             'pax_value': pax_str, 'hour_range': hour_range, 'is_confirm_split': is_split,
+            'today_str': now.date().strftime('%Y-%m-%d')
         })
 
 
