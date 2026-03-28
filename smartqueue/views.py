@@ -366,12 +366,23 @@ class QueueReserve(LoginRequiredMixin, View):
 
         is_closed, start_time, end_time = day_map.get(weekday)
 
+        # 🌟 ค้นหาเวลาที่ผู้ใช้คนนี้เคยจองไว้แล้วในวันที่เลือก (ทุกร้าน) 🌟
+        existing_booking_hours = Queue.objects.filter(
+            customer__auth=request.user,
+            queue_date=selected_date,
+            status='doing'
+        ).values_list('queue_time__hour', flat=True)
+
         hour_range = []
         if not is_closed and start_time and end_time:
             buffer_datetime = now + datetime.timedelta(hours=1)
             end_hr = end_time.hour + (1 if end_time.minute > 0 else 0)
             
             for h in range(start_time.hour, end_hr):
+                # 🌟 เช็คว่าชั่วโมงนี้ถูกจองไปแล้วหรือยัง ถ้าจองแล้วให้ skip ไปเลย 🌟
+                if h in existing_booking_hours:
+                    continue
+
                 slot_time = datetime.time(hour=h, minute=0)
                 if not (start_time <= slot_time < end_time):
                     continue
@@ -393,29 +404,24 @@ class QueueReserve(LoginRequiredMixin, View):
     
     def post(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
-        
         queue_date_str = request.POST.get('queue_date')
         queue_time_str = request.POST.get('queue_time')
         pax_str = request.POST.get('pax')
 
         now = timezone.localtime()
         today = now.date()
-        date_obj = parse_date(queue_date_str) if queue_date_str else today
+        parsed_date = parse_date(queue_date_str) if queue_date_str else today
 
         if not queue_date_str or not queue_time_str or not pax_str:
-            return redirect(f"{request.path}?queue_date={date_obj.strftime('%Y-%m-%d')}")
+            return redirect(f"{request.path}?queue_date={parsed_date.strftime('%Y-%m-%d')}")
 
         try:
             customer = Customer.objects.get(auth=request.user)
-            parsed_date = parse_date(queue_date_str)
             parsed_time = parse_time(queue_time_str)
             pax = int(pax_str)
-            
-            # เตรียม Datetime สำหรับเปรียบเทียบ
             combined_datetime = timezone.make_aware(datetime.datetime.combine(parsed_date, parsed_time))
 
-            # 🌟 1. ป้องกันการจองซ้อนเวลาเดียวกัน (Double Booking Check) 🌟
-            # เช็คว่าลูกค้านี้มีการจองที่สถานะ 'doing' ในวันและเวลาเดียวกันที่ร้านใดๆ หรือไม่
+            # 1. ป้องกันการจองซ้อนเวลาเดียวกัน
             is_already_booked = Queue.objects.filter(
                 customer=customer,
                 queue_time=combined_datetime,
@@ -425,18 +431,16 @@ class QueueReserve(LoginRequiredMixin, View):
             if is_already_booked:
                 raise Exception(f"คุณมีรายการจองคิวในวันที่ {parsed_date.strftime('%d/%m/%Y')} เวลา {parsed_time.strftime('%H:%M')} น. อยู่แล้ว ไม่สามารถจองซ้อนได้")
 
-            # 🌟 2. Basic Validations 🌟
+            # 2. Basic Validations
             if pax <= 0: raise Exception("จำนวนลูกค้าต้องมากกว่า 0 ท่าน")
             if parsed_date < today: raise Exception("ไม่สามารถจองคิวย้อนหลังได้")
-            
             if parsed_date == today:
                 buffer_datetime = now + datetime.timedelta(hours=1)
                 if combined_datetime < buffer_datetime:
                     raise Exception("กรุณาจองคิวล่วงหน้าอย่างน้อย 1 ชั่วโมง")
-            
             if parsed_time.minute != 0: raise Exception("รองรับการจองเฉพาะนาทีที่ :00 เท่านั้น")
 
-            # 🌟 3. Check Shop Working Hours 🌟
+            # 3. Check Shop Working Hours
             weekday = parsed_date.weekday()
             open_info = shop.open_date
             day_config = {
@@ -455,12 +459,11 @@ class QueueReserve(LoginRequiredMixin, View):
             if not (o_time <= parsed_time < c_time):
                 raise Exception("กรุณาเลือกเวลาในช่วงที่ร้านเปิดทำการ")
 
-            # 🌟 4. เริ่ม Algorithm ค้นหาโต๊ะ (Database Transaction) 🌟
+            # 4. เริ่ม Algorithm ค้นหาโต๊ะ
             with transaction.atomic():
                 suitable_tables = Table.objects.filter(shop=shop, capacity__gte=pax).order_by('capacity')
                 allocated_table = None
 
-                # 4.1 ลองหาโต๊ะว่างในเวลาที่ลูกค้าต้องการ
                 for table in suitable_tables:
                     locked_table = Table.objects.select_for_update().get(pk=table.pk)
                     existing_queues_count = Queue.objects.filter(
@@ -471,13 +474,13 @@ class QueueReserve(LoginRequiredMixin, View):
                         allocated_table = locked_table
                         break 
                 
-                # 4.2 ถ้ามีโต๊ะว่าง -> บันทึกและส่ง LINE
                 if allocated_table:
                     Queue.objects.create(
                         customer=customer, shop=shop, table=allocated_table,
                         pax=pax, queue_date=parsed_date, queue_time=combined_datetime, status='doing'
                     )
                     
+                    # (โค้ดส่ง LINE คงไว้ตามเดิม)
                     if customer.line_uid:
                         try:
                             line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
@@ -490,45 +493,47 @@ class QueueReserve(LoginRequiredMixin, View):
                                 f"🙏 กรุณามาถึงร้านก่อนเวลา 10 นาทีนะคะ"
                             )
                             line_bot_api.push_message(customer.line_uid, TextSendMessage(text=receipt_msg))
-                        except Exception as e:
-                            print(f"LINE Error: {e}")
+                        except Exception as e: print(f"LINE Error: {e}")
                             
                     return redirect('home-c') 
 
-                # 4.3 ถ้าโต๊ะเต็ม -> เริ่ม Smart Alternative Time Algorithm
                 else:
+                    # Smart Alternative Time Algorithm
                     alternative_times = []
                     buffer_datetime = now + datetime.timedelta(hours=1)
                     end_hr = c_time.hour + (1 if c_time.minute > 0 else 0)
-                    valid_hours = []
+                    
+                    # 🌟 เช็คเวลาที่ลูกค้าคนนี้ "จองแล้ว" ในวันที่ต้องการ 🌟
+                    my_booked_hours = Queue.objects.filter(
+                        customer=customer, queue_date=parsed_date, status='doing'
+                    ).values_list('queue_time__hour', flat=True)
 
+                    valid_hours = []
                     for h in range(o_time.hour, end_hr):
+                        # 🌟 ถ้าเป็นเวลาที่เคยจองไปแล้ว ห้ามเอามาเป็นตัวเลือก Alternative 🌟
+                        if h in my_booked_hours: continue
+
                         slot_time = datetime.time(hour=h, minute=0)
                         if not (o_time <= slot_time < c_time): continue
-                        
                         alt_dt = timezone.make_aware(datetime.datetime.combine(parsed_date, slot_time))
                         if alt_dt < buffer_datetime or h == parsed_time.hour: continue
                         valid_hours.append(h)
 
-                    # เรียงหาเวลาที่ใกล้เคียงที่สุด
                     valid_hours.sort(key=lambda h: abs(h - parsed_time.hour))
 
                     for h in valid_hours:
                         alt_time = datetime.time(hour=h, minute=0)
                         alt_dt = timezone.make_aware(datetime.datetime.combine(parsed_date, alt_time))
-                        
                         is_alt_available = False
                         for table in suitable_tables:
                             count = Queue.objects.filter(shop=shop, table=table, queue_time=alt_dt, status='doing').count()
                             if count < table.amount:
                                 is_alt_available = True
                                 break
-                        
                         if is_alt_available:
                             alternative_times.append(f"{h:02d}:00")
                             if len(alternative_times) >= 3: break
                     
-                    # แจ้งเตือนหน้าเว็บพร้อมปุ่มเลือกเวลาใหม่
                     raise ValueError({
                         'msg': f"ขออภัย โต๊ะสำหรับ {pax} ท่าน เวลา {parsed_time.strftime('%H:%M')} น. เต็มแล้ว",
                         'alts': alternative_times
@@ -538,21 +543,38 @@ class QueueReserve(LoginRequiredMixin, View):
             error_data = ve.args[0]
             error = error_data['msg']
             alternatives = error_data['alts']
-        except Customer.DoesNotExist:
-            error = 'ไม่พบข้อมูลลูกค้า'
-            alternatives = []
         except Exception as e:
             error = str(e)
             alternatives = []
 
-        # เตรียม Dropdown เวลาให้ลูกค้าเลือกใหม่กรณีเกิด Error
+        # 🌟 เตรียม Dropdown กรณี Error ให้กรองเวลาที่ซ้ำออกด้วย 🌟
+        my_booked_hours = Queue.objects.filter(
+            customer__auth=request.user, queue_date=parsed_date, status='doing'
+        ).values_list('queue_time__hour', flat=True)
+
         hour_range = []
-        if not is_closed and o_time and c_time:
-            buffer_time = (now + datetime.timedelta(hours=1))
-            for h in range(o_time.hour, c_time.hour):
-                slot_dt = timezone.make_aware(datetime.datetime.combine(parsed_date, datetime.time(h,0)))
-                if slot_dt < buffer_time: continue
-                hour_range.append(h)
+        is_closed_result = False
+        if parsed_date:
+            weekday = parsed_date.weekday()
+            # ดึงเวลาเปิดปิดใหม่เพื่อความชัวร์
+            day_config = {
+                0: (open_info.mon_is_closed, open_info.mon_open, open_info.mon_close),
+                1: (open_info.tue_is_closed, open_info.tue_open, open_info.tue_close),
+                2: (open_info.wed_is_closed, open_info.wed_open, open_info.wed_close),
+                3: (open_info.thu_is_closed, open_info.thu_open, open_info.thu_close),
+                4: (open_info.fri_is_closed, open_info.fri_open, open_info.fri_close),
+                5: (open_info.sat_is_closed, open_info.sat_open, open_info.sat_close),
+                6: (open_info.sun_is_closed, open_info.sun_open, open_info.sun_close),
+            }
+            is_closed_result, o_time, c_time = day_config.get(weekday)
+            if not is_closed_result and o_time and c_time:
+                buffer_time = (now + datetime.timedelta(hours=1))
+                for h in range(o_time.hour, c_time.hour):
+                    # 🌟 กรองเวลาที่เคยจองแล้วออก 🌟
+                    if h in my_booked_hours: continue
+                    slot_dt = timezone.make_aware(datetime.datetime.combine(parsed_date, datetime.time(h,0)))
+                    if slot_dt < buffer_time: continue
+                    hour_range.append(h)
 
         return render(request, 'queue_reserve.html', {
             'shop': shop,
@@ -562,9 +584,9 @@ class QueueReserve(LoginRequiredMixin, View):
             'today_str': today.strftime('%Y-%m-%d'),
             'pax_value': pax_str,
             'hour_range': hour_range,
-            'is_closed': is_closed,
+            'is_closed': is_closed_result,
         })
-        
+
 
 # หน้าหลักร้านค้า
 class HomeShop(View):
