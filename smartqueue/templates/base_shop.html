@@ -45,7 +45,10 @@
     <div class="flex items-center space-x-8 text-sm font-bold text-gray-300">
       {% if user.is_authenticated %}
         <a href="{% url 'home-s' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">หน้าแรก</a>
-        <a href="{% url 'table-manage' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">จัดการโต๊ะ</a>
+        <a href="{% url 'queue-all' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">จัดการคิวทั้งหมด</a>
+      <a href="{% url 'promo-manage' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">จัดการโปรโมชั่น</a>
+      <a href="{% url 'table-manage' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">จัดการโต๊ะ</a>
+      <a href="{% url 'opendate-edit' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">จัดการเวลา</a>
         
         <div class="relative inline-block text-left">
             <button onclick="toggleUserMenu()" class="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-700/80 backdrop-blur border border-white/10 text-white px-4 py-2 rounded-full transition-all shadow-sm focus:outline-none">
@@ -60,7 +63,7 @@
                     <p class="text-sm font-bold text-slate-800 truncate">{{ user.username }}</p>
                 </div>
                 <a href="{% url 'view-s-profile' %}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2">
-                    ⚙️ ตั้งค่าร้านค้า
+                    ⚙️ ดูโปรไฟล์ร้านค้า
                 </a>
                 <a href="{% url 'logout' %}" class="block px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors border-t border-gray-50 flex items-center gap-2">
                     🚪 ออกจากระบบ
