@@ -1119,3 +1119,8 @@ class SearchSuggestion(View):
             return JsonResponse({'results': list(shops)})
         
         return JsonResponse({'results': []})
+
+
+class AboutView(View):
+    def get(self, request):
+        return render(request, "about.html")

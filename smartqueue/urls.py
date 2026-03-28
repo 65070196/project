@@ -18,6 +18,7 @@ urlpatterns = [
     path("home/s/", HomeShop.as_view(), name="home-s"),
 
     path('api/search-suggestion/', SearchSuggestion.as_view(), name='search-suggestion'),
+    path('about/', AboutView.as_view(), name='about'),
 
     path("shop-detail/<int:shop_id>/", ShopDetail.as_view(), name="shop-detail"),
     

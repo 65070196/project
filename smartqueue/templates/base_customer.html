@@ -65,7 +65,7 @@
       {% if user.is_authenticated %}
         <a href="{% url 'home-c' %}" class="hover:text-white transition duration-200">หน้าแรก</a>
         <a href="{% url 'queue-check' %}" class="hover:text-white transition duration-200">ตรวจสอบคิว</a>
-        <a href="#" class="hover:text-white transition duration-200">เกี่ยวกับ</a>
+        <a href="{% url 'about' %}" class="hover:text-white transition duration-200">เกี่ยวกับ</a>
         
         <div class="relative inline-block text-left">
             <button onclick="toggleUserMenu()" class="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full hover:bg-gray-100 transition shadow-sm focus:outline-none">
