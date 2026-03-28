@@ -1,6 +1,7 @@
 from django.urls import path
 from django.shortcuts import redirect
 from smartqueue.views import *
+from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -12,6 +13,15 @@ urlpatterns = [
     path("reset-password/", ResetPassword.as_view(), name="reset-password"),
     path('line/auth/', LineAuthRedirect.as_view(), name='line-auth-redirect'),
     path('line/callback/', LineAuthCallback.as_view(), name='line-auth-callback'),
+
+    # 1. หน้ากรอก Email เพื่อขอ Reset
+    path('password-reset/', auth_views.PasswordResetView.as_view(template_name='registration/password_reset_form.html'), name='password_reset'),
+    # 2. หน้าแจ้งว่าส่ง Email สำเร็จแล้ว
+    path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'), name='password_reset_done'),
+    # 3. หน้ากรอกรหัสผ่านใหม่ (ลิงก์จาก Email)
+    path('password-reset-confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),
+    # 4. หน้าแจ้งว่าเปลี่ยนรหัสผ่านเสร็จเรียบร้อย
+    path('password-reset-complete/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
 
     path('', lambda request: redirect('home-c')), 
     path("home/c/", HomeCustomer.as_view(), name="home-c"), 
