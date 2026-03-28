@@ -56,11 +56,13 @@
               {% elif not hour_range %}
                   <option value="" disabled selected>-- คิวสำหรับวันนี้หมดเวลาจองแล้ว --</option>
               {% else %}
-                  <option value="" disabled selected>-- เลือกเวลา --</option>
+                  <option value="" disabled {% if not selected_time %}selected{% endif %}>-- เลือกเวลา --</option>
                   {% for hour in hour_range %}
-                      <option value="{{ hour|stringformat:'02d' }}:00">
-                          {{ hour|stringformat:'02d' }}:00 น.
+                      {% with h_str=hour|stringformat:'02d'|add:':00' %}
+                      <option value="{{ h_str }}" {% if selected_time == h_str %}selected{% endif %}>
+                          {{ h_str }} น.
                       </option>
+                      {% endwith %}
                   {% endfor %}
               {% endif %}
             </select>
@@ -117,15 +119,11 @@
   function selectAlternativeTime(timeValue) {
       const selectElement = document.getElementById('timeSelect');
       selectElement.value = timeValue;
-      
       selectElement.classList.add('ring-4', 'ring-purple-400');
       setTimeout(() => selectElement.classList.remove('ring-4', 'ring-purple-400'), 500);
-      
-      // เมื่อเลือกเวลาใหม่ ให้เซ็ตการยืนยันแยกโต๊ะเป็น false ก่อน เพราะเวลาใหม่อาจจะมีโต๊ะเดี่ยวพอ
       document.getElementById('splitInput').value = 'false';
   }
 
-  // 🌟 ฟังก์ชันส่งฟอร์มแบบยืนยันแยกโต๊ะ 🌟
   function submitSplit() {
       document.getElementById('splitInput').value = 'true';
       document.getElementById('reserveForm').submit();
