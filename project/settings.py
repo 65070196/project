@@ -83,11 +83,6 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'megathon2205@gmail.com'
-EMAIL_HOST_PASSWORD = '030391Cr?'
 
 LINE_CHANNEL_ACCESS_TOKEN = 'h/TBk7izgXqunNBsnnzcnZPIePPDqcwIJ4Ct9DTLOpBxK1Ib8bDG1mOeGEOr8BcA/MhQHkjE1xaUsM6+TcP8B0F39gR96rINSQED4IEM2kxwhSgBjQC1QCYynTItSIF6XIQmbbXkGRYl1ay6XsbhTwdB04t89/1O/w1cDnyilFU='
 LINE_LOGIN_CHANNEL_ID = '2009625334'
