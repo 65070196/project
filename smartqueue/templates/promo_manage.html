@@ -20,8 +20,7 @@
         <div class="w-full overflow-x-auto">
           <div class="min-w-[900px]">
             
-            <div class="grid grid-cols-6 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
-              <div class="truncate">รหัสโปรโมชั่น</div>
+            <div class="grid grid-cols-5 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
               <div class="truncate">ชื่อโปรโมชั่น</div>
               <div class="truncate text-center">ส่วนลด</div>
               <div class="truncate text-center">วันเริ่มต้น</div>
@@ -30,11 +29,7 @@
             </div>
 
             {% for promo in promotions %}
-            <div class="grid grid-cols-6 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
-              
-              <div class="font-bold text-gray-800">
-                #{{ promo.promo_id }}
-              </div>
+            <div class="grid grid-cols-5 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
               
               <div class="font-bold text-gray-800 truncate" title="{{ promo.promo_name }}">
                 {{ promo.promo_name }}
