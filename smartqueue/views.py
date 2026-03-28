@@ -333,6 +333,10 @@ class QueueCheck(View):
         return render(request, "queue_check.html", context)
     
 
+from django.utils.dateparse import parse_date, parse_time
+from django.db import transaction
+import datetime
+
 class QueueReserve(LoginRequiredMixin, View):
     def get(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
