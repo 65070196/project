@@ -34,62 +34,59 @@
 
 <body class="font-sans bg-center bg-cover bg-no-repeat bg-fixed min-h-screen text-gray-800">
 
-  <header class="flex justify-between items-center px-6 py-3 bg-[#a7a1f9] fixed w-full top-0 z-50 shadow-sm">
+  <header class="flex justify-between items-center px-6 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-500 fixed w-full top-0 z-50 shadow-lg">
     
     <div class="flex items-center space-x-4">
-      <a href="{% url 'home-c' %}" class="flex items-center gap-2">
-        <div class="bg-white rounded-full w-10 h-10 shadow-sm"></div>
-        <div class="text-xl font-bold text-black tracking-wide">On-Queue</div>
+      <a href="{% url 'home-c' %}" class="flex items-center gap-2 group">
+        <div class="bg-white text-indigo-600 rounded-full w-10 h-10 shadow-md flex items-center justify-center font-black text-xl group-hover:scale-110 transition-transform">Q</div>
+        <div class="text-xl font-extrabold text-white tracking-wide drop-shadow-sm">On-Queue</div>
       </a>
       
       <form action="{% url 'home-c' %}" method="GET" class="hidden md:flex items-center gap-2 relative">
         <div class="relative w-64">
-          <div class="flex items-center bg-white rounded-full px-4 py-1.5 w-full shadow-inner border border-transparent focus-within:border-[#a7a1f9] transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-gray-500 mr-2">
+          <div class="flex items-center bg-white/20 backdrop-blur-md rounded-full px-4 py-1.5 w-full shadow-inner border border-white/30 focus-within:bg-white focus-within:border-white transition-all group">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-white group-focus-within:text-indigo-500 mr-2 transition-colors">
               <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
-            <input type="text" id="searchInput" name="q" value="{{ request.GET.q }}" autocomplete="off" placeholder="ค้นหาร้านอาหาร..." class="outline-none text-sm w-full bg-transparent placeholder-gray-400 text-black">
+            <input type="text" id="searchInput" name="q" value="{{ request.GET.q }}" autocomplete="off" placeholder="ค้นหาร้านอาหาร..." class="outline-none text-sm w-full bg-transparent placeholder-white/70 text-white group-focus-within:text-gray-900 group-focus-within:placeholder-gray-400 transition-colors">
           </div>
           
-          <div id="searchDropdown" class="absolute left-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 hidden z-50 overflow-hidden">
-            <ul id="searchList" class="divide-y divide-gray-50">
-                </ul>
+          <div id="searchDropdown" class="absolute left-0 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 hidden z-50 overflow-hidden">
+            <ul id="searchList" class="divide-y divide-gray-50"></ul>
           </div>
         </div>
 
-        <button type="submit" class="bg-[#eefc57] text-black font-bold px-6 py-1.5 rounded-full hover:bg-yellow-300 transition text-sm shadow-sm">ค้นหา</button>
+        <button type="submit" class="bg-[#eefc57] text-gray-900 font-bold px-6 py-1.5 rounded-full hover:bg-yellow-400 hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm shadow-sm">ค้นหา</button>
       </form>
     </div>
 
-    <div class="flex items-center space-x-8 text-sm font-bold text-black">
+    <div class="flex items-center space-x-8 text-sm font-bold text-white/90">
       {% if user.is_authenticated %}
-        <a href="{% url 'home-c' %}" class="hover:text-white transition duration-200">หน้าแรก</a>
-        <a href="{% url 'queue-check' %}" class="hover:text-white transition duration-200">ตรวจสอบคิว</a>
-        <a href="{% url 'about' %}" class="hover:text-white transition duration-200">เกี่ยวกับ</a>
+        <a href="{% url 'home-c' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">หน้าแรก</a>
+        <a href="{% url 'queue-check' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">ตรวจสอบคิว</a>
+        <a href="{% url 'about' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">เกี่ยวกับ</a>
         
         <div class="relative inline-block text-left">
-            <button onclick="toggleUserMenu()" class="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full hover:bg-gray-100 transition shadow-sm focus:outline-none">
-                <span>{{ user.username }}</span>
-                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            <button onclick="toggleUserMenu()" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur border border-white/20 text-white px-4 py-2 rounded-full transition-all shadow-sm focus:outline-none">
+                <span>{{ user.get_full_name|default:user.username }}</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
             
-            <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                <a href="{% url 'view-c-profile' %}" class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors text-center">
+            <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50">
+                <a href="{% url 'view-c-profile' %}" class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-center">
                     ดูโปรไฟล์ผู้ใช้
                 </a>
                 <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors text-center">
                     ออกจากระบบ
                 </a>
             </div>
-
-
         </div>
 
       {% else %}
-        <a href="{% url 'home-c' %}" class="hover:text-white transition duration-200">หน้าแรก</a>
-        <a href="#" class="hover:text-white transition duration-200">เกี่ยวกับ</a>
+        <a href="{% url 'home-c' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">หน้าแรก</a>
+        <a href="{% url 'about' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">เกี่ยวกับ</a>
         
-        <a href="{% url 'login' %}" class="bg-[#eefc57] text-black px-6 py-2 rounded-full hover:bg-yellow-300 transition font-bold shadow-sm">
+        <a href="{% url 'login' %}" class="bg-[#eefc57] text-gray-900 px-6 py-2 rounded-full hover:bg-yellow-400 hover:shadow-lg hover:-translate-y-0.5 transition-all font-bold shadow-sm">
             เข้าสู่ระบบ
         </a>
       {% endif %}

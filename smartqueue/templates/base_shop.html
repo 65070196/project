@@ -33,46 +33,40 @@
 
 <body class="font-sans bg-center bg-cover bg-no-repeat bg-fixed min-h-screen text-gray-800">
 
-  <header class="flex justify-between items-center px-6 py-3 bg-[#f9d28f] fixed w-full top-0 z-50 shadow-md">
+  <header class="flex justify-between items-center px-6 py-3 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 fixed w-full top-0 z-50 shadow-lg border-b border-white/10">
     
     <div class="flex items-center space-x-4">
-      <a href="{% url 'home-s' %}" class="flex items-center gap-3">
-        <div class="bg-white rounded-full w-10 h-10 shadow-sm flex items-center justify-center overflow-hidden">
-             </div> 
-        <div class="text-xl font-bold text-black tracking-wide">On-Queue</div>
+      <a href="{% url 'home-s' %}" class="flex items-center gap-2 group">
+        <div class="bg-gradient-to-br from-[#eefc57] to-yellow-400 text-slate-900 rounded-lg w-10 h-10 shadow-md flex items-center justify-center font-black text-xl group-hover:scale-110 transition-transform">🏪</div>
+        <div class="text-xl font-extrabold text-white tracking-wide drop-shadow-sm">On-Queue <span class="text-[10px] bg-blue-600/50 text-blue-100 px-2 py-0.5 rounded-full uppercase ml-1 border border-blue-400/30 tracking-wider">Shop Admin</span></div>
       </a>
     </div>
 
-    <div class="flex items-center space-x-6 text-sm font-bold text-black">
-      <a href="{% url 'home-s' %}" class="hover:text-white transition duration-200">หน้าหลัก</a>
-      <a href="{% url 'queue-all' %}" class="hover:text-white transition duration-200">จัดการคิวทั้งหมด</a>
-      <a href="{% url 'promo-manage' %}" class="hover:text-white transition duration-200">จัดการโปรโมชั่น</a>
-      <a href="{% url 'table-manage' %}" class="hover:text-white transition duration-200">จัดการโต๊ะ</a>
-      <a href="{% url 'opendate-edit' %}" class="hover:text-white transition duration-200">จัดการเวลา</a>
-      
+    <div class="flex items-center space-x-8 text-sm font-bold text-gray-300">
       {% if user.is_authenticated %}
-      <div class="relative inline-block text-left">
-      <button onclick="toggleUserMenu()" 
-        class="bg-[#fcd34d] text-black px-6 py-2 rounded-full hover:bg-[#fbbf24] transition font-bold shadow-md flex items-center gap-2">
+        <a href="{% url 'home-s' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">หน้าแรก</a>
+        <a href="{% url 'shop-table' %}" class="hover:text-white hover:drop-shadow-md transition duration-200">จัดการโต๊ะ</a>
         
-        <span>ร้าน {{ user.shop.shop_name }}</span>
-        <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-
-      <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-        <a href="{% url 'view-s-profile' %}" class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors text-center">
-          ดูโปรไฟล์ผู้ใช้
-        </a>
-        <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors text-center">
-          ออกจากระบบ
-        </a>
-      </div>
-      {% else %}
-      <a href="{% url 'login' %}" class="bg-[#fcd34d] text-black px-6 py-2 rounded-full hover:bg-[#fbbf24] transition font-bold shadow-md">
-          เข้าสู่ระบบ
-      </a>
+        <div class="relative inline-block text-left">
+            <button onclick="toggleUserMenu()" class="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-700/80 backdrop-blur border border-white/10 text-white px-4 py-2 rounded-full transition-all shadow-sm focus:outline-none">
+                <span class="text-yellow-400 mr-1">👑</span> 
+                <span>{{ user.shop.shop_name|default:user.username }}</span>
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            
+            <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-50 bg-slate-50 mb-1">
+                    <p class="text-xs text-gray-500 font-medium">เข้าสู่ระบบในชื่อ</p>
+                    <p class="text-sm font-bold text-slate-800 truncate">{{ user.username }}</p>
+                </div>
+                <a href="{% url 'shop-profile' %}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2">
+                    ⚙️ ตั้งค่าร้านค้า
+                </a>
+                <a href="{% url 'logout' %}" class="block px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors border-t border-gray-50 flex items-center gap-2">
+                    🚪 ออกจากระบบ
+                </a>
+            </div>
+        </div>
       {% endif %}
     </div>
   </header>
