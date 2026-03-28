@@ -180,7 +180,7 @@ class RegisterShop(View):
                 )
                 
                 # สมัครเสร็จให้ Login ให้อัตโนมัติ (เลือกใช้ได้)
-                # login(request, user) 
+                login(request, user)
                 
                 return redirect('home-s')
 
