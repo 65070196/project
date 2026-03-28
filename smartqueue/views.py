@@ -476,24 +476,47 @@ class QueueReserve(LoginRequiredMixin, View):
 
     def _render_reserve(self, request, shop, error, parsed_date, pax_str, now, open_info, is_split=False, selected_time=None):
         my_booked = Queue.objects.filter(customer__auth=request.user, queue_date=parsed_date, status='doing').values_list('queue_time__hour', flat=True)
-        hour_range = []
+        
+        # เตรียมรายการเวลาพร้อมสถานะความว่าง
+        hour_data_list = []
+        pax = int(pax_str) if pax_str and pax_str.isdigit() else 0
+        
+        weekday = parsed_date.weekday()
         day_config = {0:(open_info.mon_open, open_info.mon_close), 1:(open_info.tue_open, open_info.tue_close), 2:(open_info.wed_open, open_info.wed_close), 3:(open_info.thu_open, open_info.thu_close), 4:(open_info.fri_open, open_info.fri_close), 5:(open_info.sat_open, open_info.sat_close), 6:(open_info.sun_open, open_info.sun_close)}
-        o_t, c_t = day_config.get(parsed_date.weekday(), (None, None))
+        o_t, c_t = day_config.get(weekday, (None, None))
         
         if o_t and c_t:
             buf = now + datetime.timedelta(hours=1)
+            all_tables = Table.objects.filter(shop=shop)
+            
             for h in range(o_t.hour, c_t.hour):
                 if h in my_booked: continue
-                try:
-                    if timezone.make_aware(datetime.datetime.combine(parsed_date, datetime.time(h,0))) >= buf:
-                        hour_range.append(h)
-                except: continue
+                
+                slot_time = datetime.time(h, 0)
+                slot_dt = timezone.make_aware(datetime.datetime.combine(parsed_date, slot_time))
+                
+                if slot_dt >= buf:
+                    # 🌟 Logic ตรวจสอบความเหมาะสม (เบื้องต้น) 🌟
+                    is_recommended = False
+                    if pax > 0:
+                        total_available_pax = 0
+                        for t in all_tables:
+                            q_count = Queue.objects.filter(shop=shop, table=t, queue_time=slot_dt, status='doing').count()
+                            total_available_pax += (t.amount - q_count) * t.capacity
+                        
+                        if total_available_pax >= pax:
+                            is_recommended = True
+                    
+                    hour_data_list.append({
+                        'hour': h,
+                        'time_str': f"{h:02d}:00",
+                        'recommended': is_recommended
+                    })
 
         return render(request, 'queue_reserve.html', {
             'shop': shop, 'error_message': error, 'selected_date': parsed_date.strftime('%Y-%m-%d'),
-            'pax_value': pax_str, 'hour_range': hour_range, 'is_confirm_split': is_split,
-            'selected_time': selected_time, # 🌟 ส่งค่าเวลากลับไปให้ HTML
-            'today_str': now.date().strftime('%Y-%m-%d')
+            'pax_value': pax_str, 'hour_data_list': hour_data_list, 'is_confirm_split': is_split,
+            'selected_time': selected_time, 'today_str': now.date().strftime('%Y-%m-%d')
         })
 
 
