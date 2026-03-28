@@ -22,12 +22,20 @@
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 pb-4 border-b border-gray-100">
                 
                 <div class="flex-grow flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-gray-200 shadow-inner bg-gray-50 flex items-center justify-center text-gray-400">
+                        {% if queue.shop.image and queue.shop.image.image_path %}
+                            <img src="{{ queue.shop.image.image_path.url }}" alt="{{ queue.shop.shop_name }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-xl">🏪</span>
+                        {% endif %}
+                    </div>
+                    
                     <h3 class="text-lg md:text-xl font-extrabold text-gray-900 leading-tight tracking-tight line-clamp-1">
                       ร้าน {{ queue.shop.shop_name }}
                     </h3>
                 </div>
 
-                <div class="flex-shrink-0">
+                <div class="flex-shrink-0 mt-1 sm:mt-0">
                   {% if queue.status == 'doing' %}
                     <span class="px-3 py-1 text-xs rounded-full bg-amber-100 text-amber-700 font-bold border border-amber-200 shadow-sm whitespace-nowrap">
                       ⏳ กำลังทำ
@@ -77,7 +85,7 @@
                   <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                   <span>หากต้องการยกเลิกการจอง กรุณาติดต่อทางร้านค้าโดยตรง</span>
                   {% if queue.shop.phone %}
-                    <span class="ml-1">โทร: {{ queue.shop.phone }}</span>
+                    <span class="ml-1">โทร: <a href="tel:{{ queue.shop.phone }}" class="text-indigo-600 hover:text-indigo-800 font-bold underline transition-colors">{{ queue.shop.phone }}</a></span>
                   {% endif %}
               </p>
             </div>
