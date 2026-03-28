@@ -19,7 +19,9 @@
         <input type="hidden" name="confirm_split" id="splitInput" value="{% if is_confirm_split %}true{% else %}false{% endif %}">
 
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2">ร้านที่ต้องการจอง</label>
+          <label class="block text-sm font-bold text-gray-700 mb-2">
+            ร้านที่ต้องการจอง
+          </label>
           <div class="h-14 bg-purple-50/50 border border-purple-100 rounded-xl flex items-center px-4 text-purple-900 font-extrabold text-lg shadow-inner">
             🏪 {{ shop.shop_name }}
           </div>
@@ -29,8 +31,7 @@
           <label class="block text-sm font-bold text-gray-700 mb-2">
             จำนวนลูกค้า <span class="text-red-500">*</span>
           </label>
-          <input type="number" name="pax" id="paxInput" min="1" value="{{ pax_value|default:'' }}" 
-                 oninput="checkPax()" placeholder="กรอกจำนวนคนเพื่อเลือกวันที่..." required 
+          <input type="number" name="pax" id="paxInput" min="1" value="{{ pax_value|default:'' }}" placeholder="ระบุจำนวนคน (เช่น 2)" required 
                  class="w-full h-14 bg-gray-50 border border-gray-200 rounded-xl px-4 text-gray-800 font-bold outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent focus:bg-white transition-all shadow-sm">
         </div>
 
@@ -40,32 +41,28 @@
             <label class="block text-sm font-bold text-gray-700 mb-2">
               วันที่ทำการจอง <span class="text-red-500">*</span>
             </label>
-            <input type="date" name="queue_date" id="dateInput" value="{{ selected_date }}" min="{{ today_str }}" required
-              {% if not pax_value %}disabled{% endif %}
-              onchange="handleDateChange(this.value)"
-              class="w-full h-14 bg-gray-50 border border-gray-200 rounded-xl px-4 text-gray-800 font-bold outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent focus:bg-white transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:bg-slate-100 disabled:cursor-not-allowed">
+            <input type="date" name="queue_date" value="{{ selected_date }}" min="{{ today_str }}" required
+              onchange="window.location.href='?queue_date=' + this.value + '&pax=' + document.getElementById('paxInput').value"
+              class="w-full h-14 bg-gray-50 border border-gray-200 rounded-xl px-4 text-gray-800 font-bold outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent focus:bg-white transition-all cursor-pointer shadow-sm">
           </div>
 
           <div>
             <label class="block text-sm font-bold text-gray-700 mb-2">
                 เวลาที่ทำการจอง <span class="text-red-500">*</span>
             </label>
-            <select name="queue_time" id="timeSelect" required 
-                {% if not selected_date or is_closed %}disabled{% endif %}
-                class="w-full h-14 bg-gray-50 border border-gray-200 rounded-xl px-4 text-gray-800 font-bold outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent focus:bg-white transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:bg-slate-100 disabled:cursor-not-allowed">
-              
+            <select name="queue_time" id="timeSelect" required class="w-full h-14 bg-gray-50 border border-gray-200 rounded-xl px-4 text-gray-800 font-bold outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent focus:bg-white transition-all cursor-pointer shadow-sm">
               {% if is_closed %}
                   <option value="" disabled selected>-- วันนี้ร้านปิดทำการ --</option>
-              {% elif not selected_date %}
-                  <option value="" disabled selected>-- กรุณาเลือกวันที่ก่อน --</option>
-              {% elif not hour_data_list %}
-                  <option value="" disabled selected>-- ไม่มีเวลาที่สามารถจองได้ --</option>
+              {% elif not hour_range %}
+                  <option value="" disabled selected>-- คิวสำหรับวันนี้หมดเวลาจองแล้ว --</option>
               {% else %}
                   <option value="" disabled {% if not selected_time %}selected{% endif %}>-- เลือกเวลา --</option>
-                  {% for item in hour_data_list %}
-                      <option value="{{ item.time_str }}" {% if selected_time == item.time_str %}selected{% endif %}>
-                          {{ item.time_str }} น. {% if item.recommended %}(แนะนำ ✅){% endif %}
+                  {% for hour in hour_range %}
+                      {% with h_str=hour|stringformat:'02d'|add:':00' %}
+                      <option value="{{ h_str }}" {% if selected_time == h_str %}selected{% endif %}>
+                          {{ h_str }} น.
                       </option>
+                      {% endwith %}
                   {% endfor %}
               {% endif %}
             </select>
@@ -107,9 +104,7 @@
                 ✅ ยืนยันจองแบบแยกโต๊ะ
             </button>
           {% else %}
-            <button type="submit" id="submitBtn" 
-                {% if not selected_time %}disabled{% endif %}
-                class="w-full sm:w-2/3 py-3.5 bg-gradient-to-r from-purple-600 to-fuchsia-500 hover:from-purple-700 hover:to-fuchsia-600 text-white rounded-xl font-extrabold transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed">
+            <button type="submit" class="w-full sm:w-2/3 py-3.5 bg-gradient-to-r from-purple-600 to-fuchsia-500 hover:from-purple-700 hover:to-fuchsia-600 text-white rounded-xl font-extrabold transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
                 ยืนยันการจองคิว
             </button>
           {% endif %}
@@ -121,39 +116,10 @@
 </div>
 
 <script>
-  // ฟังก์ชันเช็คว่าใส่ Pax หรือยัง เพื่อเปิดช่องวันที่
-  function checkPax() {
-      const pax = document.getElementById('paxInput').value;
-      const dateInput = document.getElementById('dateInput');
-      const timeSelect = document.getElementById('timeSelect');
-      const submitBtn = document.getElementById('submitBtn');
-
-      if (pax > 0) {
-          dateInput.disabled = false;
-      } else {
-          dateInput.disabled = true;
-          dateInput.value = "";
-          timeSelect.disabled = true;
-          if(submitBtn) submitBtn.disabled = true;
-      }
-  }
-
-  // ฟังก์ชันเปลี่ยนวันที่ พร้อมส่งค่า Pax ไปด้วย
-  function handleDateChange(dateValue) {
-      const pax = document.getElementById('paxInput').value;
-      if (dateValue && pax > 0) {
-          window.location.href = '?queue_date=' + dateValue + '&pax=' + pax;
-      }
-  }
-
   function selectAlternativeTime(timeValue) {
       const selectElement = document.getElementById('timeSelect');
-      const submitBtn = document.getElementById('submitBtn');
-      
       selectElement.value = timeValue;
       selectElement.classList.add('ring-4', 'ring-purple-400');
-      if(submitBtn) submitBtn.disabled = false;
-      
       setTimeout(() => selectElement.classList.remove('ring-4', 'ring-purple-400'), 500);
       document.getElementById('splitInput').value = 'false';
   }
