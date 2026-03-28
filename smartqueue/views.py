@@ -333,28 +333,28 @@ class QueueCheck(View):
         return render(request, "queue_check.html", context)
     
 
-from django.utils.dateparse import parse_date, parse_time
-from django.db import transaction
-import datetime
-
 class QueueReserve(LoginRequiredMixin, View):
     def get(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
         now = timezone.localtime()
         today = now.date()
         pax_str = request.GET.get('pax', '')
-        date_str = request.GET.get('queue_date')
+        date_str = request.GET.get('queue_date', '') # ป้องกัน None
         
-        try:
-            selected_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else today
-            if selected_date < today: selected_date = today
-        except (ValueError, TypeError):
+        # ตรวจสอบและแปลงวันที่อย่างปลอดภัย
+        if date_str and isinstance(date_str, str):
+            try:
+                selected_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                if selected_date < today: selected_date = today
+            except (ValueError, TypeError):
+                selected_date = today
+        else:
             selected_date = today
             
         weekday = selected_date.weekday()
         open_info = shop.open_date
         
-        # กรองเวลาที่ลูกค้าคนนี้จองไปแล้วในวันนั้น
+        # กรองเวลาที่เคยจองแล้ว
         my_booked_hours = Queue.objects.filter(
             customer__auth=request.user, queue_date=selected_date, status='doing'
         ).values_list('queue_time__hour', flat=True)
@@ -376,8 +376,10 @@ class QueueReserve(LoginRequiredMixin, View):
             buffer_dt = now + datetime.timedelta(hours=1)
             for h in range(start_time.hour, end_time.hour + (1 if end_time.minute > 0 else 0)):
                 if h in my_booked_hours: continue
-                slot_dt = timezone.make_aware(datetime.datetime.combine(selected_date, datetime.time(h, 0)))
-                if start_time <= datetime.time(h, 0) < end_time and slot_dt >= buffer_dt:
+                # เช็คขอบเขตเวลาเปิดปิด และ buffer 1 ชม.
+                slot_time = datetime.time(h, 0)
+                slot_dt = timezone.make_aware(datetime.datetime.combine(selected_date, slot_time))
+                if start_time <= slot_time < end_time and slot_dt >= buffer_dt:
                     hour_range.append(h)
 
         return render(request, 'queue_reserve.html', {
@@ -388,8 +390,8 @@ class QueueReserve(LoginRequiredMixin, View):
     
     def post(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
-        queue_date_str = request.POST.get('queue_date')
-        queue_time_str = request.POST.get('queue_time')
+        queue_date_str = request.POST.get('queue_date', '').strip()
+        queue_time_str = request.POST.get('queue_time', '').strip()
         pax_str = request.POST.get('pax', '0')
         confirm_split = request.POST.get('confirm_split') == 'true'
 
@@ -398,19 +400,28 @@ class QueueReserve(LoginRequiredMixin, View):
         open_info = shop.open_date
 
         try:
-            # แปลงข้อมูลเบื้องต้น
             customer = Customer.objects.get(auth=request.user)
-            parsed_date = parse_date(queue_date_str) if queue_date_str else today
-            parsed_time = parse_time(queue_time_str)
-            pax = int(pax_str)
-
-            if not parsed_time: raise Exception("กรุณาเลือกเวลาที่ต้องการจอง")
             
+            # --- 🛡️ ป้องกัน Error fromisoformat ด้วยการเช็คค่าว่างก่อน parse ---
+            if not queue_date_str:
+                parsed_date = today
+            else:
+                parsed_date = parse_date(queue_date_str)
+                if not parsed_date: parsed_date = today
+
+            if not queue_time_str:
+                raise Exception("กรุณาเลือกเวลาที่ต้องการจอง")
+            
+            parsed_time = parse_time(queue_time_str)
+            if not parsed_time:
+                raise Exception("รูปแบบเวลาไม่ถูกต้อง")
+
+            pax = int(pax_str)
             combined_datetime = timezone.make_aware(datetime.datetime.combine(parsed_date, parsed_time))
 
-            # 1. ป้องกันการจองซ้อน (ทุกร้าน)
+            # 1. เช็คจองซ้อน
             if Queue.objects.filter(customer=customer, queue_time=combined_datetime, status='doing').exists():
-                raise Exception("คุณมีรายการจองคิวเวลานี้อยู่แล้ว ไม่สามารถจองซ้อนได้")
+                raise Exception("คุณมีรายการจองคิวเวลานี้อยู่แล้ว")
 
             if pax <= 0: raise Exception("จำนวนลูกค้าต้องมากกว่า 0 ท่าน")
             if parsed_date < today: raise Exception("ไม่สามารถจองคิวย้อนหลังได้")
@@ -428,14 +439,14 @@ class QueueReserve(LoginRequiredMixin, View):
             }
             is_closed, o_t, c_t = day_config.get(weekday, (True, None, None))
             if is_closed or not o_t or not (o_t <= parsed_time < c_t):
-                raise Exception("ร้านปิดทำการหรืออยู่นอกเวลาให้บริการในวันที่เลือก")
+                raise Exception("ร้านปิดทำการหรืออยู่นอกเวลาให้บริการ")
 
             # 3. Algorithm ค้นหาโต๊ะ (Best-Fit)
             with transaction.atomic():
                 all_tables = Table.objects.filter(shop=shop).order_by('capacity')
                 allocated_tables = []
                 
-                # 3.1 ลองหาโต๊ะเดี่ยวที่ว่างและพอดีที่สุดก่อน
+                # 3.1 ลองหาโต๊ะเดี่ยว
                 suitable_single = all_tables.filter(capacity__gte=pax).first()
                 if suitable_single:
                     locked_t = Table.objects.select_for_update().get(pk=suitable_single.pk)
@@ -443,13 +454,13 @@ class QueueReserve(LoginRequiredMixin, View):
                     if q_count < locked_t.amount:
                         allocated_tables.append(locked_t)
 
-                # 3.2 ถ้าโต๊ะเดี่ยวไม่พอ -> คำนวณแยกโต๊ะ
+                # 3.2 หาโต๊ะแยก (Split)
                 if not allocated_tables:
                     available_pool = []
                     for t in all_tables:
                         locked_t = Table.objects.select_for_update().get(pk=t.pk)
                         q_count = Queue.objects.filter(shop=shop, table=locked_t, queue_time=combined_datetime, status='doing').count()
-                        for _ in range(locked_t.amount - q_count):
+                        for _ in range(max(0, locked_t.amount - q_count)):
                             available_pool.append(locked_t)
                     
                     available_pool.sort(key=lambda x: x.capacity, reverse=True)
@@ -471,11 +482,10 @@ class QueueReserve(LoginRequiredMixin, View):
                         if confirm_split:
                             allocated_tables = selected_pool
                         else:
-                            t_names = " + ".join([f"{t.name}({t.capacity}ที่นั่ง)" for t in selected_pool])
-                            total_cap = sum([t.capacity for t in selected_pool])
+                            t_names = " + ".join([f"{t.name}" for t in selected_pool])
                             raise ValueError({
                                 'type': 'confirm_split', 
-                                'msg': f"ไม่มีโต๊ะเดี่ยวว่างสำหรับ {pax} ท่าน แต่สามารถแยกจองเป็น [{t_names}] รวม {total_cap} ที่นั่งได้ ต้องการจองหรือไม่?"
+                                'msg': f"ไม่มีโต๊ะเดี่ยวว่างสำหรับ {pax} ท่าน แต่สามารถแยกจองเป็น [{t_names}] ได้ ต้องการจองหรือไม่?"
                             })
                     else:
                         raise Exception(f"ขออภัย โต๊ะที่ว่างในขณะนี้ไม่เพียงพอสำหรับ {pax} ท่าน")
@@ -512,8 +522,10 @@ class QueueReserve(LoginRequiredMixin, View):
             buf = now + datetime.timedelta(hours=1)
             for h in range(o_t.hour, c_t.hour):
                 if h in my_booked: continue
-                slot_dt = timezone.make_aware(datetime.datetime.combine(parsed_date, datetime.time(h,0)))
-                if slot_dt >= buf: hour_range.append(h)
+                try:
+                    slot_dt = timezone.make_aware(datetime.datetime.combine(parsed_date, datetime.time(h,0)))
+                    if slot_dt >= buf: hour_range.append(h)
+                except: continue
 
         return render(request, 'queue_reserve.html', {
             'shop': shop, 'error_message': error, 'selected_date': parsed_date.strftime('%Y-%m-%d'),
