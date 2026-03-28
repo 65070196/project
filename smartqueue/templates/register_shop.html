@@ -9,7 +9,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -33,18 +33,20 @@
 
 <body class="font-sans bg-center bg-cover bg-no-repeat bg-fixed min-h-screen text-gray-800">
 
-  <div class="fixed top-0 w-full flex items-center px-6 py-3 bg-[#f9d28f] shadow-sm z-50">
-    <div class="bg-white rounded-full w-10 h-10 shadow-sm mr-3"></div>
-    <div class="text-xl font-bold text-black tracking-wide">On-Queue</div>
+  <div class="fixed top-0 w-full flex items-center px-6 py-3 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 shadow-lg z-50">
+    <div class="bg-gradient-to-br from-[#eefc57] to-yellow-400 text-slate-900 rounded-lg w-10 h-10 shadow-md flex items-center justify-center font-black text-xl mr-3">🏪</div>
+    <div class="text-xl font-extrabold text-white tracking-wide drop-shadow-sm">On-Queue <span class="text-[10px] bg-blue-600/50 text-blue-100 px-2 py-0.5 rounded-full uppercase ml-1 border border-blue-400/30 tracking-wider align-middle">Shop Admin</span></div>
   </div>
 
-  <div class="fixed inset-0 bg-white/40 z-0"></div>
+  <div class="fixed inset-0 bg-white/30 backdrop-blur-sm z-0"></div>
 
-  <div class="relative min-h-screen flex items-center justify-center px-4 z-10 pt-20 pb-10">
+  <div class="relative min-h-screen flex items-center justify-center px-4 z-10 pt-24 pb-12">
     
-    <div class="bg-white p-8 rounded-[20px] shadow-2xl w-full max-w-2xl border border-gray-200">
+    <div class="bg-white/95 backdrop-blur-xl p-8 md:p-10 rounded-3xl shadow-[0_20px_50px_rgba(30,58,138,0.15)] w-full max-w-2xl border border-white">
       
-      <h2 class="text-2xl font-bold text-center mb-8 text-gray-900">สมัครบัญชีร้านค้า</h2>
+      <h2 class="text-3xl font-extrabold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-blue-700">
+        สมัครบัญชีร้านค้า
+      </h2>
 
       <form class="space-y-6" method="POST">
         {% csrf_token %}
@@ -52,62 +54,64 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             <div class="md:col-span-2">
-                <label class="block text-base font-bold text-gray-700 mb-2 ml-1">ชื่อร้านค้า</label>
-                <input type="text" name="shop_name" placeholder="กรอกชื่อร้านค้า" value="{{ old_shop_name|default:'' }}"
-                    class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors shadow-sm">
+                <label class="block text-sm font-extrabold text-gray-700 mb-2 ml-1">ชื่อร้านค้า</label>
+                <input type="text" name="shop_name" placeholder="กรอกชื่อร้านค้าของคุณ" value="{{ old_shop_name|default:'' }}"
+                    class="w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm">
             </div>
 
             <div>
-                <label class="block text-base font-bold text-gray-700 mb-2 ml-1">ชื่อผู้ใช้งาน</label>
-                <input type="text" name="username" placeholder="กรอกชื่อผู้ใช้งาน" value="{{ old_username|default:'' }}"
-                    class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors shadow-sm">
+                <label class="block text-sm font-extrabold text-gray-700 mb-2 ml-1">ชื่อผู้ใช้งาน</label>
+                <input type="text" name="username" placeholder="ตั้งชื่อผู้ใช้งาน (Username)" value="{{ old_username|default:'' }}"
+                    class="w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm">
             </div>
 
             <div>
-                <label class="block text-base font-bold text-gray-700 mb-2 ml-1">เบอร์โทรศัพท์</label>
-                <input type="tel" name="phone" placeholder="กรอกเบอร์โทรศัพท์" value="{{ old_phone|default:'' }}"
-                    class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors shadow-sm">
+                <label class="block text-sm font-extrabold text-gray-700 mb-2 ml-1">เบอร์โทรศัพท์</label>
+                <input type="tel" name="phone" placeholder="08X-XXX-XXXX" value="{{ old_phone|default:'' }}"
+                    class="w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm">
             </div>
 
             <div class="md:col-span-2">
-                <label class="block text-base font-bold text-gray-700 mb-2 ml-1">อีเมล</label>
-                <input type="email" name="email" placeholder="กรอกอีเมล" value="{{ old_email|default:'' }}"
-                    class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors shadow-sm">
+                <label class="block text-sm font-extrabold text-gray-700 mb-2 ml-1">อีเมล</label>
+                <input type="email" name="email" placeholder="example@email.com" value="{{ old_email|default:'' }}"
+                    class="w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm">
             </div>
 
             <div>
-                <label class="block text-base font-bold text-gray-700 mb-2 ml-1">รหัสผ่าน</label>
-                <input type="password" name="password" placeholder="กรอกรหัสผ่าน (อย่างน้อย 8 ตัวขึ้นไป)"
-                    class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors shadow-sm">
+                <label class="block text-sm font-extrabold text-gray-700 mb-2 ml-1">รหัสผ่าน</label>
+                <input type="password" name="password" placeholder="อย่างน้อย 8 ตัวอักษร"
+                    class="w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm">
             </div>
 
             <div>
-                <label class="block text-base font-bold text-gray-700 mb-2 ml-1">ยืนยันรหัสผ่าน</label>
-                <input type="password" name="password_confirm" placeholder="ยืนยันรหัสผ่าน"
-                    class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors shadow-sm">
+                <label class="block text-sm font-extrabold text-gray-700 mb-2 ml-1">ยืนยันรหัสผ่าน</label>
+                <input type="password" name="password_confirm" placeholder="พิมพ์รหัสผ่านอีกครั้ง"
+                    class="w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm">
             </div>
 
         </div>
 
         {% if error_message %}
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm text-center font-bold">
-                🚨 {{ error_message }}
+            <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-xl text-sm font-bold flex items-start gap-2 shadow-sm mt-6">
+                <span class="text-lg leading-none">🚨</span>
+                <span>{{ error_message }}</span>
             </div>
         {% endif %}
 
-        <div class="pt-2">
+        <div class="pt-6 border-t border-gray-100 mt-6">
             <button type="submit" 
-                class="w-full bg-blue-400 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-md text-lg">
-                ยืนยันการสมัคร
+                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold py-3.5 px-4 rounded-xl transition-all shadow-md hover:shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-0.5 text-lg">
+                ยืนยันการสมัครร้านค้า
             </button>
         </div>
 
         <div class="flex flex-col md:flex-row justify-between items-center mt-6 text-sm font-bold px-2 gap-4 text-center">
-            <a href="{% url 'register-c' %}" class="text-gray-600 hover:text-blue-500 hover:underline transition-colors">
-                สมัครบัญชีทั่วไป?
+            <a href="{% url 'register-c' %}" class="text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                สมัครบัญชีสำหรับลูกค้าทั่วไป?
             </a>
-            <a href="{% url 'login' %}" class="text-blue-500 hover:text-blue-700 hover:underline transition-colors">
-                มีบัญชีผู้ใช้อยู่แล้ว?
+            <a href="{% url 'login' %}" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+                มีบัญชีร้านค้าอยู่แล้ว?
             </a>
         </div>
 
