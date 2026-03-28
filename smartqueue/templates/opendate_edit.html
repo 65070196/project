@@ -131,15 +131,23 @@
     function toggleTimeInputs(dayKey, isClosed) {
         const openInput = document.getElementById(`open_${dayKey}`);
         const closeInput = document.getElementById(`close_${dayKey}`);
+        const labelOpen = document.getElementById(`status_open_${dayKey}`);
+        const labelClosed = document.getElementById(`status_closed_${dayKey}`);
         
         if (isClosed) {
             openInput.disabled = true;
             closeInput.disabled = true;
             openInput.value = ''; 
             closeInput.value = '';
+            // สลับสีตัวหนังสือ
+            labelOpen.classList.replace('text-emerald-500', 'text-slate-300');
+            labelClosed.classList.replace('text-slate-300', 'text-rose-500');
         } else {
             openInput.disabled = false;
-            updateCloseOptions(dayKey); // อัปเดตช่องเวลาปิดตามเวลาเปิด
+            updateCloseOptions(dayKey);
+            // สลับสีตัวหนังสือ
+            labelOpen.classList.replace('text-slate-300', 'text-emerald-500');
+            labelClosed.classList.replace('text-rose-500', 'text-slate-300');
         }
     }
 
