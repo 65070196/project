@@ -2,72 +2,76 @@
 {% load static %}
 
 {% block content %}
-<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden">
-  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x overflow-y-auto no-scrollbar">
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden bg-slate-50/50">
+  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar">
     <div class="p-6 md:p-10 pb-24">
       
-      <div class="mb-6 flex justify-between items-center">
+      <div class="mb-8 border-l-4 border-blue-500 pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-3 shadow-sm -mx-6 md:-mx-10 px-6 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-gray-800">จัดการประเภทโต๊ะ</h2>
-          <p class="text-sm text-gray-500">จัดการรูปแบบโต๊ะและจำนวนที่เปิดให้บริการภายในร้าน</p>
+          <h2 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-blue-700">จัดการประเภทโต๊ะ</h2>
+          <p class="text-gray-500 text-sm font-medium mt-1">จัดการรูปแบบโต๊ะและจำนวนที่เปิดให้บริการภายในร้าน</p>
         </div>
         <a href="{% url 'table-add' %}" 
-           class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-indigo-100 flex items-center gap-2">
-          <span>+</span> เพิ่มประเภทโต๊ะ
+           class="w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-extrabold text-sm transition-all shadow-md hover:shadow-lg hover:shadow-blue-500/30 flex items-center justify-center gap-2 transform hover:-translate-y-0.5">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          เพิ่มประเภทโต๊ะ
         </a>
       </div>
 
-      <div class="bg-white rounded-xl overflow-hidden shadow border border-gray-200">
+      <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200">
         <div class="w-full overflow-x-auto">
           <div class="min-w-[900px]">
             
-            <div class="grid grid-cols-5 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
-              <div>ชื่อประเภทโต๊ะ</div>
-              <div>รายละเอียด</div>
-              <div class="text-center">ที่นั่งสูงสุด</div> 
-              <div class="text-center">จำนวนทั้งหมด</div>
-              <div class="text-center">จัดการ</div>
+            <div class="grid grid-cols-5 gap-4 bg-gradient-to-r from-slate-800 to-blue-800 text-white text-base font-bold px-4 py-4">
+              <div class="truncate pl-2">ชื่อประเภทโต๊ะ</div>
+              <div class="truncate">รายละเอียด</div>
+              <div class="truncate text-center">ที่นั่งสูงสุด</div> 
+              <div class="truncate text-center">จำนวนทั้งหมด</div>
+              <div class="truncate text-center">จัดการ</div>
             </div>
 
             {% for table in tables %}
-            <div class="grid grid-cols-5 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
+            <div class="grid grid-cols-5 gap-4 items-center px-4 py-4 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
               
-              <div class="font-bold text-gray-800 truncate" title="{{ table.name }}">
+              <div class="font-extrabold text-slate-800 truncate pl-2" title="{{ table.name }}">
                 {{ table.name }}
               </div>
 
-              <div class="font-bold text-gray-800 truncate" title="{{ table.description }}">
+              <div class="font-medium text-slate-600 truncate" title="{{ table.description }}">
                 {{ table.description|default:"- ไม่มีรายละเอียด -" }}
               </div>
               
               <div class="text-center">
-                <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full font-extrabold text-xs border border-amber-200">
+                <span class="px-3.5 py-1.5 bg-amber-50 text-amber-700 rounded-full font-extrabold text-xs border border-amber-200 shadow-sm whitespace-nowrap">
                   👥 {{ table.capacity }} ที่นั่ง
                 </span>
               </div>
 
               <div class="text-center">
-                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-extrabold text-xs border border-blue-200">
-                  {{ table.amount }} โต๊ะ
+                <span class="px-3.5 py-1.5 bg-blue-50 text-blue-700 rounded-full font-extrabold text-xs border border-blue-200 shadow-sm whitespace-nowrap">
+                  🪑 {{ table.amount }} โต๊ะ
                 </span>
               </div>
 
               <div class="flex justify-center gap-2">
                 <a href="{% url 'table-edit' table.table_id %}" 
-                  class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-colors whitespace-nowrap">
+                   class="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-transform transform hover:-translate-y-0.5 whitespace-nowrap flex items-center gap-1">
+                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                   แก้ไข
                 </a>
                 <button type="button" onclick="openDelete(`{% url 'table-delete' table.table_id %}`)" 
-                        class="px-3 py-1.5 bg-[#df4141] hover:bg-red-600 text-white rounded-lg text-xs font-bold shadow-sm transition-colors whitespace-nowrap">
+                        class="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-xs font-bold shadow-sm transition-transform transform hover:-translate-y-0.5 whitespace-nowrap flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                   ลบ
                 </button>
               </div>
 
             </div>
             {% empty %}
-            <div class="px-4 py-16 text-center text-gray-400 bg-gray-50">
-              <span class="text-4xl block mb-2">🛋️</span>
-              ยังไม่มีข้อมูลประเภทโต๊ะในระบบ
+            <div class="px-4 py-20 text-center text-slate-500 bg-slate-50 col-span-5 block">
+              <span class="text-6xl block mb-4 drop-shadow-sm opacity-80 filter grayscale">🛋️</span>
+              <p class="text-xl font-extrabold text-slate-700">ยังไม่มีข้อมูลประเภทโต๊ะในระบบ</p>
+              <p class="text-sm font-medium text-slate-400 mt-1">กดปุ่มเพิ่มประเภทโต๊ะเพื่อเริ่มเปิดรับคิวลูกค้าได้เลย!</p>
             </div>
             {% endfor %}
 
@@ -79,18 +83,22 @@
   </div>
 </div>
 
-<div id="deleteModal" class="hidden fixed inset-0 bg-black/20 z-50 items-center justify-center transition-opacity">
-  <div class="bg-white rounded-2xl shadow-2xl p-8 w-[380px] text-center">
-    <p class="text-gray-800 font-bold mb-8 text-[20px]">ยืนยันการลบประเภทโต๊ะนี้</p>
+<div id="deleteModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 items-center justify-center transition-opacity">
+  <div class="bg-white rounded-3xl shadow-2xl p-8 w-[400px] text-center border border-white">
+    <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-red-50/50">
+        <span class="text-4xl">🗑️</span>
+    </div>
+    <h3 class="text-2xl font-extrabold text-slate-900 mb-2">ยืนยันการลบประเภทโต๊ะ</h3>
+    <p class="text-slate-500 font-medium mb-8">คุณแน่ใจหรือไม่ว่าต้องการลบประเภทโต๊ะนี้? <br> ข้อมูลจะไม่สามารถกู้คืนได้</p>
     
     <form id="deleteForm" method="POST" action="">
       {% csrf_token %}
-      <div class="flex justify-center gap-6">
-        <button type="submit" class="bg-[#66d148] hover:bg-green-500 text-white font-bold py-2 px-10 rounded-lg shadow-sm transition-colors">
-          ใช่
+      <div class="flex justify-center gap-4">
+        <button type="button" onclick="closeDelete()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3 rounded-xl shadow-sm transition-colors">
+          ยกเลิก
         </button>
-        <button type="button" onclick="closeDelete()" class="bg-[#df4141] hover:bg-red-600 text-white font-bold py-2 px-10 rounded-lg shadow-sm transition-colors">
-          ไม่
+        <button type="submit" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-extrabold py-3 rounded-xl shadow-md transition-colors">
+          ใช่, ลบเลย
         </button>
       </div>
     </form>

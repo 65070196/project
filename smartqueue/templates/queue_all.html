@@ -2,30 +2,40 @@
 {% load static %}
 
 {% block content %}
-<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden">
-  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x overflow-y-auto no-scrollbar">
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden bg-slate-50/50">
+  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar">
     <div class="p-6 md:p-10 pb-24">
       
-      <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div class="mb-6 border-l-4 border-blue-500 pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-3 shadow-sm -mx-6 md:-mx-10 px-6 md:px-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">รายการคิวลูกค้าทั้งหมด</h2>
-            <p class="text-sm text-gray-500">ประวัติการจองคิวทั้งหมดของร้านคุณ</p>
+            <h2 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-blue-700">รายการคิวลูกค้าทั้งหมด</h2>
+            <p class="text-gray-500 text-sm font-medium mt-1">ประวัติการจองคิวทั้งหมดของร้านคุณ</p>
         </div>
 
-        <div class="flex flex-wrap gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
-            <button onclick="filterQueue('all')" id="btn-all" class="filter-btn active px-4 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white shadow-sm transition-all">ทั้งหมด</button>
-            <button onclick="filterQueue('doing')" id="btn-doing" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-yellow-100 hover:text-yellow-700 transition-all">⏳ กำลังทำ</button>
-            <button onclick="filterQueue('done')" id="btn-done" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-green-100 hover:text-green-700 transition-all">✅ เสร็จสิ้น</button>
-            <button onclick="filterQueue('cancel')" id="btn-cancel" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-red-100 hover:text-red-700 transition-all">❌ ยกเลิก</button>
+        <div class="flex flex-col sm:flex-row flex-wrap gap-3 w-full lg:w-auto">
+            <div class="relative w-full sm:w-64">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="ค้นหาชื่อลูกค้า..." 
+                       class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-inner">
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200 shadow-inner w-full sm:w-auto">
+                <button onclick="filterShopQueue('all')" id="btn-all" class="shop-filter-btn active px-4 py-1.5 rounded-lg text-sm font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md transition-all flex-1 sm:flex-none">ทั้งหมด</button>
+                <button onclick="filterShopQueue('doing')" id="btn-doing" class="shop-filter-btn px-4 py-1.5 rounded-lg text-sm font-bold text-gray-600 hover:bg-amber-100 hover:text-amber-700 transition-all flex-1 sm:flex-none">⏳ กำลังทำ</button>
+                <button onclick="filterShopQueue('done')" id="btn-done" class="shop-filter-btn px-4 py-1.5 rounded-lg text-sm font-bold text-gray-600 hover:bg-green-100 hover:text-green-700 transition-all flex-1 sm:flex-none">✅ เสร็จสิ้น</button>
+                <button onclick="filterShopQueue('cancel')" id="btn-cancel" class="shop-filter-btn px-4 py-1.5 rounded-lg text-sm font-bold text-gray-600 hover:bg-red-100 hover:text-red-700 transition-all flex-1 sm:flex-none">❌ ยกเลิก</button>
+            </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl overflow-hidden shadow border border-gray-200">
+      <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200">
         <div class="w-full overflow-x-auto">
           <div class="min-w-[900px]">
             
-            <div class="grid grid-cols-6 gap-4 bg-indigo-600 text-white text-base font-bold px-4 py-4">
-              <div class="truncate">ชื่อลูกค้า</div>
+            <div class="grid grid-cols-6 gap-4 bg-gradient-to-r from-slate-800 to-blue-800 text-white text-base font-bold px-4 py-4">
+              <div class="truncate pl-2">ชื่อลูกค้า</div>
               <div class="truncate text-center">ประเภทโต๊ะ</div>
               <div class="truncate text-center">วันที่</div>
               <div class="truncate text-center">เวลา</div>
@@ -35,35 +45,35 @@
 
             <div id="queueContainer">
               {% for queue in queues %}
-              <div class="queue-row grid grid-cols-6 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors" data-status="{{ queue.status }}">
+              <div class="queue-row grid grid-cols-6 gap-4 items-center px-4 py-4 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors" data-status="{{ queue.status }}">
                 
-                <div class="font-bold text-gray-800 truncate" title="{{ queue.customer.auth.get_full_name }}">
+                <div class="customer-name font-extrabold text-slate-800 truncate pl-2" title="{{ queue.customer.auth.get_full_name }}">
                   {{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}
                 </div>
 
-                <div class="text-gray-800 text-center truncate">
+                <div class="text-slate-700 font-medium text-center truncate">
                   {{ queue.table.name|default:"ไม่ได้ระบุ" }}
                 </div>
                 
-                <div class="text-gray-800 text-center">
+                <div class="text-slate-700 font-medium text-center">
                   {{ queue.queue_date|date:"d/m/Y" }}
                 </div>
                 
-                <div class="text-gray-800 text-center font-semibold">
+                <div class="text-slate-900 text-center font-extrabold text-base">
                   {{ queue.queue_time|date:"H:i" }} น.
                 </div>
                 
                 <div class="text-center">
                   {% if queue.status == 'doing' %}
-                    <span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 font-bold border border-yellow-200 whitespace-nowrap">
+                    <span class="px-3.5 py-1.5 text-xs rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 shadow-sm whitespace-nowrap">
                       ⏳ กำลังทำ
                     </span>
                   {% elif queue.status == 'done' %}
-                    <span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-bold border border-green-200 whitespace-nowrap">
+                    <span class="px-3.5 py-1.5 text-xs rounded-full bg-green-50 text-green-700 font-bold border border-green-200 shadow-sm whitespace-nowrap">
                       ✅ เสร็จสิ้น
                     </span>
                   {% elif queue.status == 'cancel' %}
-                    <span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-bold border border-red-200 whitespace-nowrap">
+                    <span class="px-3.5 py-1.5 text-xs rounded-full bg-red-50 text-red-700 font-bold border border-red-200 shadow-sm whitespace-nowrap">
                       ❌ ยกเลิก
                     </span>
                   {% endif %}
@@ -71,26 +81,30 @@
 
                 <div class="flex justify-center gap-2">
                   <a href="{% url 'queue-edit' queue.queue_id %}?next=all" 
-                     class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-colors whitespace-nowrap">
-                    แก้ไขสถานะ
+                     class="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-transform transform hover:-translate-y-0.5 whitespace-nowrap flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    แก้ไข
                   </a>
                   <button type="button" onclick="openDelete(`{% url 'queue-delete' queue.queue_id %}?next=all`)" 
-                    class="px-4 py-1.5 bg-[#df4141] hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-sm transition-colors whitespace-nowrap">
+                    class="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-xs font-bold shadow-sm transition-transform transform hover:-translate-y-0.5 whitespace-nowrap flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                       ลบ
                   </button>
                 </div>
 
               </div>
               {% empty %}
-              <div id="noDataEmpty" class="px-4 py-12 text-center text-gray-400 bg-gray-50 col-span-6 block">
-                <span class="text-4xl block mb-2">📋</span>
-                ไม่มีข้อมูลคิวในระบบ
+              <div id="noDataEmpty" class="px-4 py-20 text-center text-slate-500 bg-slate-50 col-span-6 block">
+                <span class="text-6xl block mb-4 drop-shadow-sm opacity-80 filter grayscale">📋</span>
+                <p class="text-xl font-extrabold text-slate-700">ไม่มีข้อมูลคิวในระบบ</p>
+                <p class="text-sm font-medium text-slate-400 mt-1">คิวใหม่จะแสดงที่นี่โดยอัตโนมัติ</p>
               </div>
               {% endfor %}
 
-              <div id="filterEmptyState" class="px-4 py-16 text-center text-gray-400 bg-gray-50 hidden col-span-6">
-                <span class="text-4xl block mb-2">🔍</span>
-                ไม่พบคิวในสถานะที่คุณเลือก
+              <div id="filterEmptyState" class="px-4 py-20 text-center text-slate-500 bg-slate-50 hidden col-span-6">
+                <span class="text-6xl block mb-4 drop-shadow-sm opacity-80 filter grayscale">🔍</span>
+                <p class="text-xl font-extrabold text-slate-700">ไม่พบรายการที่ค้นหา</p>
+                <p class="text-sm font-medium text-slate-400 mt-1">ลองเปลี่ยนคำค้นหาหรือเลือกสถานะอื่นดูอีกครั้ง</p>
               </div>
             </div>
 
@@ -101,18 +115,22 @@
   </div>
 </div>
 
-<div id="deleteModal" class="hidden fixed inset-0 bg-black/20 z-50 items-center justify-center transition-opacity">
-  <div class="bg-white rounded-2xl shadow-2xl p-8 w-[380px] text-center">
-    <p class="text-gray-800 font-bold mb-8 text-[20px]">คุณยืนยันว่าต้องการที่จะลบใช่หรือไม่</p>
+<div id="deleteModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 items-center justify-center transition-opacity">
+  <div class="bg-white rounded-3xl shadow-2xl p-8 w-[400px] text-center border border-white">
+    <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-red-50/50">
+        <span class="text-4xl">🗑️</span>
+    </div>
+    <h3 class="text-2xl font-extrabold text-slate-900 mb-2">ยืนยันการลบคิว</h3>
+    <p class="text-slate-500 font-medium mb-8">คุณแน่ใจหรือไม่ว่าต้องการลบคิวนี้? <br> ข้อมูลจะไม่สามารถกู้คืนได้</p>
     
     <form id="deleteForm" method="POST" action="">
       {% csrf_token %}
-      <div class="flex justify-center gap-6">
-        <button type="submit" class="bg-[#66d148] hover:bg-green-500 text-white font-bold py-2 px-10 rounded-lg shadow-sm transition-colors">
-          ใช่  
+      <div class="flex justify-center gap-4">
+        <button type="button" onclick="closeDelete()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3 rounded-xl shadow-sm transition-colors">
+          ยกเลิก
         </button>
-        <button type="button" onclick="closeDelete()" class="bg-[#df4141] hover:bg-red-600 text-white font-bold py-2 px-10 rounded-lg shadow-sm transition-colors">
-          ไม่
+        <button type="submit" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-extrabold py-3 rounded-xl shadow-md transition-colors">
+          ใช่, ลบเลย
         </button>
       </div>
     </form>
@@ -120,25 +138,45 @@
 </div>
 
 <script>
-  function filterQueue(status) {
+  let currentStatus = 'all'; // เก็บสถานะปัจจุบันไว้ตัวแปรรวม
+
+  function filterShopQueue(status) {
+    currentStatus = status; // อัปเดตสถานะ
+
     // รีเซ็ตสีปุ่ม
-    const allBtns = document.querySelectorAll('.filter-btn');
+    const allBtns = document.querySelectorAll('.shop-filter-btn');
     allBtns.forEach(btn => {
-      btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+      btn.classList.remove('bg-gradient-to-r', 'from-blue-600', 'to-indigo-600', 'text-white', 'shadow-md');
       btn.classList.add('text-gray-600');
     });
 
     // ไฮไลต์ปุ่มที่กด
     const activeBtn = document.getElementById('btn-' + status);
-    activeBtn.classList.remove('text-gray-600');
-    activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+    if(activeBtn) {
+        activeBtn.classList.remove('text-gray-600');
+        activeBtn.classList.add('bg-gradient-to-r', 'from-blue-600', 'to-indigo-600', 'text-white', 'shadow-md');
+    }
 
-    // จัดการแสดงผลข้อมูล
+    applyFilters(); // เรียกใช้ฟังก์ชันกรองรวม
+  }
+
+  // ฟังก์ชันหลักที่ทำงานประสานกันระหว่าง Search และ Filter
+  function applyFilters() {
+    const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
     const rows = document.querySelectorAll('.queue-row');
     let visibleCount = 0;
 
     rows.forEach(row => {
-      if (status === 'all' || row.dataset.status === status) {
+      // 1. ดึงชื่อลูกค้ามาเช็ค (ตัวพิมพ์เล็กทั้งหมด)
+      const customerName = row.querySelector('.customer-name').textContent.toLowerCase();
+      // 2. ดึงสถานะคิว
+      const rowStatus = row.dataset.status;
+
+      // 3. ตรวจสอบเงื่อนไขว่าผ่านทั้ง สถานะ และ คำค้นหา หรือไม่
+      const matchStatus = (currentStatus === 'all' || rowStatus === currentStatus);
+      const matchSearch = customerName.includes(searchText);
+
+      if (matchStatus && matchSearch) {
         row.style.display = 'grid'; 
         visibleCount++;
       } else {
@@ -146,13 +184,11 @@
       }
     });
 
-    // เช็คว่ามีข้อมูลโชว์อยู่ไหม ถ้าไม่มีให้ขึ้น "ไม่พบคิวในสถานะที่คุณเลือก"
+    // จัดการกล่องแสดงข้อความว่างเปล่า
     const filterEmptyState = document.getElementById('filterEmptyState');
     const noDataEmpty = document.getElementById('noDataEmpty');
     
-    if (noDataEmpty) {
-        return; 
-    }
+    if (noDataEmpty) { return; } // ถ้าไม่มีข้อมูลเลยแต่แรก ไม่ต้องทำอะไร
 
     if (visibleCount === 0) {
         filterEmptyState.classList.remove('hidden');

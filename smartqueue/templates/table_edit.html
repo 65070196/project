@@ -2,101 +2,132 @@
 {% load static %}
 
 {% block content %}
-<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden">
-  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x overflow-y-auto no-scrollbar">
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden bg-slate-50/50">
+  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar">
     <div class="p-6 md:p-10 pb-24">
       
-      <div class="mb-6 border-b border-gray-200 pb-4">
-        <h2 class="text-2xl font-bold text-gray-800">แก้ไขประเภทโต๊ะ</h2>
-        <p class="text-sm text-gray-500 mt-1">ปรับปรุงข้อมูลและรูปภาพของประเภทโต๊ะในร้านของคุณ</p>
+      <div class="mb-8 border-l-4 border-blue-500 pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-3 shadow-sm -mx-6 md:-mx-10 px-6 md:px-10">
+        <h2 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-blue-700">แก้ไขประเภทโต๊ะ</h2>
+        <p class="text-gray-500 text-sm font-medium mt-1">ปรับปรุงข้อมูลและรูปภาพของประเภทโต๊ะในร้านของคุณ</p>
       </div>
 
-      <form method="POST" enctype="multipart/form-data" class="max-w-3xl mx-auto space-y-6">
+      <form method="POST" enctype="multipart/form-data" class="max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-3xl border border-slate-200/60 shadow-sm space-y-6">
         {% csrf_token %}
         
-        <div class="mb-10 max-w-sm mx-auto">
-          <label class="block text-sm font-bold text-gray-700 mb-3 text-center">รูปภาพประเภทโต๊ะ</label>
+        <div class="mb-8 max-w-sm mx-auto">
+          <label class="block text-sm font-extrabold text-slate-700 mb-4 text-center">รูปภาพประเภทโต๊ะ</label>
           
-          <div id="image-label" class="w-full aspect-square bg-white rounded-2xl flex flex-col items-center justify-center hover:bg-gray-50 border-2 {% if table.image %}border-solid border-gray-100 p-1{% else %}border-dashed border-gray-300{% endif %} hover:border-indigo-400 transition-all overflow-hidden relative group shadow-sm">
+          <div id="image-label" class="w-full aspect-square bg-slate-50 rounded-3xl flex flex-col items-center justify-center hover:bg-slate-100 border-2 {% if table.image %}border-solid border-slate-200 shadow-sm{% else %}border-dashed border-slate-300{% endif %} hover:border-blue-500 transition-all overflow-hidden relative group">
             
             <label for="image-input" id="placeholder-content" class="absolute inset-0 flex flex-col items-center justify-center text-center p-4 cursor-pointer {% if table.image %}hidden{% endif %}">
-              <span class="text-5xl text-gray-400 mb-3 transition-transform group-hover:scale-110">🪑</span>
-              <span class="text-sm font-semibold text-gray-500">อัปโหลดรูปภาพโต๊ะ</span>
-              <span class="text-xs text-gray-400 mt-1">คลิกเพื่อเลือกไฟล์ (สูงสุด 4.5MB)</span>
+              <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                  <span class="text-3xl text-blue-500">📸</span>
+              </div>
+              <span class="text-sm font-bold text-slate-600">อัปโหลดรูปภาพโต๊ะ</span>
+              <span class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider font-semibold">Max 4.5MB</span>
             </label>
 
             <img id="image-preview" 
                  src="{% if table.image %}{{ table.image.image_path.url }}{% else %}#{% endif %}" 
                  alt="Table Image Preview" 
-                 class="{% if not table.image %}hidden{% endif %} absolute inset-0 w-full h-full object-cover rounded-2xl p-1 pointer-events-none">
+                 class="{% if not table.image %}hidden{% endif %} absolute inset-0 w-full h-full object-cover rounded-3xl p-1 pointer-events-none">
             
             <input type="file" name="image" id="image-input" class="sr-only" accept="image/*" onchange="previewImage(event)">
             
-            <button type="button" id="remove-image-btn" onclick="removeImage(event)" class="{% if not table.image %}hidden{% endif %} absolute top-2 right-2 bg-white/80 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 shadow-md backdrop-blur-sm z-10 transition-colors" title="ลบรูปภาพ">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <button type="button" id="remove-image-btn" onclick="removeImage(event)" class="{% if not table.image %}hidden{% endif %} absolute top-3 right-3 bg-white hover:bg-rose-50 text-rose-500 hover:text-rose-600 rounded-full p-2 shadow-md border border-rose-100 z-10 transition-all transform hover:scale-110" title="ลบรูปภาพ">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl shadow-inner">🛋️</div>
+            <div>
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">หมายเลขประเภทโต๊ะอ้างอิง</p>
+              <p class="text-lg font-extrabold text-blue-700">#{{ table.table_id }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
           
-          <div class="md:col-span-2">
-            <label class="block text-sm font-semibold text-gray-600 mb-2">หมายเลขประเภทโต๊ะ</label>
-            <input type="text" value="{{ table.table_id }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-200 text-gray-600 border border-gray-300 cursor-not-allowed">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 rounded-2xl border border-slate-100 bg-white shadow-sm hover:border-blue-200 transition-colors">
+            <div>
+              <label class="block text-sm font-extrabold text-slate-400 mb-2">ชื่อประเภทโต๊ะเดิม</label>
+              <input type="text" value="{{ table.name }}" disabled 
+                     class="w-full h-12 px-4 rounded-xl bg-slate-100 text-slate-500 font-semibold cursor-not-allowed border border-slate-200 border-dashed">
+            </div>
+            <div>
+              <label class="block text-sm font-extrabold text-slate-800 mb-2">ชื่อประเภทโต๊ะใหม่</label>
+              <input type="text" name="name" placeholder="เว้นว่างไว้หากไม่ต้องการเปลี่ยน" 
+                     class="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm">
+            </div>
           </div>
-          
-          <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-2">ชื่อประเภทโต๊ะปัจจุบัน</label>
-            <input type="text" value="{{ table.name }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed">
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 rounded-2xl border border-slate-100 bg-white shadow-sm hover:border-blue-200 transition-colors">
+            <div>
+              <label class="block text-sm font-extrabold text-slate-400 mb-2">รายละเอียดเดิม</label>
+              <input type="text" value="{{ table.description|default:'ไม่มีรายละเอียด' }}" disabled 
+                     class="w-full h-12 px-4 rounded-xl bg-slate-100 text-slate-500 font-semibold cursor-not-allowed border border-slate-200 border-dashed">
+            </div>
+            <div>
+              <label class="block text-sm font-extrabold text-slate-800 mb-2">รายละเอียดใหม่</label>
+              <input type="text" name="description" placeholder="เว้นว่างไว้หากไม่ต้องการเปลี่ยน" 
+                     class="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm">
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2 font-bold">ชื่อประเภทโต๊ะใหม่</label>
-            <input type="text" name="name" placeholder="กรอกชื่อใหม่ (หากต้องการเปลี่ยน)" class="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-800">
-          </div>
-          
-          <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-2">รายละเอียดปัจจุบัน</label>
-            <input type="text" value="{{ table.description|default:'ไม่มีรายละเอียด' }}" disabled class="w-full h-12 px-4 rounded-xl bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed">
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2 font-bold">รายละเอียดใหม่</label>
-            <input type="text" name="description" placeholder="กรอกรายละเอียดใหม่" class="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-800">
-          </div>
-          
-          <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-gray-200 mt-2">
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 rounded-2xl border border-slate-100 bg-white shadow-sm hover:border-blue-200 transition-colors">
             
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">จำนวนโต๊ะทั้งหมดที่มี (ปัจจุบัน: {{ table.amount }})</label>
-              <div class="h-12 bg-white rounded-xl flex items-center px-4 border border-gray-300 focus-within:ring-2 focus-within:ring-blue-400 transition">
-                <span class="text-gray-400 mr-2 text-sm">🛋️</span>
-                <input type="number" name="amount" value="{{ table.amount }}" min="1" required class="w-full bg-transparent outline-none text-gray-800 font-semibold">
+              <label class="block text-sm font-extrabold text-slate-800 mb-2">
+                จำนวนโต๊ะทั้งหมดที่มี <span class="text-xs text-slate-400 font-medium ml-1">(เดิม: {{ table.amount }})</span>
+              </label>
+              <div class="h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center px-4 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all shadow-sm group">
+                <span class="text-slate-400 mr-2 text-lg group-focus-within:text-blue-500 transition-colors">🪑</span>
+                <input type="number" name="amount" value="{{ table.amount }}" min="1" required 
+                       class="w-full h-full bg-transparent outline-none text-slate-800 font-extrabold">
               </div>
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">ความจุสูงสุด (ปัจจุบัน: {{ table.capacity|default:'0' }})</label>
-              <div class="h-12 bg-white rounded-xl flex items-center px-4 border border-gray-300 focus-within:ring-2 focus-within:ring-blue-400 transition">
-                <span class="text-gray-400 mr-2 text-sm">👥</span>
-                <input type="number" name="capacity" value="{{ table.capacity|default:'' }}" min="1" required class="w-full bg-transparent outline-none text-gray-800 font-semibold">
-                <span class="text-gray-500 text-sm ml-2">ท่าน</span>
+              <label class="block text-sm font-extrabold text-slate-800 mb-2">
+                ที่นั่งสูงสุด / โต๊ะ <span class="text-xs text-slate-400 font-medium ml-1">(เดิม: {{ table.capacity|default:'0' }})</span>
+              </label>
+              <div class="h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center px-4 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all shadow-sm group">
+                <span class="text-slate-400 mr-2 text-lg group-focus-within:text-blue-500 transition-colors">👥</span>
+                <input type="number" name="capacity" value="{{ table.capacity|default:'' }}" min="1" required 
+                       class="w-full h-full bg-transparent outline-none text-slate-800 font-extrabold">
+                <span class="text-slate-500 font-bold text-sm ml-2 flex-shrink-0">ที่นั่ง</span>
               </div>
             </div>
+            
+            <p class="md:col-span-2 text-xs text-blue-600/80 font-bold text-center mt-2 flex items-center justify-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                หากไม่ต้องการเปลี่ยนจำนวนโต๊ะหรือที่นั่ง ให้คงค่าตัวเลขเดิมเอาไว้
+            </p>
 
-            <p class="md:col-span-2 text-xs text-gray-500 text-center">*หากไม่ต้องการเปลี่ยนจำนวนหรือความจุ ให้คงค่าเดิมไว้</p>
           </div>
 
         </div>
 
-        <div class="flex gap-4 pt-6 border-t border-gray-200 mt-8">
-          <a href="{% url 'table-manage' %}" class="flex-1 py-3 bg-gray-100 text-center rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition border border-gray-300">ยกเลิก</a>
-          <button type="submit" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-md shadow-blue-100">บันทึกการแก้ไข</button>
+        <div class="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t border-slate-100 mt-8">
+          <a href="{% url 'table-manage' %}" 
+             class="w-full sm:w-auto px-8 py-3.5 bg-slate-100 hover:bg-slate-200 transition text-slate-700 rounded-xl font-extrabold shadow-sm text-center flex items-center justify-center">
+            ยกเลิก
+          </a>
+          <button type="submit" 
+                  class="w-full sm:w-auto px-10 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all text-white rounded-xl font-extrabold shadow-md hover:shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+            บันทึกการแก้ไข
+          </button>
         </div>
 
       </form>
     </div>
   </div>
 </div>
-
 {% endblock %}

@@ -2,70 +2,93 @@
 {% load static %}
 
 {% block content %}
-<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden">
-  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x overflow-y-auto no-scrollbar">
+<div class="fixed top-[60px] left-0 right-0 bottom-0 flex justify-center overflow-hidden bg-slate-50/50">
+  <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar">
     <div class="p-6 md:p-10 pb-24">
       
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">แก้ไขสถานะคิว</h2>
-        <p class="text-sm text-gray-500">อัปเดตสถานะการเข้าใช้บริการของลูกค้า</p>
+      <div class="mb-8 border-l-4 border-blue-500 pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-3 shadow-sm -mx-6 md:-mx-10 px-6 md:px-10">
+        <h2 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-blue-700">แก้ไขสถานะคิว</h2>
+        <p class="text-gray-500 text-sm font-medium mt-1">ตรวจสอบและอัปเดตสถานะการเข้าใช้บริการของลูกค้า</p>
       </div>
 
-      <form method="POST" class="max-w-3xl mx-auto space-y-6">
+      <form method="POST" class="max-w-3xl mx-auto bg-white p-6 md:p-8 rounded-3xl border border-slate-200/60 shadow-sm space-y-8">
         {% csrf_token %}
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-semibold mb-2 text-gray-500">หมายเลขคิว</label>
-            <input type="text" value="#{{ queue.queue_id }}" disabled
-                   class="w-full h-12 px-4 rounded-xl bg-gray-300 text-gray-600 font-bold cursor-not-allowed">
-          </div>
-          <div>
-            <label class="block text-sm font-semibold mb-2 text-gray-500">ชื่อลูกค้า</label>
-            <input type="text" value="{{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}" disabled
-                   class="w-full h-12 px-4 rounded-xl bg-gray-300 text-gray-600 font-bold cursor-not-allowed">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-semibold mb-2 text-gray-500">ประเภทโต๊ะ</label>
-            <input type="text" value="{{ queue.table.name|default:'ไม่ได้ระบุ' }}" disabled
-                   class="w-full h-12 px-4 rounded-xl bg-gray-300 text-gray-600 font-bold cursor-not-allowed">
-          </div>
-          <div>
-            <label class="block text-sm font-semibold mb-2 text-gray-500">วันที่จองคิว</label>
-            <input type="text" value="{{ queue.queue_date|date:'d/m/Y' }}" disabled
-                   class="w-full h-12 px-4 rounded-xl bg-gray-300 text-gray-600 font-bold cursor-not-allowed">
-          </div>
-          <div>
-            <label class="block text-sm font-semibold mb-2 text-gray-500">เวลา</label>
-            <input type="text" value="{{ queue.queue_time|date:'H:i' }} น." disabled
-                   class="w-full h-12 px-4 rounded-xl bg-gray-300 text-gray-600 font-bold cursor-not-allowed">
-          </div>
-        </div>
-
-        <div class="p-6 bg-blue-50 border border-blue-200 rounded-xl mt-6">
-          <label class="block text-base font-bold mb-3 text-blue-800">อัปเดตสถานะคิวปัจจุบัน</label>
+        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+          <h3 class="text-lg font-extrabold text-slate-800 mb-6 flex items-center gap-2">
+            <span class="text-blue-500">📋</span> ข้อมูลการจองคิว
+          </h3>
           
-          <select name="status" required
-                  class="w-full h-14 px-4 rounded-xl bg-white border-2 border-blue-300 focus:border-blue-500 focus:ring-0 outline-none text-gray-800 font-semibold text-lg cursor-pointer transition-colors">
-            <option value="doing" {% if queue.status == 'doing' %}selected{% endif %}>⏳ กำลังดำเนินการ</option>
-            <option value="done" {% if queue.status == 'done' %}selected{% endif %}>✅ เสร็จสิ้น</option>
-            <option value="cancel" {% if queue.status == 'cancel' %}selected{% endif %}>❌ ยกเลิก</option>
-          </select>
-          <p class="text-sm text-gray-500 mt-2">* กรุณาเลือกสถานะใหม่ที่ต้องการแล้วกดบันทึก</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-5">
+            <div>
+              <p class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">หมายเลขคิว</p>
+              <div class="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-blue-700 font-extrabold text-lg shadow-inner flex items-center gap-2">
+                <span class="text-slate-400">#</span>{{ queue.queue_id }}
+              </div>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">ชื่อลูกค้า</p>
+              <div class="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-slate-800 font-extrabold text-lg shadow-inner truncate" title="{{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}">
+                {{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+            <div>
+              <p class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">ประเภทโต๊ะ</p>
+              <div class="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-slate-700 font-bold shadow-inner truncate">
+                {{ queue.table.name|default:'ไม่ได้ระบุ' }}
+              </div>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">วันที่จอง</p>
+              <div class="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-slate-700 font-bold shadow-inner">
+                {{ queue.queue_date|date:'d M Y' }}
+              </div>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">เวลา</p>
+              <div class="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-slate-900 font-extrabold shadow-inner">
+                {{ queue.queue_time|date:'H:i' }} น.
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="flex gap-4 pt-6">
+        <div class="p-6 md:p-8 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 border border-blue-200/60 rounded-2xl shadow-sm relative overflow-hidden">
+          <div class="absolute -right-10 -top-10 text-9xl opacity-5">⚙️</div>
+          <h3 class="text-xl font-extrabold text-blue-900 mb-4 flex items-center gap-2 relative z-10">
+            อัปเดตสถานะคิวปัจจุบัน
+          </h3>
+          
+          <div class="relative z-10">
+            <select name="status" required
+                    class="w-full h-16 px-5 rounded-xl bg-white border-2 border-blue-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none text-slate-800 font-extrabold text-lg cursor-pointer transition-all shadow-sm appearance-none">
+              <option value="doing" {% if queue.status == 'doing' %}selected{% endif %}>⏳ กำลังดำเนินการ (กำลังใช้บริการ)</option>
+              <option value="done" {% if queue.status == 'done' %}selected{% endif %}>✅ เสร็จสิ้น (รับประทานเสร็จแล้ว)</option>
+              <option value="cancel" {% if queue.status == 'cancel' %}selected{% endif %}>❌ ยกเลิก (ลูกค้าไม่มา หรือ ขอยกเลิก)</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-blue-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+          
+          <p class="text-sm text-blue-600/80 font-bold mt-3 relative z-10 flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            กรุณาตรวจสอบให้แน่ใจก่อนกดบันทึกสถานะ
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t border-slate-100 mt-8">
           <button type="button" onclick="history.back()"
-                  class="flex-1 py-3 bg-gray-400 hover:bg-gray-500 transition text-center rounded-xl font-bold text-white shadow-sm">
+                  class="w-full sm:w-auto px-8 py-3.5 bg-slate-100 hover:bg-slate-200 transition text-slate-700 rounded-xl font-extrabold shadow-sm text-center">
               ย้อนกลับ
           </button>
 
           <button type="submit"
-                  class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 transition text-white rounded-xl font-bold shadow-sm">
-              บันทึกสถานะ
+                  class="w-full sm:w-auto px-10 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all text-white rounded-xl font-extrabold shadow-md hover:shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-0.5">
+              ✨ บันทึกสถานะ
           </button>
         </div>
 
