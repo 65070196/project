@@ -6,10 +6,17 @@
   <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x overflow-y-auto no-scrollbar">
     <div class="p-6 md:p-10 pb-24">
       
-      <div class="mb-6 flex justify-between items-center">
+      <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 class="text-2xl font-bold text-gray-800">รายการคิวลูกค้าวันนี้</h2>
           <p class="text-sm text-gray-500">จัดการคิวที่เข้ามาใช้บริการในวันที่ {{ "now"|date:"d M Y" }}</p>
+        </div>
+        
+        <div class="flex flex-wrap gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
+            <button onclick="filterQueue('all')" id="btn-all" class="filter-btn active px-4 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white shadow-sm transition-all">ทั้งหมด</button>
+            <button onclick="filterQueue('doing')" id="btn-doing" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-yellow-100 hover:text-yellow-700 transition-all">⏳ กำลังทำ</button>
+            <button onclick="filterQueue('done')" id="btn-done" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-green-100 hover:text-green-700 transition-all">✅ เสร็จสิ้น</button>
+            <button onclick="filterQueue('cancel')" id="btn-cancel" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-red-100 hover:text-red-700 transition-all">❌ ยกเลิก</button>
         </div>
       </div>
 
@@ -27,63 +34,66 @@
               <div class="truncate text-center">จัดการ</div>
             </div>
 
-            {% for queue in queues %}
-            <div class="grid grid-cols-7 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
-              
-              <div class="font-bold text-gray-800">
-                #{{ queue.queue_id }}
-              </div>
-              
-              <div class="font-bold text-gray-800 truncate" title="{{ queue.customer.auth.get_full_name }}">
-                {{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}
-              </div>
+            <div id="queueContainer">
+                {% for queue in queues %}
+                <div class="queue-row grid grid-cols-7 gap-4 items-center px-4 py-5 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors" data-status="{{ queue.status }}">
+                  
+                  <div class="font-bold text-gray-800 truncate" title="{{ queue.customer.auth.get_full_name }}">
+                    {{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}
+                  </div>
 
-              <div class="text-gray-800 text-center truncate">
-                {{ queue.table.name|default:"ไม่ได้ระบุ" }}
-              </div>
-              
-              <div class="text-gray-800 text-center">
-                {{ queue.queue_date|date:"d/m/Y" }}
-              </div>
-              
-              <div class="text-gray-800 text-center font-semibold">
-                {{ queue.queue_time|date:"H:i" }} น.
-              </div>
-              
-              <div class="text-center">
-                {% if queue.status == 'doing' %}
-                  <span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 font-bold border border-yellow-200 whitespace-nowrap">
-                    ⏳ กำลังทำ
-                  </span>
-                {% elif queue.status == 'done' %}
-                  <span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-bold border border-green-200 whitespace-nowrap">
-                    ✅ เสร็จสิ้น
-                  </span>
-                {% elif queue.status == 'cancel' %}
-                  <span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-bold border border-red-200 whitespace-nowrap">
-                    ❌ ยกเลิก
-                  </span>
-                {% endif %}
-              </div>
+                  <div class="text-gray-800 text-center truncate">
+                    {{ queue.table.name|default:"ไม่ได้ระบุ" }}
+                  </div>
+                  
+                  <div class="text-gray-800 text-center">
+                    {{ queue.queue_date|date:"d/m/Y" }}
+                  </div>
+                  
+                  <div class="text-gray-800 text-center font-semibold">
+                    {{ queue.queue_time|date:"H:i" }} น.
+                  </div>
+                  
+                  <div class="text-center">
+                    {% if queue.status == 'doing' %}
+                      <span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 font-bold border border-yellow-200 whitespace-nowrap">
+                        ⏳ กำลังทำ
+                      </span>
+                    {% elif queue.status == 'done' %}
+                      <span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-bold border border-green-200 whitespace-nowrap">
+                        ✅ เสร็จสิ้น
+                      </span>
+                    {% elif queue.status == 'cancel' %}
+                      <span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-bold border border-red-200 whitespace-nowrap">
+                        ❌ ยกเลิก
+                      </span>
+                    {% endif %}
+                  </div>
 
-              <div class="flex justify-center gap-2">
-                <a href="{% url 'queue-edit' queue.queue_id %}?next=today" 
-                   class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-colors whitespace-nowrap">
-                  แก้ไขสถานะ
-                </a>
-                <button type="button" onclick="openDelete(`{% url 'queue-delete' queue.queue_id %}?next=today`)" 
-                  class="px-4 py-1.5 bg-[#df4141] hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-sm transition-colors whitespace-nowrap">
-                    ลบ
-                </button>
-              </div>
+                  <div class="flex justify-center gap-2">
+                    <a href="{% url 'queue-edit' queue.queue_id %}?next=today" 
+                       class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-colors whitespace-nowrap">
+                      แก้ไขสถานะ
+                    </a>
+                    <button type="button" onclick="openDelete(`{% url 'queue-delete' queue.queue_id %}?next=today`)" 
+                      class="px-4 py-1.5 bg-[#df4141] hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-sm transition-colors whitespace-nowrap">
+                        ลบ
+                    </button>
+                  </div>
 
+                </div>
+                {% empty %}
+                <div id="noDataEmpty" class="px-4 py-16 text-center text-gray-400 bg-gray-50 col-span-7 block">
+                  <span class="text-4xl block mb-2">📋</span>
+                  ไม่มีรายการคิวสำหรับวันนี้
+                </div>
+                {% endfor %}
+
+                <div id="filterEmptyState" class="px-4 py-16 text-center text-gray-400 bg-gray-50 hidden">
+                  <span class="text-4xl block mb-2">🔍</span>
+                  ไม่พบคิวในสถานะที่คุณเลือก
+                </div>
             </div>
-            {% empty %}
-            <div class="px-4 py-16 text-center text-gray-400 bg-gray-50">
-              <span class="text-4xl block mb-2">📋</span>
-              ไม่มีรายการคิวสำหรับวันนี้
-            </div>
-            {% endfor %}
 
           </div>
         </div>
@@ -111,4 +121,50 @@
   </div>
 </div>
 
+<script>
+  function filterQueue(status) {
+    // 1. รีเซ็ตสีปุ่มทั้งหมดให้เป็นสีเทา
+    const allBtns = document.querySelectorAll('.filter-btn');
+    allBtns.forEach(btn => {
+      btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+      btn.classList.add('text-gray-600');
+    });
+
+    // 2. ไฮไลต์ปุ่มที่ถูกกดให้เป็นสีน้ำเงิน
+    const activeBtn = document.getElementById('btn-' + status);
+    activeBtn.classList.remove('text-gray-600');
+    activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+
+    // 3. จัดการแสดง/ซ่อน แถวข้อมูล
+    const rows = document.querySelectorAll('.queue-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      // ถ้าเลือก "ทั้งหมด" หรือ ตรงกับสถานะที่เลือก ให้แสดงเป็น grid
+      if (status === 'all' || row.dataset.status === status) {
+        row.style.display = 'grid'; 
+        visibleCount++;
+      } else {
+        row.style.display = 'none'; // ซ่อน
+      }
+    });
+
+    // 4. จัดการหน้าจอ "ไม่พบข้อมูล"
+    const filterEmptyState = document.getElementById('filterEmptyState');
+    const noDataEmpty = document.getElementById('noDataEmpty');
+    
+    // ถ้ามีบล็อก empty ดั้งเดิมอยู่ (กรณีไม่มีคิวเลยตั้งแต่ต้น) ให้ซ่อนตัว filter empty ไปเลย
+    if (noDataEmpty) {
+        return; 
+    }
+
+    if (visibleCount === 0) {
+        filterEmptyState.classList.remove('hidden');
+        filterEmptyState.classList.add('block');
+    } else {
+        filterEmptyState.classList.remove('block');
+        filterEmptyState.classList.add('hidden');
+    }
+  }
+</script>
 {% endblock %}
