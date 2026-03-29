@@ -6,10 +6,84 @@
   <div class="bg-white w-full max-w-[1440px] h-full shadow-2xl border-x border-gray-100 overflow-y-auto no-scrollbar">
     <div class="p-6 md:p-10 pb-24">
       
+      <div class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <div class="lg:col-span-2 bg-gradient-to-br from-slate-800 to-blue-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+              <div class="absolute right-0 bottom-0 opacity-10 transform translate-y-4 translate-x-4">
+                  <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
+              </div>
+              
+              <div class="relative z-10 flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+                  <div>
+                      <h3 class="text-lg font-bold opacity-90 uppercase tracking-wider flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                          สถานะความว่างรายชั่วโมง (Walk-in)
+                      </h3>
+                  </div>
+                  <form method="GET" class="flex items-center gap-2 bg-white/10 p-1.5 rounded-xl border border-white/20">
+                      <span class="pl-2 text-xs font-bold opacity-70">ดูวันที่:</span>
+                      <input type="date" name="view_date" value="{{ view_date_str }}" 
+                             onchange="this.form.submit()"
+                             class="bg-transparent border-none text-sm outline-none cursor-pointer focus:ring-0 text-white [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert">
+                  </form>
+              </div>
+
+              <div class="flex gap-4 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
+                  {% for item in occupancy_report %}
+                  <div class="flex-shrink-0 flex flex-col items-center gap-3 group">
+                      <div class="text-[11px] font-bold opacity-60 group-hover:opacity-100 transition-opacity">{{ item.hour }}</div>
+                      
+                      <div class="relative w-12 h-32 bg-white/5 rounded-2xl flex flex-col justify-end overflow-hidden border border-white/10 group-hover:border-white/30 transition-all">
+                          <div class="w-full transition-all duration-1000 ease-out 
+                              {% if item.percent > 80 %} bg-gradient-to-t from-rose-500 to-rose-400 
+                              {% elif item.percent > 50 %} bg-gradient-to-t from-amber-500 to-amber-300 
+                              {% else %} bg-gradient-to-t from-emerald-500 to-emerald-300 {% endif %}" 
+                              style="height: {{ item.percent }}%;">
+                          </div>
+                          
+                          {% if item.is_now %}
+                          <div class="absolute inset-0 ring-2 ring-blue-400 rounded-2xl animate-pulse shadow-[0_0_15px_rgba(96,165,250,0.5)]"></div>
+                          <div class="absolute -top-1 left-1/2 -translate-x-1/2 bg-blue-400 text-[8px] px-1 rounded font-black text-slate-900 uppercase tracking-widest">Now</div>
+                          {% endif %}
+                      </div>
+
+                      <div class="text-center">
+                          <div class="text-[10px] font-black uppercase {% if item.available == 0 %}text-rose-400{% else %}text-emerald-400{% endif %}">
+                              ว่าง {{ item.available }}
+                          </div>
+                          <div class="text-[9px] opacity-40">จอง {{ item.booked }}</div>
+                      </div>
+                  </div>
+                  {% empty %}
+                  <div class="py-10 text-center w-full flex flex-col items-center opacity-40">
+                      <span class="text-4xl mb-2">😴</span>
+                      <p class="text-sm font-bold italic">ร้านปิดทำการในวันที่เลือก</p>
+                  </div>
+                  {% endfor %}
+              </div>
+          </div>
+
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div class="relative z-10">
+                  <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl mb-4 shadow-inner">🛋️</div>
+                  <h4 class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-1">ความจุร้านทั้งหมด</h4>
+                  <div class="text-5xl font-black text-slate-800">{{ total_tables }} <span class="text-lg text-slate-300 font-bold">โต๊ะ</span></div>
+              </div>
+              
+              <div class="relative z-10 mt-6 pt-6 border-t border-slate-100">
+                  <p class="text-[11px] text-slate-400 leading-relaxed font-medium">
+                      <b class="text-blue-500">สำหรับ Walk-in:</b> ดูจำนวนที่ "ว่าง" ในแท่งกราฟด้านซ้าย ระบบคำนวณหักลบลูกค้าที่จองคิวออนไลน์ไว้ให้แล้ว
+                  </p>
+              </div>
+              
+              <div class="absolute -right-4 -bottom-4 text-slate-50 text-9xl font-black select-none -rotate-12">Q</div>
+          </div>
+
+      </div>
       <div class="mb-6 border-l-4 border-blue-500 pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-3 shadow-sm -mx-6 md:-mx-10 px-6 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-blue-700">รายการคิวลูกค้าวันนี้</h2>
-          <p class="text-gray-500 text-sm font-medium mt-1">จัดการคิวที่เข้ามาใช้บริการในวันที่ {{ today_date|date:"d M Y" }}</p>
+          <h2 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-blue-700">รายการคิวลูกค้า</h2>
+          <p class="text-gray-500 text-sm font-medium mt-1">ประจำวันที่ {{ today_date|date:"d M Y" }}</p>
         </div>
         
         <div class="flex flex-wrap gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 shadow-inner w-full md:w-auto">
@@ -86,7 +160,7 @@
                 {% empty %}
                 <div id="noDataEmpty" class="px-4 py-20 text-center text-slate-500 bg-slate-50 col-span-6 block">
                   <span class="text-6xl block mb-4 drop-shadow-sm opacity-80 filter grayscale">📋</span>
-                  <p class="text-xl font-extrabold text-slate-700">ไม่มีรายการคิวสำหรับวันนี้</p>
+                  <p class="text-xl font-extrabold text-slate-700">ไม่มีรายการคิวสำหรับวันที่เลือก</p>
                   <p class="text-sm font-medium text-slate-400 mt-1">คิวใหม่จะแสดงที่นี่โดยอัตโนมัติ</p>
                 </div>
                 {% endfor %}
