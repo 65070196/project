@@ -499,11 +499,10 @@ class QueueReserve(LoginRequiredMixin, View):
 # หน้าหลักร้านค้า
 class HomeShop(View):
     def get_occupancy_data(self, my_shop, target_date):
-        """ ฟังก์ชันเดิม: คำนวณความหนาแน่นรายชั่วโมงของวันที่เลือก """
         total_tables = Table.objects.filter(shop=my_shop).aggregate(total=Sum('amount'))['total'] or 0
-        
         weekday = target_date.weekday()
         open_info = my_shop.open_date
+        
         day_map = {
             0: (open_info.mon_is_closed, open_info.mon_open, open_info.mon_close),
             1: (open_info.tue_is_closed, open_info.tue_open, open_info.tue_close),
@@ -513,54 +512,66 @@ class HomeShop(View):
             5: (open_info.sat_is_closed, open_info.sat_open, open_info.sat_close),
             6: (open_info.sun_is_closed, open_info.sun_open, open_info.sun_close),
         }
-        is_closed, start_t, end_t = day_map.get(weekday, (True, None, None))
         
+        is_closed, start_t, end_t = day_map.get(weekday, (True, None, None))
         occupancy_report = []
+        
         if not is_closed and start_t and end_t:
             now = timezone.localtime()
             for hour in range(start_t.hour, end_t.hour):
                 booked_count = Queue.objects.filter(
-                    shop=my_shop, 
-                    queue_date=target_date, 
-                    queue_time__hour=hour, 
-                    status='doing'
+                    shop=my_shop, queue_date=target_date, queue_time__hour=hour, status='doing'
                 ).count()
                 
                 available = total_tables - booked_count
                 percent = (booked_count / total_tables * 100) if total_tables > 0 else 0
                 
                 occupancy_report.append({
-                    'hour': f"{hour:02d}:00",
-                    'booked': booked_count,
-                    'available': max(0, available),
-                    'percent': percent,
+                    'hour': f"{hour:02d}:00", 'booked': booked_count,
+                    'available': max(0, available), 'percent': percent,
                     'is_now': hour == now.hour and target_date == now.date()
                 })
         
         return occupancy_report, total_tables
 
     def get_current_realtime_check(self, my_shop):
-        """ 🌟 ฟังก์ชันใหม่: คำนวณข้อมูลสำหรับเวลาปัจจุบันของวันนี้ 🌟 """
-        # 1. หาวันและเวลาปัจจุบัน
+        # ฟังก์ชันใหม่: เช็คละเอียดว่าร้านเปิดหรือปิด ณ เวลานี้จริงๆ
         now = timezone.localtime()
         today = now.date()
         current_hour = now.hour
         
-        # 2. หาโต๊ะทั้งหมดของร้าน
         total_tables = Table.objects.filter(shop=my_shop).aggregate(total=Sum('amount'))['total'] or 0
+        weekday = today.weekday()
+        open_info = my_shop.open_date
         
-        # 3. นับคิวที่จองออนไลน์สำหรับชั่วโมงปัจจุบันของวันนี้
+        day_map = {
+            0: (open_info.mon_is_closed, open_info.mon_open, open_info.mon_close),
+            1: (open_info.tue_is_closed, open_info.tue_open, open_info.tue_close),
+            2: (open_info.wed_is_closed, open_info.wed_open, open_info.wed_close),
+            3: (open_info.thu_is_closed, open_info.thu_open, open_info.thu_close),
+            4: (open_info.fri_is_closed, open_info.fri_open, open_info.fri_close),
+            5: (open_info.sat_is_closed, open_info.sat_open, open_info.sat_close),
+            6: (open_info.sun_is_closed, open_info.sun_open, open_info.sun_close),
+        }
+        
+        is_closed, start_t, end_t = day_map.get(weekday, (True, None, None))
+        
+        # 1. เช็คว่าร้านปิดวันนี้ไหม หรือไม่มีข้อมูลเวลา
+        if is_closed or not start_t or not end_t:
+            return {'status': 'closed', 'time_str': f"{current_hour:02d}:00 น.", 'message': 'ร้านปิดทำการวันนี้'}
+            
+        # 2. เช็คว่าอยู่นอกเวลาทำการไหม (เช่น ร้านเปิด 10 ปิด 20 แต่ตอนนี้ 21)
+        if not (start_t.hour <= current_hour < end_t.hour):
+            return {'status': 'closed', 'time_str': f"{current_hour:02d}:00 น.", 'message': 'นอกเวลาทำการ'}
+
+        # 3. ถ้าร้านเปิดปกติ ค่อยดึงข้อมูล Walk-in
         current_booked_count = Queue.objects.filter(
-            shop=my_shop, 
-            queue_date=today, 
-            queue_time__hour=current_hour, 
-            status='doing'
+            shop=my_shop, queue_date=today, queue_time__hour=current_hour, status='doing'
         ).count()
-        
-        # 4. คำนวณโต๊ะว่างสำหรับ Walk-in
         walkin_available = total_tables - current_booked_count
         
         return {
+            'status': 'open',
             'time_str': f"{current_hour:02d}:00 น.",
             'booked': current_booked_count,
             'available': max(0, walkin_available)
@@ -572,12 +583,20 @@ class HomeShop(View):
         try:
             my_shop = Shop.objects.get(auth=request.user)
             
-            # รับวันที่จาก GET
             date_str = request.GET.get('view_date')
             today = timezone.localtime().date()
-            target_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else today
             
-            queues = Queue.objects.filter(shop=my_shop, queue_date=target_date).annotate(
+            if date_str:
+                try:
+                    view_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    view_date = today
+            else:
+                view_date = today
+                
+            is_today = (view_date == today)
+            
+            queues = Queue.objects.filter(shop=my_shop, queue_date=view_date).annotate(
                 status_order=Case(
                     When(status='doing', then=Value(1)),
                     When(status='done', then=Value(2)),
@@ -586,19 +605,17 @@ class HomeShop(View):
                 )
             ).order_by('status_order', 'queue_time')
 
-            # 1. ดึงข้อมูลหนาแน่นของวันที่เลือก
-            occupancy_report, total_tables = self.get_occupancy_data(my_shop, target_date)
-            
-            # 🌟 2. ดึงข้อมูล Real-time ของเวลาปัจจุบัน 🌟
+            occupancy_report, total_tables = self.get_occupancy_data(my_shop, view_date)
             realtime_check = self.get_current_realtime_check(my_shop)
             
             context = {
                 'queues': queues,
-                'today_date': today,
-                'view_date': target_date,
+                'view_date': view_date,
+                'view_date_str': view_date.strftime('%Y-%m-%d'), # คืนค่าให้ input date (มั่นใจว่ามีค่าตลอด)
+                'is_today': is_today,
                 'occupancy_report': occupancy_report,
                 'total_tables': total_tables,
-                'realtime_check': realtime_check, # ส่งค่า Real-time ไปที่ context
+                'realtime_check': realtime_check,
             }
             return render(request, "home_shop.html", context)
         except Shop.DoesNotExist:
