@@ -36,21 +36,21 @@ ALLOWED_HOSTS = ['.vercel.app', '*']
 # Application definition
 
 INSTALLED_APPS = [
-    'cloudinary_storage', # ต้องอยู่ก่อน staticfiles
+    'cloudinary_storage', 
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles', 
-    'cloudinary', # ไว้ตรงไหนก็ได้หลัง storage
+    'cloudinary', 
     'smartqueue',
 ]
 
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # สำคัญมากสำหรับ Vercel!
+    'whitenoise.middleware.WhiteNoiseMiddleware', # สำคัญสำหรับ Vercel!
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -64,7 +64,7 @@ ROOT_URLCONF = 'project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')], # ย้าย TEMPLATE_DIRS มาไว้ตรงนี้
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
