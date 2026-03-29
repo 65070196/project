@@ -7,6 +7,7 @@
     <div class="p-6 md:p-10 pb-24">
       
       <div class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
           <div class="lg:col-span-2 bg-gradient-to-br from-slate-800 to-blue-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
               <div class="absolute right-0 bottom-0 opacity-10 transform translate-y-4 translate-x-4">
                   <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
@@ -31,7 +32,8 @@
                   {% for item in occupancy_report %}
                   <div class="flex-shrink-0 flex flex-col items-center gap-3 group">
                       <div class="text-[11px] font-bold opacity-60 group-hover:opacity-100 transition-opacity">{{ item.hour }}</div>
-                      <div class="relative w-12 h-32 bg-white/5 rounded-2xl flex flex-col justify-end overflow-hidden border border-white/10 group-hover:border-white/30 transition-all">
+                      
+                      <div class="relative w-12 h-32 bg-black/20 rounded-2xl flex flex-col justify-end overflow-hidden transition-all">
                           <div class="w-full transition-all duration-1000 ease-out 
                               {% if item.percent > 80 %} bg-gradient-to-t from-rose-500 to-rose-400 
                               {% elif item.percent > 50 %} bg-gradient-to-t from-amber-500 to-amber-300 
@@ -43,6 +45,7 @@
                           <div class="absolute -top-1 left-1/2 -translate-x-1/2 bg-blue-400 text-[8px] px-1 rounded font-black text-slate-900 uppercase tracking-widest">Now</div>
                           {% endif %}
                       </div>
+
                       <div class="text-center">
                           <div class="text-[10px] font-black uppercase {% if item.available == 0 %}text-rose-400{% else %}text-emerald-400{% endif %}">
                               ว่าง {{ item.available }}
@@ -59,17 +62,38 @@
               </div>
           </div>
 
-          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden">
-              <div class="relative z-10">
-                  <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl mb-4 shadow-inner">🛋️</div>
-                  <h4 class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-1">ความจุร้านทั้งหมด</h4>
-                  <div class="text-5xl font-black text-slate-800">{{ total_tables }} <span class="text-lg text-slate-300 font-bold">โต๊ะ</span></div>
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+              <div class="relative z-10 flex justify-between items-center mb-4 mt-2">
+                  <div>
+                      <h4 class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-1">ความจุร้านทั้งหมด</h4>
+                      <div class="text-4xl font-black text-slate-800">{{ total_tables }} <span class="text-sm text-slate-400 font-bold">โต๊ะ</span></div>
+                  </div>
+                  <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-inner">🛋️</div>
               </div>
-              <div class="relative z-10 mt-6 pt-6 border-t border-slate-100">
-                  <p class="text-[11px] text-slate-400 leading-relaxed font-medium">
-                      <b class="text-blue-500">สำหรับ Walk-in:</b> ดูจำนวนที่ "ว่าง" ในแท่งกราฟด้านซ้าย ระบบจะหักลบลูกค้าที่จองคิวออนไลน์ไว้ให้แล้ว
-                  </p>
+              
+              <div class="w-full h-px bg-slate-100 my-2 relative z-10"></div>
+
+              <div class="relative z-10 mt-4">
+                  <h4 class="text-slate-800 font-extrabold text-sm mb-3 flex items-center gap-2">
+                      <span class="relative flex h-2.5 w-2.5">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+                      </span>
+                      สถานะขณะนี้ ({{ realtime_check.time_str }})
+                  </h4>
+                  
+                  <div class="grid grid-cols-2 gap-3">
+                      <div class="bg-slate-50 border border-slate-100 p-3 rounded-xl text-center">
+                          <div class="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-1">จองออนไลน์แล้ว</div>
+                          <div class="text-2xl font-black text-slate-800">{{ realtime_check.booked }}</div>
+                      </div>
+                      <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl ring-2 ring-emerald-100 ring-offset-1 text-center">
+                          <div class="text-emerald-600 font-black text-[10px] uppercase tracking-widest mb-1">ว่าง (Walk-in)</div>
+                          <div class="text-2xl font-black text-emerald-700">{{ realtime_check.available }}</div>
+                      </div>
+                  </div>
               </div>
+              
               <div class="absolute -right-4 -bottom-4 text-slate-50 text-9xl font-black select-none -rotate-12">Q</div>
           </div>
       </div>
