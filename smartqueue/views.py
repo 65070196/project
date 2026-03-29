@@ -499,10 +499,7 @@ class QueueReserve(LoginRequiredMixin, View):
 # หน้าหลักร้านค้า
 class HomeShop(View):
     def get_occupancy_data(self, my_shop, target_date):
-        """ ฟังก์ชันช่วยคำนวณความหนาแน่นรายชั่วโมง """
-        # หาจำนวนโต๊ะทั้งหมดที่ร้านมี
         total_tables = Table.objects.filter(shop=my_shop).aggregate(total=Sum('amount'))['total'] or 0
-        
         weekday = target_date.weekday()
         open_info = my_shop.open_date
         
@@ -522,22 +519,16 @@ class HomeShop(View):
         if not is_closed and start_t and end_t:
             now = timezone.localtime()
             for hour in range(start_t.hour, end_t.hour):
-                # นับจำนวนคิวที่กำลังทำอยู่ในชั่วโมงนั้น
                 booked_count = Queue.objects.filter(
-                    shop=my_shop, 
-                    queue_date=target_date, 
-                    queue_time__hour=hour, 
-                    status='doing'
+                    shop=my_shop, queue_date=target_date, queue_time__hour=hour, status='doing'
                 ).count()
                 
                 available = total_tables - booked_count
                 percent = (booked_count / total_tables * 100) if total_tables > 0 else 0
                 
                 occupancy_report.append({
-                    'hour': f"{hour:02d}:00",
-                    'booked': booked_count,
-                    'available': max(0, available),
-                    'percent': percent,
+                    'hour': f"{hour:02d}:00", 'booked': booked_count,
+                    'available': max(0, available), 'percent': percent,
                     'is_now': hour == now.hour and target_date == now.date()
                 })
         
@@ -549,7 +540,6 @@ class HomeShop(View):
         try:
             my_shop = Shop.objects.get(auth=request.user)
             
-            # 🌟 รับค่าวันที่สำหรับดูข้อมูลล่วงหน้า/ย้อนหลัง
             date_str = request.GET.get('view_date')
             today = timezone.localtime().date()
             
@@ -560,6 +550,8 @@ class HomeShop(View):
                     view_date = today
             else:
                 view_date = today
+                
+            is_today = (view_date == today)
             
             queues = Queue.objects.filter(shop=my_shop, queue_date=view_date).annotate(
                 status_order=Case(
@@ -570,13 +562,13 @@ class HomeShop(View):
                 )
             ).order_by('status_order', 'queue_time')
             
-            # ดึงข้อมูล Occupancy
             occupancy_report, total_tables = self.get_occupancy_data(my_shop, view_date)
             
             context = {
                 'queues': queues,
-                'today_date': view_date, # ใช้วันที่กำลังดูอยู่เป็นหลัก
-                'view_date_str': view_date.strftime('%Y-%m-%d'),
+                'view_date': view_date, # เปลี่ยนชื่อให้สื่อความหมาย
+                'view_date_str': view_date.strftime('%Y-%m-%d'), # ส่งเป็น String ให้ HTML
+                'is_today': is_today, # ส่งตัวแปรเช็คว่าเป็นวันนี้ไหม
                 'occupancy_report': occupancy_report,
                 'total_tables': total_tables,
             }
@@ -585,37 +577,8 @@ class HomeShop(View):
         except Shop.DoesNotExist:
             return redirect('login')
 
-    def get(self, request):
-        if not request.user.is_authenticated:
-            return redirect('login')   
-        try:
-            my_shop = Shop.objects.get(auth=request.user)
-            # รับวันที่จาก GET (ถ้ามี) เพื่อให้เจ้าของร้านเลือกดูวันอื่นได้
-            date_str = request.GET.get('view_date')
-            today = timezone.localdate()
-            target_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else today
-            
-            queues = Queue.objects.filter(shop=my_shop, queue_date=target_date).annotate(
-                status_order=Case(
-                    When(status='doing', then=Value(1)),
-                    When(status='done', then=Value(2)),
-                    When(status='cancel', then=Value(3)),
-                    output_field=IntegerField(),
-                )
-            ).order_by('status_order', 'queue_time')
-
-            occupancy_report, total_tables = self.get_occupancy_data(my_shop, target_date)
-            
-            context = {
-                'queues': queues,
-                'today_date': today,
-                'view_date': target_date,
-                'occupancy_report': occupancy_report,
-                'total_tables': total_tables,
-            }
-            return render(request, "home_shop.html", context)
-        except Shop.DoesNotExist:
-            return redirect('login')
+    def post(self, request):
+        return self.get(request)
 
 
 class AllQueueShop(View):

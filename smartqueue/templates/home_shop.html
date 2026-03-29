@@ -7,7 +7,6 @@
     <div class="p-6 md:p-10 pb-24">
       
       <div class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
           <div class="lg:col-span-2 bg-gradient-to-br from-slate-800 to-blue-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
               <div class="absolute right-0 bottom-0 opacity-10 transform translate-y-4 translate-x-4">
                   <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
@@ -20,7 +19,7 @@
                           สถานะความว่างรายชั่วโมง (Walk-in)
                       </h3>
                   </div>
-                  <form method="GET" class="flex items-center gap-2 bg-white/10 p-1.5 rounded-xl border border-white/20">
+                  <form method="GET" class="flex items-center gap-2 bg-white/10 p-1.5 rounded-xl border border-white/20 z-20">
                       <span class="pl-2 text-xs font-bold opacity-70">ดูวันที่:</span>
                       <input type="date" name="view_date" value="{{ view_date_str }}" 
                              onchange="this.form.submit()"
@@ -28,11 +27,10 @@
                   </form>
               </div>
 
-              <div class="flex gap-4 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
+              <div class="flex gap-4 overflow-x-auto pb-4 no-scrollbar scroll-smooth relative z-10">
                   {% for item in occupancy_report %}
                   <div class="flex-shrink-0 flex flex-col items-center gap-3 group">
                       <div class="text-[11px] font-bold opacity-60 group-hover:opacity-100 transition-opacity">{{ item.hour }}</div>
-                      
                       <div class="relative w-12 h-32 bg-white/5 rounded-2xl flex flex-col justify-end overflow-hidden border border-white/10 group-hover:border-white/30 transition-all">
                           <div class="w-full transition-all duration-1000 ease-out 
                               {% if item.percent > 80 %} bg-gradient-to-t from-rose-500 to-rose-400 
@@ -40,13 +38,11 @@
                               {% else %} bg-gradient-to-t from-emerald-500 to-emerald-300 {% endif %}" 
                               style="height: {{ item.percent }}%;">
                           </div>
-                          
                           {% if item.is_now %}
                           <div class="absolute inset-0 ring-2 ring-blue-400 rounded-2xl animate-pulse shadow-[0_0_15px_rgba(96,165,250,0.5)]"></div>
                           <div class="absolute -top-1 left-1/2 -translate-x-1/2 bg-blue-400 text-[8px] px-1 rounded font-black text-slate-900 uppercase tracking-widest">Now</div>
                           {% endif %}
                       </div>
-
                       <div class="text-center">
                           <div class="text-[10px] font-black uppercase {% if item.available == 0 %}text-rose-400{% else %}text-emerald-400{% endif %}">
                               ว่าง {{ item.available }}
@@ -69,21 +65,21 @@
                   <h4 class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-1">ความจุร้านทั้งหมด</h4>
                   <div class="text-5xl font-black text-slate-800">{{ total_tables }} <span class="text-lg text-slate-300 font-bold">โต๊ะ</span></div>
               </div>
-              
               <div class="relative z-10 mt-6 pt-6 border-t border-slate-100">
                   <p class="text-[11px] text-slate-400 leading-relaxed font-medium">
-                      <b class="text-blue-500">สำหรับ Walk-in:</b> ดูจำนวนที่ "ว่าง" ในแท่งกราฟด้านซ้าย ระบบคำนวณหักลบลูกค้าที่จองคิวออนไลน์ไว้ให้แล้ว
+                      <b class="text-blue-500">สำหรับ Walk-in:</b> ดูจำนวนที่ "ว่าง" ในแท่งกราฟด้านซ้าย ระบบจะหักลบลูกค้าที่จองคิวออนไลน์ไว้ให้แล้ว
                   </p>
               </div>
-              
               <div class="absolute -right-4 -bottom-4 text-slate-50 text-9xl font-black select-none -rotate-12">Q</div>
           </div>
-
       </div>
-      <div class="mb-6 border-l-4 border-blue-500 pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-3 shadow-sm -mx-6 md:-mx-10 px-6 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      
+      <div class="mb-6 border-l-4 {% if is_today %}border-blue-500{% else %}border-fuchsia-500{% endif %} pl-4 sticky top-0 bg-white/95 backdrop-blur z-10 py-3 shadow-sm -mx-6 md:-mx-10 px-6 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-colors">
         <div>
-          <h2 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-blue-700">รายการคิวลูกค้า</h2>
-          <p class="text-gray-500 text-sm font-medium mt-1">ประจำวันที่ {{ today_date|date:"d M Y" }}</p>
+          <h2 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent {% if is_today %}bg-gradient-to-r from-slate-800 to-blue-700{% else %}bg-gradient-to-r from-slate-800 to-fuchsia-600{% endif %}">
+              {% if is_today %}รายการคิวลูกค้าวันนี้{% else %}รายการคิวล่วงหน้า / ย้อนหลัง{% endif %}
+          </h2>
+          <p class="text-gray-500 text-sm font-medium mt-1">ประจำวันที่ {{ view_date|date:"d M Y" }}</p>
         </div>
         
         <div class="flex flex-wrap gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 shadow-inner w-full md:w-auto">
@@ -110,58 +106,25 @@
             <div id="queueContainer">
                 {% for queue in queues %}
                 <div class="queue-row grid grid-cols-6 gap-4 items-center px-4 py-4 text-sm bg-white border-b border-gray-100 hover:bg-blue-50/50 transition-colors" data-status="{{ queue.status }}">
-                  
-                  <div class="font-extrabold text-slate-800 truncate pl-2" title="{{ queue.customer.auth.get_full_name }}">
-                    {{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}
-                  </div>
-
-                  <div class="text-slate-700 font-medium text-center truncate">
-                    {{ queue.table.name|default:"ไม่ได้ระบุ" }}
-                  </div>
-                  
-                  <div class="text-slate-700 font-medium text-center">
-                    {{ queue.queue_date|date:"d/m/Y" }}
-                  </div>
-                  
-                  <div class="text-slate-900 text-center font-extrabold text-base">
-                    {{ queue.queue_time|date:"H:i" }} น.
-                  </div>
-                  
+                  <div class="font-extrabold text-slate-800 truncate pl-2">{{ queue.customer.auth.first_name }} {{ queue.customer.auth.last_name }}</div>
+                  <div class="text-slate-700 font-medium text-center truncate">{{ queue.table.name|default:"ไม่ได้ระบุ" }}</div>
+                  <div class="text-slate-700 font-medium text-center">{{ queue.queue_date|date:"d/m/Y" }}</div>
+                  <div class="text-slate-900 text-center font-extrabold text-base">{{ queue.queue_time|date:"H:i" }} น.</div>
                   <div class="text-center">
-                    {% if queue.status == 'doing' %}
-                      <span class="px-3.5 py-1.5 text-xs rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 shadow-sm whitespace-nowrap">
-                        ⏳ กำลังทำ
-                      </span>
-                    {% elif queue.status == 'done' %}
-                      <span class="px-3.5 py-1.5 text-xs rounded-full bg-green-50 text-green-700 font-bold border border-green-200 shadow-sm whitespace-nowrap">
-                        ✅ เสร็จสิ้น
-                      </span>
-                    {% elif queue.status == 'cancel' %}
-                      <span class="px-3.5 py-1.5 text-xs rounded-full bg-red-50 text-red-700 font-bold border border-red-200 shadow-sm whitespace-nowrap">
-                        ❌ ยกเลิก
-                      </span>
-                    {% endif %}
+                    {% if queue.status == 'doing' %}<span class="px-3.5 py-1.5 text-xs rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 shadow-sm">⏳ กำลังทำ</span>
+                    {% elif queue.status == 'done' %}<span class="px-3.5 py-1.5 text-xs rounded-full bg-green-50 text-green-700 font-bold border border-green-200 shadow-sm">✅ เสร็จสิ้น</span>
+                    {% elif queue.status == 'cancel' %}<span class="px-3.5 py-1.5 text-xs rounded-full bg-red-50 text-red-700 font-bold border border-red-200 shadow-sm">❌ ยกเลิก</span>{% endif %}
                   </div>
-
                   <div class="flex justify-center gap-2">
-                    <a href="{% url 'queue-edit' queue.queue_id %}?next=today" 
-                       class="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm transition-transform transform hover:-translate-y-0.5 whitespace-nowrap flex items-center gap-1">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                      แก้ไข
-                    </a>
-                    <button type="button" onclick="openDelete(`{% url 'queue-delete' queue.queue_id %}?next=today`)" 
-                      class="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-xs font-bold shadow-sm transition-transform transform hover:-translate-y-0.5 whitespace-nowrap flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        ลบ
-                    </button>
+                    <a href="{% url 'queue-edit' queue.queue_id %}?next={{ view_date_str }}" class="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> แก้ไข</a>
+                    <button type="button" onclick="openDelete(`{% url 'queue-delete' queue.queue_id %}?next={{ view_date_str }}`)" class="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> ลบ</button>
                   </div>
-
                 </div>
                 {% empty %}
                 <div id="noDataEmpty" class="px-4 py-20 text-center text-slate-500 bg-slate-50 col-span-6 block">
                   <span class="text-6xl block mb-4 drop-shadow-sm opacity-80 filter grayscale">📋</span>
-                  <p class="text-xl font-extrabold text-slate-700">ไม่มีรายการคิวสำหรับวันที่เลือก</p>
-                  <p class="text-sm font-medium text-slate-400 mt-1">คิวใหม่จะแสดงที่นี่โดยอัตโนมัติ</p>
+                  <p class="text-xl font-extrabold text-slate-700">ไม่มีรายการคิว</p>
+                  <p class="text-sm font-medium text-slate-400 mt-1">ประจำวันที่ {{ view_date|date:"d M Y" }}</p>
                 </div>
                 {% endfor %}
 
@@ -170,32 +133,23 @@
                   <p class="text-xl font-extrabold text-slate-700">ไม่พบคิวในสถานะที่คุณเลือก</p>
                 </div>
             </div>
-
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
 <div id="deleteModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 items-center justify-center transition-opacity">
   <div class="bg-white rounded-3xl shadow-2xl p-8 w-[400px] text-center border border-white">
-    <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-red-50/50">
-        <span class="text-4xl">🗑️</span>
-    </div>
+    <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-red-50/50"><span class="text-4xl">🗑️</span></div>
     <h3 class="text-2xl font-extrabold text-slate-900 mb-2">ยืนยันการลบคิว</h3>
     <p class="text-slate-500 font-medium mb-8">คุณแน่ใจหรือไม่ว่าต้องการลบคิวนี้? <br> ข้อมูลจะไม่สามารถกู้คืนได้</p>
-    
     <form id="deleteForm" method="POST" action="">
       {% csrf_token %}
       <div class="flex justify-center gap-4">
-        <button type="button" onclick="closeDelete()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3 rounded-xl shadow-sm transition-colors">
-          ยกเลิก
-        </button>
-        <button type="submit" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-extrabold py-3 rounded-xl shadow-md transition-colors">
-          ใช่, ลบเลย
-        </button>
+        <button type="button" onclick="closeDelete()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3 rounded-xl shadow-sm transition-colors">ยกเลิก</button>
+        <button type="submit" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-extrabold py-3 rounded-xl shadow-md transition-colors">ใช่, ลบเลย</button>
       </div>
     </form>
   </div>
@@ -217,11 +171,9 @@
 
     const rows = document.querySelectorAll('.queue-row');
     let visibleCount = 0;
-
     rows.forEach(row => {
       if (status === 'all' || row.dataset.status === status) {
-        row.style.display = 'grid'; 
-        visibleCount++;
+        row.style.display = 'grid'; visibleCount++;
       } else {
         row.style.display = 'none'; 
       }
@@ -233,11 +185,9 @@
     if (noDataEmpty) { return; }
 
     if (visibleCount === 0) {
-        filterEmptyState.classList.remove('hidden');
-        filterEmptyState.classList.add('block');
+        filterEmptyState.classList.remove('hidden'); filterEmptyState.classList.add('block');
     } else {
-        filterEmptyState.classList.remove('block');
-        filterEmptyState.classList.add('hidden');
+        filterEmptyState.classList.remove('block'); filterEmptyState.classList.add('hidden');
     }
   }
 </script>
