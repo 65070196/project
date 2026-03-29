@@ -610,8 +610,9 @@ class HomeShop(View):
             
             context = {
                 'queues': queues,
+                'today_date': today,
                 'view_date': view_date,
-                'view_date_str': view_date.strftime('%Y-%m-%d'), # คืนค่าให้ input date (มั่นใจว่ามีค่าตลอด)
+                'view_date_str': view_date.strftime('%Y-%m-%d'),
                 'is_today': is_today,
                 'occupancy_report': occupancy_report,
                 'total_tables': total_tables,
