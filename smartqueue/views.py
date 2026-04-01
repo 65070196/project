@@ -500,6 +500,11 @@ class QueueReserve(LoginRequiredMixin, View):
 class HomeShop(View):
     def get_occupancy_data(self, my_shop, target_date):
         total_tables = Table.objects.filter(shop=my_shop).aggregate(total=Sum('amount'))['total'] or 0
+        
+        # 🌟 ป้องกัน Error: ถ้าร้านยังไม่มี open_date ให้คืนค่ากราฟว่างๆ กลับไปเลย
+        if not hasattr(my_shop, 'open_date') or my_shop.open_date is None:
+            return [], total_tables
+
         weekday = target_date.weekday()
         open_info = my_shop.open_date
         
@@ -535,12 +540,15 @@ class HomeShop(View):
         return occupancy_report, total_tables
 
     def get_current_realtime_check(self, my_shop):
-        # ฟังก์ชันใหม่: เช็คละเอียดว่าร้านเปิดหรือปิด ณ เวลานี้จริงๆ
         now = timezone.localtime()
         today = now.date()
         current_hour = now.hour
         
         total_tables = Table.objects.filter(shop=my_shop).aggregate(total=Sum('amount'))['total'] or 0
+        
+        if not hasattr(my_shop, 'open_date') or my_shop.open_date is None:
+            return {'status': 'closed', 'time_str': f"{current_hour:02d}:00 น.", 'message': 'กรุณาตั้งเวลาเปิดร้าน'}
+
         weekday = today.weekday()
         open_info = my_shop.open_date
         
@@ -556,15 +564,12 @@ class HomeShop(View):
         
         is_closed, start_t, end_t = day_map.get(weekday, (True, None, None))
         
-        # 1. เช็คว่าร้านปิดวันนี้ไหม หรือไม่มีข้อมูลเวลา
         if is_closed or not start_t or not end_t:
             return {'status': 'closed', 'time_str': f"{current_hour:02d}:00 น.", 'message': 'ร้านปิดทำการวันนี้'}
             
-        # 2. เช็คว่าอยู่นอกเวลาทำการไหม (เช่น ร้านเปิด 10 ปิด 20 แต่ตอนนี้ 21)
         if not (start_t.hour <= current_hour < end_t.hour):
             return {'status': 'closed', 'time_str': f"{current_hour:02d}:00 น.", 'message': 'นอกเวลาทำการ'}
 
-        # 3. ถ้าร้านเปิดปกติ ค่อยดึงข้อมูล Walk-in
         current_booked_count = Queue.objects.filter(
             shop=my_shop, queue_date=today, queue_time__hour=current_hour, status='doing'
         ).count()
